@@ -13,7 +13,7 @@ class SignupSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id','username', 'password', 'password2']  # 시리얼라이즈할 필드
+        fields = ['id','username', 'password', 'password2', 'tags']  # 시리얼라이즈할 필드
 
     def validate_username(self, value):
         """아이디 중복 체크"""

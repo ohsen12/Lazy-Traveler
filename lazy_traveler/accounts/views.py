@@ -26,7 +26,8 @@ class SignupView(APIView):
                 {
                     "detail": "Sign-up completed.",
                     "id": user.id, 
-                    "username":user.username
+                    "username":user.username,
+                    "tags": user.tags
                 },
                 status=status.HTTP_201_CREATED,
             )
