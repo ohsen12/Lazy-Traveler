@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     # lazy_traveler
-    'accounts',
+    'accounts', 
+    'actionbar', 
 ]
 
 MIDDLEWARE = [
