@@ -7,6 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from .models import ChatHistory
 from .serializers import ChatHistorySerializer
 from .chat_logic import get_recommendation
+from django.db.models import Min
+from django.db.models import F
 
 DEFAULT_CHAT_LIMIT = 50  # 기본 조회 개수 제한
 
@@ -57,6 +59,8 @@ class ChatBotView(APIView):
         return Response(chat_data, status=status.HTTP_200_OK)
 
 
+
+
 class ChatHistoryView(APIView):
     """
     특정 유저의 대화 기록을 세션별로 조회하는 API.
@@ -79,16 +83,21 @@ class ChatHistoryView(APIView):
             return Response(ChatHistorySerializer(chats, many=True).data, status=status.HTTP_200_OK)
 
         # 전체 세션 목록 조회 (각 세션의 첫 메시지만 가져옴)
-        sessions = ChatHistory.objects.filter(username=user.username).order_by("-created_at").distinct("session_id")
+        sessions = ChatHistory.objects.filter(username=user.username).values('session_id')\
+            .annotate(first_message=Min('created_at'))\
+            .order_by('-first_message')
+
         session_list = [
             {
-                "session_id": chat.session_id,
-                "first_message": chat.message,
-                "created_at": chat.created_at
+                "session_id": session['session_id'],
+                "first_message": ChatHistory.objects.filter(username=user.username, session_id=session['session_id'])\
+                    .order_by('created_at').first().message,
+                "created_at": session['first_message']
             }
-            for chat in sessions
+            for session in sessions
         ]
         return Response(session_list, status=status.HTTP_200_OK)
+
 
 
 @api_view(['POST'])
