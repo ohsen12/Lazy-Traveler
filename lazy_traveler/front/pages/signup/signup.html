@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+    <link rel="stylesheet" href="signup.css">
+</head>
+<body>
+    <h1>회원가입</h1>
+
+    <form id="signup-form">
+        <label for="username"></label>
+        <input type="text" id="username" placeholder="아이디" required>
+
+        <label for="password"></label>
+        <input type="password" id="password" placeholder="비밀번호" required>
+
+        <label for="password2"></label>
+        <input type="password" id="password2" placeholder="비밀번호 확인" required>
+
+        <!-- ✅ 태그 선택 버튼 -->
+        <p>관심 태그를 선택하세요 (복수 선택 가능)</p>
+        <div id="tag-container">
+            <button class="tag-button" data-tag="공원">공원</button>
+            <button class="tag-button" data-tag="관광명소">관광명소</button>
+            <button class="tag-button" data-tag="미술관">미술관</button>
+            <button class="tag-button" data-tag="박물관">박물관</button>
+            <button class="tag-button" data-tag="베이커리">베이커리</button>
+            <button class="tag-button" data-tag="볼링">볼링</button>
+            <button class="tag-button" data-tag="서점">서점</button>
+            <button class="tag-button" data-tag="쇼핑">쇼핑</button>
+            <button class="tag-button" data-tag="식당">식당</button>
+            <button class="tag-button" data-tag="주점">주점</button>
+            <button class="tag-button" data-tag="카페">카페</button>
+        </div>
+        
+
+        <button type="submit">회원가입</button>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="signup.js"></script>
+</body>
+</html>
