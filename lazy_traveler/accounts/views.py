@@ -32,7 +32,7 @@ class SignupView(APIView):
                     "detail": "Sign-up completed.",
                     "id": user.id, 
                     "username":user.username,
-                    "tags": user.tags
+                    "tags": user.tags.split(",")  # 쉼표로 구분된 문자열을 리스트로 변환하여 반환
                 },
                 status=status.HTTP_201_CREATED,
             )
