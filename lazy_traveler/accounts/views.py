@@ -135,12 +135,22 @@ class UpdatePasswordView(BaseUserView):
 # ------------------------------------------------------------------------------
 class UpdateTagsView(BaseUserView):
     def post(self, request):
+        # 요청 데이터에서 user_id를 추출하고, 인증된 사용자와 비교 후 User 객체를 가져오기
         user, error_response = self.get_validated_user(request, from_query_params=False)
         if error_response:
             return error_response
         
+        # 클라이언트에서 새로운 tags 값을 받아오기
+        new_tags = request.data.get('tags', None)
+        if new_tags is None:
+            return Response({'error': '태그 정보는 필수입니다.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        
+        # User 모델의 tags 필드 저장
+        user.tags = new_tags
+        
         try:
-            user.save()
+            user.save(update_fields=['tags'])
         except DatabaseError:
             return Response({'error': '태그 정보 업데이트 중 오류가 발생했습니다.'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
