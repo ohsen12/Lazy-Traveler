@@ -1,9 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.contrib.auth import logout  # Django 내장 로그아웃 함수 임포트 
 from rest_framework import status, permissions
 
 # 챗봇 앱에서 스케줄 관련 모델과 시리얼라이저 재사용
-from datetime import datetime
+#from datetime import datetime
 #from chatbot.models import Schedule 
 #from chatbot.serializers import ScheduleSerializer  
 
@@ -26,14 +27,28 @@ class RefreshConversationView(APIView):
             #비로그인 유저:
             #대화내역 저장은 안 됨, 응답만 전달
             return Response({'detail':'대화내역이 초기화되었습니다.'})
+        
+#        
+class LogoutView(APIView):
+    """
+    로그아웃 기능을 담당하는 View
+    - 로그인 된 사용자에 대해 세션을 종료하고, 로그아웃 완료 메시지를 반환
+    """
+    permission_classes = [permissions.IsAuthenticated]  # 로그인이 필요한 엔드포인트
+    def post(self, request):
+        # Django의 logout 함수를 사용해 현재 사용자의 세션을 종료합니다.
+        logout(request)
+        # 로그아웃 완료 메시지를 반환합니다.
+        return Response({"detail": "로그아웃되었습니다."}, status=status.HTTP_200_OK) 
+
 
 
 #스케줄러 버튼 클릭시 스케줄 조회를 담당 
-class ScheduleMenuView(APIView):
+# class ScheduleMenuView(APIView):
 
-    permission_classes = [permissions.IsAuthenticated] #로그인 된 사용자만 스케줄러 조회 가능능
+#     permission_classes = [permissions.IsAuthenticated] #로그인 된 사용자만 스케줄러 조회 가능능
 
-    def get(self,request):
+#     def get(self,request):
         
         #로그인 유저인 경우: DB에서 스케줄 목록 조회
         user = request.user
