@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from .models import Profile
 
 
 User = get_user_model()
@@ -14,6 +15,7 @@ class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id','username', 'password', 'password2', 'tags']  # 시리얼라이즈할 필드
+        extra_kwargs = {'password' : {'write_only' : True}}
 
     def validate_username(self, value):
         """아이디 중복 체크"""
@@ -37,7 +39,18 @@ class SignupSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop("password2")  # password2 필드 제거
         tags = validated_data.pop('tags', "")
+        # create_user 메서드를 사용하여 User 객체 생성 (비밀번호 해싱 포함)
         user = User.objects.create_user(**validated_data)
-        user.profile.tags = tags  # 유저 프로필에 태그 저장
-        user.profile.save()
+        user.tags = tags
+        user.save(update_fields=['tags'])
+        
+        # Profile이 존재하지 않을 수 있으므로, get_or_create를 사용하여 가져오거나 생성
+        profile, created = Profile.objects.get_or_create(user=user)
+        
+        # tags 문자열을 쉼표 기준으로 분리하고, 앞뒤 공백을 제거하여 리스트로 변환
+        if tags:
+            profile.recommendation_keywords = [tag.strip() for tag in tags.split(',') if tag.strip()]
+        else:
+            profile.recommendation_keywords = []
+        profile.save()
         return user

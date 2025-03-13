@@ -34,13 +34,13 @@ class UserSelectedPath(models.Model):
     
     
 # 탈퇴한 유저 정보를 저장하는 모델
-class DeletedUser(models.Model):
-    original_user_id = models.CharField(max_length=255)
-    password = models.CharField(max_length=128)
-    characteristics = models.CharField(max_length=255, null=True, blank=True)
-    recommendation_keywords = models.JSONField(null=True, blank=True)
-    deleted_at = models.DateTimeField(auto_now_add=True)
-    retention_until = models.DateTimeField(null=True, blank=True)
+# class DeletedUser(models.Model):
+#     original_user_id = models.CharField(max_length=255)
+#     password = models.CharField(max_length=128)
+#     characteristics = models.CharField(max_length=255, null=True, blank=True)
+#     recommendation_keywords = models.JSONField(null=True, blank=True)
+#     deleted_at = models.DateTimeField(auto_now_add=True)
+#     retention_until = models.DateTimeField(null=True, blank=True)
     
-    def __str__(self):
-        return self.original_user_id
+#     def __str__(self):
+#         return self.original_user_id

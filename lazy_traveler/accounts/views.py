@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import SignupSerializer
-from .models import User, Profile, Conversation, UserSelectedPath, DeletedUser
+from .models import User, Profile, Conversation, UserSelectedPath
 
 # 로그인과 함께 진행되어야 할 access, refresh 토큰 발급은 TokenObtainPairView 클래스 뷰와 연결하여 처리한다.
 
@@ -161,30 +161,6 @@ class UpdateTagsView(BaseUserView):
 
 
 # ------------------------------------------------------------------------------
-# SaveConversationView
-# ------------------------------------------------------------------------------
-# 사용자의 대화 내역을 저장
-class SaveConversationView(BaseUserView):
-    def post(self, request):
-        user, error_response = self.get_validated_user(request, from_query_params=False)
-        if error_response:
-            return error_response
-        
-        content = request.data.get('content')
-        if not content:
-            return Response({'error': 'content는 필수 항목입니다.'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            Conversation.objects.create(user=user, content=content)
-        except DatabaseError:
-            return Response({'error': '대화 내역 저장 중 오류가 발생했습니다.'},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        return Response({'message': '대화 내역이 저장되었습니다.'},
-                        status=status.HTTP_200_OK)
-
-# ------------------------------------------------------------------------------
 # ConversationSummaryView
 # ------------------------------------------------------------------------------
 # 최근 7일간의 대화 내역을 일별로 집계하고, 사용자가 선택한 경로의 최신 데이터를 반환
@@ -218,49 +194,47 @@ class ConversationSummaryView(BaseUserView):
 # SaveFinalVisitedPathView
 # ------------------------------------------------------------------------------
 # 사용자가 선택한 경로(방문 동선)을 저장
-class SaveFinalVisitedPathView(BaseUserView):
-    def post(self, request):
-        user, error_response = self.get_validated_user(request, from_query_params=False)
-        if error_response:
-            return error_response
+# class SaveFinalVisitedPathView(BaseUserView):
+#     def post(self, request):
+#         user, error_response = self.get_validated_user(request, from_query_params=False)
+#         if error_response:
+#             return error_response
         
-        visited_path = request.data.get('visited_path')
-        if not visited_path:
-            return Response({'error': 'visited_path는 필수 항목입니다.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+#         visited_path = request.data.get('visited_path')
+#         if not visited_path:
+#             return Response({'error': 'visited_path는 필수 항목입니다.'},
+#                             status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            UserSelectedPath.objects.create(user=user, visited_path=visited_path)
-        except DatabaseError:
-            return Response({'error': '방문 동선 저장 중 오류가 발생했습니다.'},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#         try:
+#             UserSelectedPath.objects.create(user=user, visited_path=visited_path)
+#         except DatabaseError:
+#             return Response({'error': '방문 동선 저장 중 오류가 발생했습니다.'},
+#                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        return Response({'message': '최종 방문 동선이 저장되었습니다.'},
-                        status=status.HTTP_200_OK)
+#         return Response({'message': '최종 방문 동선이 저장되었습니다.'},
+#                         status=status.HTTP_200_OK)
 
 # ------------------------------------------------------------------------------
 # RecommendationsView
 # ------------------------------------------------------------------------------
 # 추천 장소(더미 데이터)를 반환
-class RecommendationsView(BaseUserView):
-    def get(self, request):
-        user, error_response = self.get_validated_user(request, from_query_params=True)
-        if error_response:
-            return error_response
+# class RecommendationsView(BaseUserView):
+#     def get(self, request):
+#         user, error_response = self.get_validated_user(request, from_query_params=True)
+#         if error_response:
+#             return error_response
         
-        dummy_recommendations = [
-            {'place_id': 'p1', 'name': '추천 장소 1', 'description': '설명 1'},
-            {'place_id': 'p2', 'name': '추천 장소 2', 'description': '설명 2'},
-            {'place_id': 'p3', 'name': '추천 장소 3', 'description': '설명 3'}
-        ]
-        return Response({'추천_장소': dummy_recommendations},
-                        status=status.HTTP_200_OK)
+#         dummy_recommendations = [
+#             {'place_id': 'p1', 'name': '추천 장소 1', 'description': '설명 1'},
+#             {'place_id': 'p2', 'name': '추천 장소 2', 'description': '설명 2'},
+#             {'place_id': 'p3', 'name': '추천 장소 3', 'description': '설명 3'}
+#         ]
+#         return Response({'추천_장소': dummy_recommendations},
+#                         status=status.HTTP_200_OK)
 
 # ------------------------------------------------------------------------------
 # DeleteAccountView
 # ------------------------------------------------------------------------------
-# 회원 탈퇴 시, 탈퇴 정보를 DeletedUser 테이블에 보관하고, User 테이블에서는 삭제
-# 보관 정보의 만료일은 현재 시각으로부터 1년 후로 설정하며, 트랜잭션 블록을 사용하여 원자적(atomic)으로 처리
 class DeleteAccountView(BaseUserView):
     def post(self, request):
         user, error_response = self.get_validated_user(request, from_query_params=False)
@@ -269,16 +243,10 @@ class DeleteAccountView(BaseUserView):
         
         try:
             with transaction.atomic():
-                retention_until = timezone.now() + timedelta(days=365)
-                DeletedUser.objects.create(
-                    original_user_id=user.id,
-                    password=user.password,
-                    characteristics=user.profile.characteristics,
-                    recommendation_keywords=user.profile.recommendation_keywords,
-                    deleted_at=timezone.now(),
-                    retention_until=retention_until
-                )
-                user.delete()
+                # 탈퇴 정보를 DeletedUser 테이블에 기록하는 대신,
+                # is_active를 False로 업데이트하여 계정을 비활성화
+                user.is_active = False
+                user.save(update_fields=['is_active'])
         except DatabaseError:
             return Response({'error': '회원 탈퇴 처리 중 오류가 발생했습니다.'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
