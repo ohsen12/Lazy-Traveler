@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import SignupSerializer
-from .models import User, Profile, Conversation, UserSelectedPath
+from .models import User
 
 # 로그인과 함께 진행되어야 할 access, refresh 토큰 발급은 TokenObtainPairView 클래스 뷰와 연결하여 처리한다.
 
@@ -133,25 +133,14 @@ class UpdatePasswordView(BaseUserView):
 # ------------------------------------------------------------------------------
 # UpdateTagsView
 # ------------------------------------------------------------------------------
-# 사용자의 특성(characteristics)과 추천 키워드(recommendation_keywords)를 업데이트
 class UpdateTagsView(BaseUserView):
     def post(self, request):
         user, error_response = self.get_validated_user(request, from_query_params=False)
         if error_response:
             return error_response
         
-        characteristics = request.data.get('characteristics')
-        recommendation_keywords = request.data.get('recommendation_keywords')
-        
-        profile, created = Profile.objects.get_or_create(user=user)
-        
-        if characteristics:
-            profile.characteristics = characteristics
-        if recommendation_keywords:
-            profile.recommendation_keywords = recommendation_keywords
-        
         try:
-            profile.save()
+            user.save()
         except DatabaseError:
             return Response({'error': '태그 정보 업데이트 중 오류가 발생했습니다.'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -159,78 +148,6 @@ class UpdateTagsView(BaseUserView):
         return Response({'message': '태그 정보가 성공적으로 업데이트 되었습니다.'},
                         status=status.HTTP_200_OK)
 
-
-# ------------------------------------------------------------------------------
-# ConversationSummaryView
-# ------------------------------------------------------------------------------
-# 최근 7일간의 대화 내역을 일별로 집계하고, 사용자가 선택한 경로의 최신 데이터를 반환
-class ConversationSummaryView(BaseUserView):
-    def get(self, request):
-        user, error_response = self.get_validated_user(request, from_query_params=True)
-        if error_response:
-            return error_response
-        
-        try:
-            start_date = timezone.now() - timedelta(days=7)
-            conversations = Conversation.objects.filter(user=user, created_at__gte=start_date)
-            summary = {}
-            for conv in conversations:
-                date_str = conv.created_at.strftime('%Y-%m-%d')
-                summary[date_str] = summary.get(date_str, 0) + 1
-            
-            # UserSelectedPath를 사용하여 사용자가 선택한 경로 중 최신 데이터를 조회
-            final_path_obj = UserSelectedPath.objects.filter(user=user).order_by('-created_at').first()
-            final_path_data = final_path_obj.visited_path if final_path_obj else None
-        except DatabaseError:
-            return Response({'error': '대화 요약 조회 중 오류가 발생했습니다.'},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        return Response({
-            '일별_대화_요약': summary,
-            '최종_방문_동선': final_path_data
-        }, status=status.HTTP_200_OK)
-
-# ------------------------------------------------------------------------------
-# SaveFinalVisitedPathView
-# ------------------------------------------------------------------------------
-# 사용자가 선택한 경로(방문 동선)을 저장
-# class SaveFinalVisitedPathView(BaseUserView):
-#     def post(self, request):
-#         user, error_response = self.get_validated_user(request, from_query_params=False)
-#         if error_response:
-#             return error_response
-        
-#         visited_path = request.data.get('visited_path')
-#         if not visited_path:
-#             return Response({'error': 'visited_path는 필수 항목입니다.'},
-#                             status=status.HTTP_400_BAD_REQUEST)
-        
-#         try:
-#             UserSelectedPath.objects.create(user=user, visited_path=visited_path)
-#         except DatabaseError:
-#             return Response({'error': '방문 동선 저장 중 오류가 발생했습니다.'},
-#                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-#         return Response({'message': '최종 방문 동선이 저장되었습니다.'},
-#                         status=status.HTTP_200_OK)
-
-# ------------------------------------------------------------------------------
-# RecommendationsView
-# ------------------------------------------------------------------------------
-# 추천 장소(더미 데이터)를 반환
-# class RecommendationsView(BaseUserView):
-#     def get(self, request):
-#         user, error_response = self.get_validated_user(request, from_query_params=True)
-#         if error_response:
-#             return error_response
-        
-#         dummy_recommendations = [
-#             {'place_id': 'p1', 'name': '추천 장소 1', 'description': '설명 1'},
-#             {'place_id': 'p2', 'name': '추천 장소 2', 'description': '설명 2'},
-#             {'place_id': 'p3', 'name': '추천 장소 3', 'description': '설명 3'}
-#         ]
-#         return Response({'추천_장소': dummy_recommendations},
-#                         status=status.HTTP_200_OK)
 
 # ------------------------------------------------------------------------------
 # DeleteAccountView
