@@ -14,6 +14,7 @@ DEFAULT_CHAT_LIMIT = 50  # 기본 조회 개수 제한
 
 
 class ChatBotView(APIView):
+    
     def post(self, request):
         """
         사용자가 메시지를 입력하면 응답을 생성하고, 해당 세션에 저장합니다.
@@ -35,9 +36,10 @@ class ChatBotView(APIView):
 
         # 새로운 세션이면 UUID 생성
         if new_session or not session_id:
+            # ✅ 랜덤한 UUID(Universally Unique Identifier) 객체를 생성하여 문자열로 변환
             session_id = str(uuid.uuid4())
 
-        # 챗봇 응답 생성
+        # 챗봇 응답 생성 (✅ response_text에는 모델 응답의 content가 담김)
         response_text = get_recommendation(user_query, session_id, latitude, longitude)
 
         # 대화 내역 저장
@@ -82,11 +84,12 @@ class ChatHistoryView(APIView):
                 }, status=status.HTTP_404_NOT_FOUND)
             return Response(ChatHistorySerializer(chats, many=True).data, status=status.HTTP_200_OK)
 
-        # 전체 세션 목록 조회 (각 세션의 첫 메시지만 가져옴)
+        # 전체 세션 목록 조회 (✅ annotate: 각 세션의 첫 메시지만 가져옴, order_by: 첫 메시지의 생성 시간을 기준으로 내림차순 정렬. 즉, 가장 최근에 시작된 세션이 먼저 오게 됨.)
         sessions = ChatHistory.objects.filter(username=user.username).values('session_id')\
             .annotate(first_message=Min('created_at'))\
             .order_by('-first_message')
-
+        
+        # 세션 ID, 첫 메시지, 첫 메시지 생성 시간을 포함하는 딕셔너리 목록
         session_list = [
             {
                 "session_id": session['session_id'],

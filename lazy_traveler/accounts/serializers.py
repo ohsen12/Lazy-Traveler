@@ -27,19 +27,12 @@ class SignupSerializer(serializers.ModelSerializer):
         if data['password'] != data['password2']:
             raise serializers.ValidationError("비밀번호가 일치하지 않습니다.")
         return data
-    
-    def validate_tags(self, value):
-        # tags는 쉼표로 구분된 문자열로 처리
-        if isinstance(value, list):
-            # 리스트가 오면 쉼표로 구분된 문자열로 변환
-            return ",".join(value)
-        return value
 
     def create(self, validated_data):
+        '''user 객체 생성 후 반환'''
         validated_data.pop("password2")  # password2 필드 제거
-        tags = validated_data.pop('tags', "")
-        # create_user 메서드를 사용하여 User 객체 생성 (비밀번호 해싱 포함)
+        # create_user 메서드를 사용하여 User 객체 생성 (비밀번호는 해싱됨)
         user = User.objects.create_user(**validated_data)
-        user.tags = tags
-        user.save(update_fields=['tags'])
+        user.save()
+        return user
 
