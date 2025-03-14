@@ -1,0 +1,138 @@
+/* 전체 페이지 스타일 */
+body {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, #f0f2f5, #d9e2ec);
+}
+
+/* 맵 스타일 */
+#map {
+    width: 100%;
+    max-width: 600px;
+    height: 45vh;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 챗봇 컨테이너 */
+#chat-container {
+    width: 100%;
+    max-width: 600px;
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* 챗봇 메시지 창 */
+#chat-box {
+    height: 45vh;
+    overflow-y: auto;
+    padding: 12px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e0e0e0;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+}
+
+/* 스크롤바 스타일 */
+#chat-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chat-box::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 6px;
+}
+
+#chat-box::-webkit-scrollbar-track {
+    background: #f0f2f5;
+}
+
+/* 메시지 공통 스타일 */
+.message {
+    max-width: 75%;
+    padding: 12px 15px;
+    margin: 6px 0;
+    border-radius: 12px;
+    word-wrap: break-word;
+    display: inline-block;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* 사용자 메시지 */
+.user-message {
+    background: #007bff;
+    color: white;
+    text-align: right;
+    align-self: flex-end;
+    border-bottom-right-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 123, 255, 0.2);
+}
+
+/* 챗봇 응답 */
+.bot-response {
+    background: #e5e5ea;
+    color: black;
+    text-align: left;
+    align-self: flex-start;
+    border-bottom-left-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 입력창 스타일 */
+#chat-input {
+    display: flex;
+    margin-top: 10px;
+    gap: 8px;
+}
+
+/* 입력 필드 */
+#user-message {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* 보내기 버튼 */
+#send-btn {
+    padding: 10px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+/* 버튼 호버 효과 */
+#send-btn:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+}
+
+/* 모바일 최적화 */
+@media screen and (max-width: 480px) {
+    #map, #chat-container {
+        width: 95%;
+    }
+
+    #chat-box {
+        height: 40vh;
+    }
+}

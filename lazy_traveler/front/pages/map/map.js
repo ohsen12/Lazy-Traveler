@@ -1,35 +1,36 @@
-let map, marker, infowindow, geocoder;
+let map, marker, geocoder, infowindow;
 
 kakao.maps.load(() => {
     var container = document.getElementById('map');
     var options = { 
-        center: new kakao.maps.LatLng(37.5704, 126.9831), // 📌 기본 위치: 종각역
+        center: new kakao.maps.LatLng(37.5704, 126.9831), // 기본 위치: 종각역
         level: 3 
     };
     map = new kakao.maps.Map(container, options);
     geocoder = new kakao.maps.services.Geocoder();
 
-    // 📌 기본 마커 (종각역)
+    // 기본 마커 (종각역)
     marker = new kakao.maps.Marker({
         position: new kakao.maps.LatLng(37.5704, 126.9831),
         map: map
     });
 
-    // 📌 정보창 추가
+    // 정보창 추가
     infowindow = new kakao.maps.InfoWindow({
         content: `<div style="padding:5px;">📍 종각역</div>`
     });
     infowindow.open(map, marker);
 
-    // 🎯 마커 클릭 시 새로운 위치로 이동하고 백엔드로 전송
+    // 지도 클릭 시 마커 이동 및 주소 업데이트
     kakao.maps.event.addListener(map, "click", function(event) {
         var position = event.latLng;
-        marker.setPosition(position);  // 마커의 위치 변경
-        getAddressFromCoords(position); // 새로운 주소 가져오기
-        sendLocationToBackend(position); // 백엔드로 위치 전송
+        marker.setPosition(position);
+        getAddressFromCoords(position);
+
     });
 });
 
+// 현재 위치 가져오기
 function getUserLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -40,9 +41,7 @@ function getUserLocation() {
 
                 marker.setPosition(newPosition);
                 map.setCenter(newPosition);
-
                 getAddressFromCoords(newPosition);
-                sendLocationToBackend(newPosition); // 🌟 현재 위치 백엔드로 전송
             },
             function(error) {
                 alert("위치 정보를 가져올 수 없습니다. 권한을 확인하세요.");
@@ -53,6 +52,7 @@ function getUserLocation() {
     }
 }
 
+// 현재 주소 가져오기
 function getAddressFromCoords(coords) {
     geocoder.coord2Address(coords.getLng(), coords.getLat(), function(result, status) {
         if (status === kakao.maps.services.Status.OK) {
@@ -65,52 +65,49 @@ function getAddressFromCoords(coords) {
     });
 }
 
-function sendLocationToBackend(coords) {
-    const data = {
-        latitude: coords.getLat().toFixed(6),
-        longitude: coords.getLng().toFixed(6)
-    };
-
-    axios.post("http://localhost:8000/chatbot/save-location/", data)
-        .then(response => {
-            console.log("✅ 위치 저장 완료:", response.data);
-        })
-        .catch(error => {
-            console.error("❌ 위치 저장 실패:", error);
-        });
-}
-
-
 function sendMessage() {
     const userMessage = document.getElementById("user-message").value;
-
     if (userMessage.trim() === "") return;
 
-    // 사용자 메시지 출력
     appendMessage(userMessage, "user-message");
 
-    // 메시지 서버로 전송
-    axios.post("http://127.0.0.1:8000/chatbot/chat/", {
+    const position = marker.getPosition();
+    const requestData = {
         message: userMessage,
-        session_id: "test1", // 세션 ID는 필요에 따라 설정하세요.
-        new_session: false,  // 새로운 대화 여부를 설정할 수 있습니다.
-    })
-    .then(response => {
-        // 챗봇 응답 출력
-        const botResponse = response.data.response;
-        appendMessage(botResponse, "bot-response");
-    })
-    .catch(error => {
-        console.error("챗봇 응답 오류:", error);
-    });
+        latitude: position.getLat().toFixed(6),
+        longitude: position.getLng().toFixed(6),
+        session_id: "test1",
+        new_session: false
+    };
 
-    // 입력란 초기화
+    axios.post("http://127.0.0.1:8000/chatbot/chat/", requestData)
+        .then(response => {
+            const botResponse = response.data.response;
+            appendMessage(botResponse, "bot-response");
+        })
+        .catch(error => {
+            console.error("❌ 챗봇 응답 오류:", error);
+        });
+
     document.getElementById("user-message").value = "";
 }
 
+// 메시지 화면에 추가
 function appendMessage(message, type) {
+    const chatBox = document.getElementById("chat-box");
     const messageContainer = document.createElement("div");
     messageContainer.classList.add("message", type);
     messageContainer.innerText = message;
-    document.getElementById("chat-box").appendChild(messageContainer);
+
+    chatBox.appendChild(messageContainer);
+    chatBox.scrollTop = chatBox.scrollHeight; // 최신 메시지로 스크롤 이동
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("send-btn").addEventListener("click", sendMessage);
+    document.getElementById("user-message").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+    });
+});
