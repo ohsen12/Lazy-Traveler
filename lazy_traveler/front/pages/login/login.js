@@ -17,7 +17,7 @@ document.getElementById("login-form").addEventListener("submit", async function(
             localStorage.setItem("refresh_token", response.data.refresh);
 
             // ✅ 바로 페이지 이동 (alert 제거)
-            window.location.href = 'http://127.0.0.1:5500/lazy_traveler/front/pages/main/main.html';
+            window.location.href = 'http://127.0.0.1:5500/lazy_traveler/front/pages/map/map.html';
         } else {
             alert("로그인 실패!");
         }
