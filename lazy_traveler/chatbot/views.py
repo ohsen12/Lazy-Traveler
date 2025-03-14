@@ -16,49 +16,51 @@ DEFAULT_CHAT_LIMIT = 50  # 기본 조회 개수 제한
 class ChatBotView(APIView):
     def post(self, request):
         """
-        사용자가 메시지를 입력하면 응답을 생성하고, 해당 세션에 저장합니다.
-        새로운 대화 시작 시 새로운 session_id를 생성할 수 있습니다.
+        로그인한 사용자만 session_id를 부여받고, 대화 내역을 DB에 저장합니다.
+        로그인하지 않은 사용자는 session_id 없이 응답만 받습니다.
         """
         user = request.user if request.user.is_authenticated else None
         user_query = request.data.get("message", "")
-        session_id = request.data.get("session_id", None)
         new_session = request.data.get("new_session", False)  # 새로운 대화 시작 여부
 
         # 세션에서 위도, 경도 가져오기
-        latitude = request.session.get('latitude')
-        longitude = request.session.get('longitude')
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
         print(f"📍 현재 위치: 위도 {latitude}, 경도 {longitude}")
-
 
         if not user_query:
             return Response({"error": "메시지를 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 새로운 세션이면 UUID 생성
-        if new_session or not session_id:
-            session_id = str(uuid.uuid4())
+        # 로그인한 경우에만 session_id 부여
+        session_id = None
+        username = None
+        if user:
+            username = user.username  # username 가져오기
+            session_id = request.data.get("session_id", None)
+            if new_session or not session_id:
+                session_id = str(uuid.uuid4())
 
         # 챗봇 응답 생성
-        response_text = get_recommendation(user_query, session_id, latitude, longitude)
+        response_text = get_recommendation(user_query, session_id, username, latitude, longitude)
 
-        # 대화 내역 저장
-        chat_data = {
-            "username": user.username if user else "익명",
+        # 로그인한 사용자만 대화 내역 저장
+        if user:
+            ChatHistory.objects.create(
+                username=user.username,
+                message=user_query,
+                response=response_text,
+                session_id=session_id
+            )
+
+        # 로그인 여부에 따라 응답 반환
+        response_data = {
             "message": user_query,
             "response": response_text,
-            "session_id": session_id
         }
+        if user:
+            response_data["session_id"] = session_id  # 로그인한 경우에만 session_id 포함
 
-        # 대화 내역을 DB에 저장
-        ChatHistory.objects.create(
-            username=user.username if user else "익명",
-            message=user_query,
-            response=response_text,
-            session_id=session_id
-        )
-
-        return Response(chat_data, status=status.HTTP_200_OK)
-
-
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class ChatHistoryView(APIView):
@@ -97,20 +99,3 @@ class ChatHistoryView(APIView):
             for session in sessions
         ]
         return Response(session_list, status=status.HTTP_200_OK)
-
-
-
-@api_view(['POST'])
-def save_location(request):
-    latitude = request.data.get('latitude')
-    longitude = request.data.get('longitude')
-
-    if latitude and longitude:
-        # 📍 세션에 위치 정보 저장
-        request.session['latitude'] = latitude
-        request.session['longitude'] = longitude
-        request.session.modified = False  # 세션 갱신
-        print(f"📍 저장된 위치: 위도 {latitude}, 경도 {longitude}")
-        return Response({"message": "위치 저장 완료!", "latitude": latitude, "longitude": longitude}, status=status.HTTP_200_OK)
-    else:
-        return Response({"error": "위치 데이터 없음"}, status=status.HTTP_400_BAD_REQUEST)
