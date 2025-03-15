@@ -10,17 +10,44 @@
     <link rel="stylesheet" href="map.css">
 </head>
 <body>
-    <h2>카카오맵 - 마커 위치 저장</h2>
-    <button onclick="getUserLocation()">📍 내 위치로 이동</button>
-    <p id="location-info">📍 현재 위치: 종각역 (37.5704, 126.9831)</p>
-    
+    <!-- ✅ 액션바 -->
+    <div id="action-bar">
+        <div id="logo">
+            <a href="http://127.0.0.1:5500/lazy_traveler/front/pages/map/map.html">
+                <img src="Lazy.png" alt="Lazy-Traveler 로고" width="150" height="40">
+            </a>
+        </div>
+        <button id="refresh-btn" onclick="refreshChat()">새로고침</button>
+        <div id="action-buttons">
+            <button onclick="goToMypage()">마이페이지</button>
+            <button onclick="logout()">로그아웃</button>
+        </div>
+    </div>
 
-    <!-- 📌 챗봇 대화창 -->
-    <div id="chat-container"><div id="map"></div>
-        <div id="chat-box"></div>
-        <div id="chat-input">
-            <input type="text" id="user-message" placeholder="메시지를 입력하세요..." />
-            <button id="send-btn" onclick="sendMessage()">보내기</button>
+    <div id="main-container">
+        <!-- 📌 사이드바 (대화 히스토리) -->
+        <div id="sidebar">
+            <h3>대화 히스토리</h3>
+            <ul id="chat-history">
+                <!-- 대화 목록이 동적으로 추가됨 -->
+            </ul>
+        </div>
+
+        <!-- 📌 메인 컨텐츠 -->
+        <div id="content">
+            <h2>카카오맵 - 마커 위치 저장</h2>
+            <button onclick="getUserLocation()">📍 내 위치로 이동</button>
+            <p id="location-info">📍 현재 위치: 종각역 (37.5704, 126.9831)</p>
+            
+            <!-- 📌 챗봇 대화창 -->
+            <div id="chat-container">
+                <div id="map"></div>
+                <div id="chat-box"></div>
+                <div id="chat-input">
+                    <input type="text" id="user-message" placeholder="메시지를 입력하세요..." />
+                    <button id="send-btn" onclick="sendMessage()">보내기</button>
+                </div>
+            </div>
         </div>
     </div>
 

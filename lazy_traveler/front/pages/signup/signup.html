@@ -9,7 +9,7 @@
 <body>
     <h1>회원가입</h1>
 
-    <form id="signup-form">
+    <form id="signup-form" action="">
         <label for="username"></label>
         <input type="text" id="username" placeholder="아이디" required>
 
@@ -41,8 +41,8 @@
             <button class="tag-button" data-tag="햄버거">햄버거</button>
         </div>
         
-
         <button type="submit">회원가입</button>
+        <div id="signup-message"></div>  <!-- 회원가입 결과 메시지 표시 -->
     </form>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
