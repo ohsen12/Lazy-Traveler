@@ -159,7 +159,8 @@ function logout() {
     window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
 }
 
-// 대화기록
+
+// 대화내역 보여주기
 function loadChatHistory() {
     console.log("대화 기록을 불러오는 중...");  // 디버깅: 로딩 시작
     axios.get("http://127.0.0.1:8000/accounts/user_history/", {
@@ -203,7 +204,7 @@ function loadChatHistory() {
                 let detailButton = document.createElement("button");
                 detailButton.textContent = "자세히";
                 detailButton.classList.add("detail-btn");
-                detailButton.onclick = () => loadChatDetails(chat);
+                detailButton.onclick = () => showChatDetails(chat);
                 chatItem.appendChild(detailButton);
 
                 historyList.appendChild(chatItem);
@@ -215,8 +216,12 @@ function loadChatHistory() {
     });
 }
 
-// ✅ 대화 선택 시 상세 내용 표시
-function loadChatDetails(chat) {
-    console.log(`선택된 대화: ${chat.message}, ${chat.response}`);  // 선택된 대화 확인
-    alert(`📢 질문: ${chat.message}\n🤖 답변:\n${chat.response}`);
+// 📌 대화 상세 내용 보여주기 함수 (예시로 팝업창 구현)
+function showChatDetails(chat) {
+    alert(`Message: ${chat.message}\nResponse: ${chat.response}`);
 }
+
+// 페이지가 로드될 때 대화 기록 불러오기
+window.onload = function() {
+    loadChatHistory();
+};
