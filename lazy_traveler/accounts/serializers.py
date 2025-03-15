@@ -14,6 +14,7 @@ class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id','username', 'password', 'password2', 'tags']  # 시리얼라이즈할 필드
+        extra_kwargs = {'password' : {'write_only' : True}}
 
     def validate_username(self, value):
         """아이디 중복 체크"""
@@ -28,7 +29,10 @@ class SignupSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        """새 사용자 생성"""
-        validated_data.pop('password2')  # password2는 사용하지 않으므로 제거
-        user = User.objects.create_user(**validated_data)  # create_user 메서드로 비밀번호 해싱 처리
+        '''user 객체 생성 후 반환'''
+        validated_data.pop("password2")  # password2 필드 제거
+        # create_user 메서드를 사용하여 User 객체 생성 (비밀번호는 해싱됨)
+        user = User.objects.create_user(**validated_data)
+        user.save()
         return user
+

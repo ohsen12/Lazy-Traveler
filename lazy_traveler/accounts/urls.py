@@ -1,22 +1,18 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .views import ConversationSummaryView, DeleteAccountView, LogoutView, SignupView, SaveConversationView, SaveFinalVisitedPathView, RecommendationsView, UpdatePasswordView, UpdateTagsView 
+from .views import DeleteAccountView, LogoutView, SignupView, UpdatePasswordView, UpdateTagsView, UserHistoryView, MyPageView
 
 app_name = "accounts"
 
 urlpatterns = [
-    # 회원가입/로그인/로그아웃
-    path("signup/", SignupView.as_view(), name="signup"),
-    path("login/", TokenObtainPairView.as_view(), name="login"),
-    path("logout/", LogoutView.as_view(), name="logout"),
-    path('update_password/', UpdatePasswordView.as_view(), name='update_password'),
-    path('update_tags/', UpdateTagsView.as_view(), name='update_tags'),
-    path('save_conversation/', SaveConversationView.as_view(), name='save_conversation'),
-    path('conversation_summary/', ConversationSummaryView.as_view(), name='conversation_summary'),
-    path('save_final_visited_path/', SaveFinalVisitedPathView.as_view(), name='save_final_visited_path'),
-    path('recommendations/', RecommendationsView.as_view(), name='recommendations'),
-    path('delete_account/', DeleteAccountView.as_view(), name='delete_account'),
-
-    # 토큰 갱신 - 프론트에서 필요
-    # path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    
+    path("signup/", SignupView.as_view(), name="signup"), # 회원가입
+    path("login/", TokenObtainPairView.as_view(), name="login"), # 로그인
+    path("logout/", LogoutView.as_view(), name="logout"), # 로그아웃
+    path('update_password/', UpdatePasswordView.as_view(), name='update_password'), # 패스워드 수정
+    path('update_tags/', UpdateTagsView.as_view(), name='update_tags'), # 태그 수정
+    path('delete_account/', DeleteAccountView.as_view(), name='delete_account'), # 회원 탈퇴
+    path('user_history/', UserHistoryView.as_view(), name='user_history'), # 대화 내역
+    path('mypage/', MyPageView.as_view(), name='mypage'), # 마이페이지
+    
 ]

@@ -1,0 +1,320 @@
+/* ✅ 액션바 스타일 */
+#action-bar {
+    width: 100%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+/* ✅ 로고 스타일 */
+#logo {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 로고와 텍스트 간격 */
+}
+
+#logo img {
+    width: 120px;  /* 가로 크기 */
+    height: auto;  /* 비율 유지하면서 조절 */
+}
+
+
+/* 버튼 공통 스타일 */
+#action-bar button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 10px;
+    transition: 0.3s;
+}
+
+/* 버튼 호버 효과 */
+#action-bar button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+}
+
+/* 오른쪽 버튼 그룹 */
+#action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+
+/* 전체 페이지 스타일 */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f7f7f7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #333;
+}
+
+/* 컨테이너 스타일 */
+.container {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* 제목 스타일 */
+h1 {
+    font-size: 28px;
+    margin-bottom: 30px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* 정보 박스 */
+div {
+    margin-bottom: 25px;
+    font-size: 18px;
+    color: #555;
+}
+
+/* 사용자 이름 스타일 */
+#username {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 22px;
+}
+
+/* 태그 스타일 */
+#tags {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+/* 태그를 버튼처럼 보이게 스타일링 */
+#tags button {
+    background-color: #007bff;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 버튼 호버 효과 */
+#tags button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+/* 비밀번호 변경 버튼 스타일 */
+#change-password-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 15px;
+    transition: background-color 0.3s ease;
+}
+
+/* 비밀번호 변경 버튼 호버 효과 */
+#change-password-btn:hover {
+    background-color: #388E3C;
+}
+
+/* 로그아웃 버튼 스타일 */
+#logout-btn {
+    background-color: #f44336;
+    color: white;
+    padding: 12px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    margin-top: 15px;
+}
+
+#logout-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* 모달 배경 */
+.modal {
+    display: none; /* 기본적으로 숨김 */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 모달 콘텐츠 */
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    width: 80%;
+    max-width: 450px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.5s ease-out;
+}
+
+/* 애니메이션 (모달 등장 효과) */
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes slideIn {
+    0% { transform: translateY(-50px); }
+    100% { transform: translateY(0); }
+}
+
+/* 닫기 버튼 */
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: black;
+}
+
+/* 폼 입력 필드 스타일 */
+input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    margin: 12px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border 0.3s ease;
+}
+
+/* 폼 입력 필드 포커스 효과 */
+input[type="password"]:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* 비밀번호 변경 버튼 스타일 */
+button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    width: 100%;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background-color 0.3s ease;
+}
+
+/* 비밀번호 변경 버튼 호버 효과 */
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* 태그 변경 모달 스타일 */
+#current-tags, #available-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+}
+
+.tag-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 선택된 태그 스타일 */
+.tag-button.selected {
+    background-color: #28a745;
+}
+
+.tag-button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+#available-tags .tag-button.selected {
+    background-color: #28a745; /* 선택된 태그 색상 */
+}
+
+/* 반응형 스타일 */
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+        width: 100%;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    #tags button, .tag-button {
+        font-size: 12px;
+        padding: 10px 18px;
+    }
+
+    #change-password-btn, #logout-btn {
+        padding: 10px 18px;
+        font-size: 14px;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+

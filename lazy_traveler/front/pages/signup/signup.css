@@ -6,20 +6,20 @@ body {
     background-color: #f4f4f4; /* 배경색 추가 */
 }
 
-/* 로그인 폼 스타일 */
+/* 회원가입 폼 스타일 */
 form {
     display: inline-block;
     text-align: left;
     margin-top: 20px;
     background: white;
-    padding: 80px;
+    padding: 40px;
     border-radius: 12px;
     box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
     width: 350px;
 }
 
 /* 제목 스타일 */
-h2 {
+h1 {
     color: #333;
     font-size: 24px;
     margin-bottom: 20px; /* 제목과 폼 간격 추가 */
@@ -27,7 +27,7 @@ h2 {
 
 /* 입력 필드 스타일 */
 input {
-    width: 100%; /* 입력 필드를 박스 너비에 맞춤 */
+    width: 90%; /* 입력 필드를 박스 너비에 맞춤 */
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -48,7 +48,7 @@ button {
     width: 100%; /* 버튼을 입력 필드와 동일한 너비로 맞춤 */
     padding: 12px;
     background-color: #007bff;
-    color: white;
+    color: rgb(65, 63, 63);
     border: none;
     border-radius: 8px;
     font-size: 16px;
@@ -71,25 +71,42 @@ button:hover {
     color: #e74c3c;
 }
 
+/* 태그 버튼을 3열로 나열하기 위한 스타일 */
+#tag-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3열로 나열 */
+    gap: 10px; /* 버튼 간격 설정 */
+    margin-top: 20px;
+    visibility: visible; /* 처음부터 보이도록 설정 */
+}
+
+/* 태그 버튼 스타일 */
+.tag-button {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background-color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    text-align: center; /* 글자가 가로로 정렬되도록 수정 */
+    font-size: 14px; /* 버튼 텍스트 크기 조정 */
+    white-space: nowrap; /* 글자가 세로로 나열되지 않도록 설정 */
+    overflow: hidden; /* 텍스트가 넘칠 경우 잘리도록 설정 */
+    min-width: 90px; /* 최소 너비 설정 */
+    max-width: 140px; /* 최대 너비 설정 */
+    visibility: visible; /* 태그 버튼들이 처음부터 보이도록 설정 */
+}
+
+
+/* 선택된 태그 버튼 스타일 */
+.tag-button.selected {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #0056b3;
+}
+
 /* 반응형 디자인 (너비가 400px 이하일 경우) */
 @media (max-width: 400px) {
     form {
         width: 90%; /* 모바일에서 로그인 박스 너비를 더 좁게 설정 */
     }
-}
-
-
-.tag-button {
-    padding: 8px 12px;
-    margin: 4px;
-    border: 1px solid #ccc;
-    background-color: white;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-.tag-button.selected {
-    background-color: #007bff;
-    color: white;
-    border: 1px solid #0056b3;
 }
