@@ -1,8 +1,9 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 
 
 class ChatHistory(models.Model):
-    username = models.CharField(max_length=255)  # 사용자 이름
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, default=1)  # 기본값을 ID=1로 설정
     message = models.TextField()  # 사용자의 메시지
     response = models.TextField()  # 챗봇의 응답
     created_at = models.DateTimeField(auto_now_add=True)  # 대화 시간
