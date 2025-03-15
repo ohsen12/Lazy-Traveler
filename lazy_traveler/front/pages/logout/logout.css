@@ -1,0 +1,62 @@
+/* 기본적인 스타일 초기화 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 전체 배경 설정 */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* 로그아웃 컨테이너 스타일 */
+.logout-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 300px;
+}
+
+/* 타이틀 스타일 */
+.logout-container h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* 설명 텍스트 스타일 */
+.logout-container p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+/* 버튼 스타일 */
+#logout-btn {
+    padding: 10px 20px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* 버튼 호버 효과 */
+#logout-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* 버튼 클릭 시 효과 */
+#logout-btn:active {
+    background-color: #b71c1c;
+}

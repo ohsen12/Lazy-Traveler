@@ -1,22 +1,32 @@
-document.getElementById('logout-button').addEventListener('click', function () {
-    const refreshToken = localStorage.getItem('refresh'); // 저장된 refresh 토큰 가져오기
-
-    if (!refreshToken) {
-        alert("이미 로그아웃된 상태입니다.");
+const logout = async () => {
+    // 엑세스 토큰 가져오기
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) {
+        alert("로그인이 필요합니다.");
         return;
     }
 
-    axios.post('http://localhost:8000/api/logout/', { refresh: refreshToken }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('access')}` }
-    })
-    .then(response => {
+    try {
+        const response = await axios.post("http://127.0.0.1:8000/accounts/logout/", {}, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`  // 엑세스 토큰을 Authorization 헤더에 추가
+            }
+        });
+
+        console.log("로그아웃 성공:", response.data);
         alert("로그아웃 되었습니다.");
-        localStorage.removeItem('access');  // 액세스 토큰 삭제
-        localStorage.removeItem('refresh'); // 리프레시 토큰 삭제
-        window.location.href = '/login.html'; // 로그인 페이지로 이동
-    })
-    .catch(error => {
-        console.error("로그아웃 실패:", error);
-        alert("로그아웃 중 오류 발생");
-    });
-});
+
+        // 로그아웃 후 로컬 스토리지에서 토큰 삭제
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+
+        // ✅ 로그인 페이지로 리디렉션
+        window.location.href = 'http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html';
+    } catch (error) {
+        console.error("로그아웃 실패:", error.response?.data || error);
+        alert("로그아웃 실패.");
+    }
+};
+
+document.getElementById("logout-btn").addEventListener("click", logout);
+
