@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .views import DeleteAccountView, LogoutView, SignupView, UpdatePasswordView, UpdateTagsView, UserHistoryView
+from .views import DeleteAccountView, LogoutView, SignupView, UpdatePasswordView, UpdateTagsView, UserHistoryView, MyPageView
 
 app_name = "accounts"
 
@@ -13,7 +13,6 @@ urlpatterns = [
     path('update_tags/', UpdateTagsView.as_view(), name='update_tags'), # 태그 수정
     path('delete_account/', DeleteAccountView.as_view(), name='delete_account'), # 회원 탈퇴
     path('user_history/', UserHistoryView.as_view(), name='user_history'), # 대화 내역
-
-    # 토큰 갱신 - 프론트에서 필요
-    # path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path('mypage/', MyPageView.as_view(), name='mypage'), # 마이페이지
+    
 ]
