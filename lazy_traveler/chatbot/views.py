@@ -1,26 +1,27 @@
 import uuid
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import ChatHistory
 from .serializers import ChatHistorySerializer
 from .chat_logic import get_recommendation
 from django.db.models import Min
-from django.db.models import F
+
 
 DEFAULT_CHAT_LIMIT = 50  # 기본 조회 개수 제한
 
 
 class ChatBotView(APIView):
+
     def post(self, request):
         """
         로그인한 사용자만 session_id를 부여받고, 대화 내역을 DB에 저장합니다.
         로그인하지 않은 사용자는 session_id 없이 응답만 받습니다.
         """
         user = request.user if request.user.is_authenticated else None
-        user_query = request.data.get("message", "")
+        username = user.username if user else "Guest"  # 로그인하지 않은 경우에는 'Guest'로 설정
+        user_query = request.data.get("message", "").strip()
         new_session = request.data.get("new_session", False)  # 새로운 대화 시작 여부
 
         # 세션에서 위도, 경도 가져오기
@@ -32,13 +33,9 @@ class ChatBotView(APIView):
             return Response({"error": "메시지를 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 로그인한 경우에만 session_id 부여
-        session_id = None
-        username = None
-        if user:
-            username = user.username  # username 가져오기
-            session_id = request.data.get("session_id", None)
-            if new_session or not session_id:
-                session_id = str(uuid.uuid4())
+        session_id = request.data.get("session_id", None)
+        if user and (new_session or not session_id):
+            session_id = str(uuid.uuid4())  # 로그인한 경우에는 새로운 session_id 생성
 
         # 챗봇 응답 생성
         response_text = get_recommendation(user_query, session_id, username, latitude, longitude)
@@ -46,7 +43,7 @@ class ChatBotView(APIView):
         # 로그인한 사용자만 대화 내역 저장
         if user:
             ChatHistory.objects.create(
-                username=user.username,
+                user=user,
                 message=user_query,
                 response=response_text,
                 session_id=session_id
@@ -56,11 +53,13 @@ class ChatBotView(APIView):
         response_data = {
             "message": user_query,
             "response": response_text,
+            
         }
         if user:
             response_data["session_id"] = session_id  # 로그인한 경우에만 session_id 포함
 
         return Response(response_data, status=status.HTTP_200_OK)
+
 
 
 class ChatHistoryView(APIView):
