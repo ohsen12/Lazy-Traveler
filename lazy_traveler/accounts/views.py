@@ -123,7 +123,7 @@ class UpdatePasswordView(BaseUserView):
         # 현재 비밀번호와 같은지 해싱 비교
         if user.check_password(new_password):
             return Response(
-                {'error': '새로운 비밀번호는 기존 비밀번호와 동일할 수 없습니다.'},
+                {'error': '새 비밀번호는 기존 비밀번호와 동일하게 사용하실 수 없습니다'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -176,7 +176,7 @@ class DeleteAccountView(BaseUserView):
         return Response({"message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         
         
-# 대화내역 조회
+# 대화내역 조회 ✅ 추후 삭제
 class UserHistoryView(BaseUserView):
     def get(self, request):
         # 해당 user를 가져옴

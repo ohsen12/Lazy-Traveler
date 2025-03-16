@@ -4,4 +4,4 @@ from .models import ChatHistory
 class ChatHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatHistory
-        fields = ["username", "message", "response", "created_at", "session_id"]
+        fields = ["user_id", "message", "response", "created_at", "session_id"]

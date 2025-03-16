@@ -7,9 +7,8 @@ from .models import ChatHistory
 from .serializers import ChatHistorySerializer
 from .chat_logic import get_recommendation
 from django.db.models import Min
+from collections import defaultdict
 
-
-DEFAULT_CHAT_LIMIT = 50  # 기본 조회 개수 제한
 
 
 class ChatBotView(APIView):
@@ -60,10 +59,9 @@ class ChatBotView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-
 class ChatHistoryView(APIView):
     """
-    특정 유저의 대화 기록을 세션별로 조회하는 API.
+    특정 유저의 대화 기록을 세션 별로 조회하는 API.
     - `session_id`가 주어지면 해당 세션의 모든 대화를 반환.
     - `session_id`가 없으면, 사용자의 전체 세션 목록을 반환.
     """
@@ -71,30 +69,58 @@ class ChatHistoryView(APIView):
 
     def get(self, request):
         user = request.user
+        # GET 요청이므로 query_params 사용
         session_id = request.query_params.get("session_id", None)
-
-        if session_id:
-            # 특정 세션 ID에 대한 대화 조회
-            chats = ChatHistory.objects.filter(username=user.username, session_id=session_id).order_by("created_at")
-            if not chats.exists():
-                return Response({
-                    "error": f"세션 ID `{session_id}`에 대한 대화 내역이 없습니다. 올바른 ID를 입력했는지 확인해주세요."
-                }, status=status.HTTP_404_NOT_FOUND)
-            return Response(ChatHistorySerializer(chats, many=True).data, status=status.HTTP_200_OK)
-
-        # 전체 세션 목록 조회 (✅ annotate: 각 세션의 첫 메시지만 가져옴, order_by: 첫 메시지의 생성 시간을 기준으로 내림차순 정렬. 즉, 가장 최근에 시작된 세션이 먼저 오게 됨.)
-        sessions = ChatHistory.objects.filter(username=user.username).values('session_id')\
-            .annotate(first_message=Min('created_at'))\
-            .order_by('-first_message')
         
-        # 세션 ID, 첫 메시지, 첫 메시지 생성 시간을 포함하는 딕셔너리 목록
-        session_list = [
-            {
-                "session_id": session['session_id'],
-                "first_message": ChatHistory.objects.filter(username=user.username, session_id=session['session_id'])\
-                    .order_by('created_at').first().message,
-                "created_at": session['first_message']
-            }
-            for session in sessions
-        ]
-        return Response(session_list, status=status.HTTP_200_OK)
+        # 특정 세션 ID에 대한 대화 조회
+        if session_id:
+            session_history = ChatHistory.objects.filter(user=user, session_id=session_id).order_by("created_at")
+            if not session_history.exists():
+                return Response(
+                    {
+                        "error": f"세션 ID `{session_id}`에 대한 대화 내역이 없습니다. 올바른 ID를 입력했는지 확인해주세요."
+                    }, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # instance를 전달하여 모델 인스턴스를 JSON 응답으로 변환 (직렬화:instance/ 역직렬화:data)
+            serializer = ChatHistorySerializer(instance=session_history, many=True) 
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        else:
+            # .values: session_id 필드만 포함하는 딕셔너리 리스트(QuerySet) 형태로 반환됨
+            # .annotate(group by): 각 세션에 대해 created_at 필드의 최솟값을 계산하여 first_message라는 새로운 필드로 추가하는 역할
+            # order_by: first_message 의 생성 시간을 기준으로 내림차순 정렬. 즉, 가장 최근에 시작된 세션이 먼저 오게 됨.
+            sessions = ChatHistory.objects.filter(user=user).values('session_id')\
+                .annotate(first_message=Min('created_at'))\
+                .order_by('-first_message')
+
+            # 날짜별로 세션을 그룹화하고, 첫 번째 메시지만 뽑아내는 grouped_sessions 생성 (defaultdict(list): 새로운 키에 자동으로 빈 리스트를 할당)
+            grouped_sessions = defaultdict(list)
+
+            for session in sessions:
+                # 해당 session_id에 대한 첫 번째 메시지 객체
+                first_message = ChatHistory.objects.filter(user=user, session_id=session['session_id']).order_by('created_at').first()
+
+                if first_message:
+                    # 첫 메시지의 날짜를 'YYYY-MM-DD' 형식으로 포맷팅
+                    date_str = first_message.created_at.strftime('%Y-%m-%d')
+                    
+                    # 날짜별로 세션 정보 저장 (각 세션의 첫 번째 메시지)
+                    grouped_sessions[date_str].append({
+                        "session_id": session['session_id'],
+                        "first_message": first_message.message,
+                        "created_at": session['first_message'].strftime("%Y-%m-%d %H:%M") # 초 단위는 날리기
+                    })
+            
+            # grouped_sessions는 날짜별로 세션이 그룹화된 딕셔너리를 요소로 가지는 리스트!
+            session_list = [
+                {
+                    "date": date,  # 날짜
+                    "sessions": sessions  # 해당 날짜에 속하는 세션들
+                }
+                for date, sessions in grouped_sessions.items()
+            ]
+    
+            return Response(session_list, status=status.HTTP_200_OK)
