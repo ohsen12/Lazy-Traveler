@@ -1,12 +1,13 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .views import DeleteAccountView, LogoutView, SignupView, UpdatePasswordView, UpdateTagsView, UserHistoryView, MyPageView
+from .views import DeleteAccountView, LogoutView, SignupView, UpdatePasswordView, UpdateTagsView, UserHistoryView, MyPageView, CheckUsernameView
 
 app_name = "accounts"
 
 urlpatterns = [
     
     path("signup/", SignupView.as_view(), name="signup"), # 회원가입
+    path("checkusername/", CheckUsernameView.as_view(), name="checkusernmae"), # 아이디 중복 체크
     path("login/", TokenObtainPairView.as_view(), name="login"), # 로그인
     path("logout/", LogoutView.as_view(), name="logout"), # 로그아웃
     path('update_password/', UpdatePasswordView.as_view(), name='update_password'), # 패스워드 수정
