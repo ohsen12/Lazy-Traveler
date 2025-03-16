@@ -149,11 +149,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'  # 한국 시간대
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False # ✅ 서버의 로컬 시간대로 DB에 인스턴스가 저장됨
 
 
 # Static files (CSS, JavaScript, Images)
