@@ -32,7 +32,7 @@ class SignupView(APIView):
             user = serializer.save()  # 새 사용자 생성
             return Response(
                 {
-                    "detail": "Sign-up completed.",
+                    "message": "Sign-up completed.",
                     "id": user.id, 
                     "username":user.username,
                     "tags": user.tags
@@ -40,6 +40,27 @@ class SignupView(APIView):
                 status=status.HTTP_201_CREATED
             )
                 
+
+# 아이디 중복 체크
+class CheckUsername(APIView):
+    
+    permission_classes = [AllowAny]
+    
+    # 요청에서 username을 받았음
+    def post(self, request):
+        username = request.data.get("username", "")
+        
+        if get_user_model().objects.filter(username=username).exists():
+            return Response(
+                    {"message":"사용할 수 없는 ID입니다."},
+                    status=status.HTTP_409_CONFLICT 
+                )
+        else:
+            return Response(
+                    {"message":"사용할 수 없는 ID입니다."},
+                    status=status.HTTP_200_OK       
+                )
+            
 
 # 로그아웃
 class LogoutView(BaseUserView):
@@ -51,7 +72,7 @@ class LogoutView(BaseUserView):
             # 만약 요청에 담겨온 리프레시 토큰이 없다면
             if not refresh_token:
                 return Response(
-                    {"detail": "No refresh token provided"}, 
+                    {"message": "No refresh token provided"}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -61,7 +82,7 @@ class LogoutView(BaseUserView):
             token.blacklist()
             return Response(
                 {
-                    "detail": "Successfully logged out.",
+                    "message": "Successfully logged out.",
                     "username": request.user.username
                 }, status=status.HTTP_200_OK
             )
