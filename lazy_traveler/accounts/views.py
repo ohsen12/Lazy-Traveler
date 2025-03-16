@@ -32,7 +32,7 @@ class SignupView(APIView):
             user = serializer.save()  # 새 사용자 생성
             return Response(
                 {
-                    "detail": "Sign-up completed.",
+                    "message": "Sign-up completed.",
                     "id": user.id, 
                     "username":user.username,
                     "tags": user.tags
@@ -40,6 +40,27 @@ class SignupView(APIView):
                 status=status.HTTP_201_CREATED
             )
                 
+
+# 아이디 중복 체크
+class CheckUsernameView(APIView):
+    
+    permission_classes = [AllowAny]
+    
+    # 요청에서 username을 받았음
+    def post(self, request):
+        username = request.data.get("username", "")
+        
+        if get_user_model().objects.filter(username=username).exists():
+            return Response(
+                    {"message":"사용할 수 없는 ID입니다"},
+                    status=status.HTTP_409_CONFLICT 
+                )
+        else:
+            return Response(
+                    {"message":"사용 가능한 ID입니다"},
+                    status=status.HTTP_200_OK       
+                )
+            
 
 # 로그아웃
 class LogoutView(BaseUserView):
@@ -51,7 +72,7 @@ class LogoutView(BaseUserView):
             # 만약 요청에 담겨온 리프레시 토큰이 없다면
             if not refresh_token:
                 return Response(
-                    {"detail": "No refresh token provided"}, 
+                    {"message": "No refresh token provided"}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -61,7 +82,7 @@ class LogoutView(BaseUserView):
             token.blacklist()
             return Response(
                 {
-                    "detail": "Successfully logged out.",
+                    "message": "Successfully logged out.",
                     "username": request.user.username
                 }, status=status.HTTP_200_OK
             )
@@ -85,16 +106,20 @@ class MyPageView(BaseUserView):
 
 # 패스워드 수정
 class UpdatePasswordView(BaseUserView):
+    
+    # 현재 비밀번호, 새로운 비밀번호
     def post(self, request):
         user = request.user
         
-        new_password = request.data.get('new_password')
-        if not new_password:
-            return Response({
-                'error': 'new_password는 필수 항목입니다.'},
+        current_password = request.data.get("current_password")
+        # 입력한 현재 비밀번호가 실제 현재 비밀번호와 같은지 해싱 비교
+        if not user.check_password(current_password):
+            return Response(
+                {'error': '현재 비밀번호가 일치하지 않습니다'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+            
+        new_password = request.data.get('new_password')
         # 현재 비밀번호와 같은지 해싱 비교
         if user.check_password(new_password):
             return Response(
@@ -118,6 +143,7 @@ class UpdatePasswordView(BaseUserView):
 class UpdateTagsView(BaseUserView):
     
     def get(self, request):
+        '''화면에 현재 태그 노출'''
         user = request.user
         
         current_tags = user.tags
@@ -127,6 +153,7 @@ class UpdateTagsView(BaseUserView):
         })
         
     def put(self, request):
+        '''태그 업데이트'''
         user = request.user
         new_tags = request.data.get('tags')
 
