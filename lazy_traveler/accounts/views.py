@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import SignupSerializer
 from collections import defaultdict
 from chatbot.models import ChatHistory
+from django.contrib.auth import get_user_model
 
 
 # 로그인과 함께 진행되어야 할 access, refresh 토큰 발급은 TokenObtainPairView 클래스 뷰와 연결하여 처리한다.
@@ -34,7 +35,7 @@ class SignupView(APIView):
                     "detail": "Sign-up completed.",
                     "id": user.id, 
                     "username":user.username,
-                    "tags": user.tags.split(",")  # 쉼표로 구분된 문자열을 리스트로 변환하여 반환
+                    "tags": user.tags
                 },
                 status=status.HTTP_201_CREATED
             )
@@ -67,6 +68,19 @@ class LogoutView(BaseUserView):
         
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# 마이페이지
+class MyPageView(BaseUserView):
+    def get(self, request):
+        user = request.user
+        
+        return Response({
+                'username':user.username,
+                'tags': user.tags
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 # 패스워드 수정
@@ -102,6 +116,16 @@ class UpdatePasswordView(BaseUserView):
 
 # 태그 업데이트
 class UpdateTagsView(BaseUserView):
+    
+    def get(self, request):
+        user = request.user
+        
+        current_tags = user.tags
+        
+        return Response({
+            'tags': current_tags
+        })
+        
     def put(self, request):
         user = request.user
         new_tags = request.data.get('tags')
@@ -131,8 +155,8 @@ class UserHistoryView(BaseUserView):
         # 해당 user를 가져옴
         user = request.user
         
-        # 해당 user의 모든 대화 인스턴스를 DB에서 오름차순으로 가져옴
-        histories = ChatHistory.objects.filter(username=user.username).order_by('-created_at')
+        # 해당 user의 모든 대화 인스턴스를 DB에서 내림차순으로 가져옴
+        histories = ChatHistory.objects.filter(user=user).order_by('-created_at')
         
         # grouped_data: 특정 날짜를 키로 하는 대화 목록
         # defaultdict(list): 새로운 키에 자동으로 빈 리스트를 할당)
@@ -154,7 +178,7 @@ class UserHistoryView(BaseUserView):
         # 최신 날짜별 정렬 
         # grouped_data.items(): 딕셔너리의 모든 키(날짜)-값(대화내역)쌍을 튜플로 반환한 것
         sorted_data = {
-            date: sorted(messages, key=lambda x: x["created_at"], reverse=False)  # ✅ 각 날짜 안의 대화내역은 오래된 순 정렬(각 객체의 created_at 기준)
+            date: sorted(messages, key=lambda x: x["created_at"], reverse=True)  # ✅ 각 날짜 안의 대화내역은 최신순 정렬(각 객체의 created_at 기준)
             for date, messages in sorted(grouped_data.items(), key=lambda x: x[0], reverse=True) # date(키) 기준 최신순 정렬 (message: 대화 딕셔너리를 담고 있는 리스트)
         }
 

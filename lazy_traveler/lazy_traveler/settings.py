@@ -122,6 +122,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+    'BLACKLIST_ENABLED': True,  # 블랙리스트 기능 활성화
 }
 
 # Password validation

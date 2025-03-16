@@ -1,3 +1,48 @@
+/* ✅ 액션바 스타일 */
+#action-bar {
+    width: 100%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+/* 로고 스타일 */
+#logo {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 버튼 공통 스타일 */
+#action-bar button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 10px;
+    transition: 0.3s;
+}
+
+/* 버튼 호버 효과 */
+#action-bar button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+}
+
+/* 오른쪽 버튼 그룹 */
+#action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+
 /* 전체 페이지 스타일 */
 body {
     font-family: 'Arial', sans-serif;
@@ -135,4 +180,110 @@ body {
     #chat-box {
         height: 40vh;
     }
+}
+
+/* ✅ 메인 컨테이너 설정 */
+#main-container {
+    display: flex;
+    width: 100%;
+    margin-top: 60px; /* 액션바와 겹치지 않도록 여백 추가 */
+}
+
+
+/* 📌 메인 컨텐츠 스타일 */
+#content {
+    flex: 1;
+    margin-left: 250px; /* 사이드바 너비만큼 여백 추가 */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 📌 챗봇 컨테이너 */
+#chat-container {
+    width: 100%;
+    max-width: 600px;
+}
+
+/* 📌 모바일 최적화 */
+@media screen and (max-width: 768px) {
+    #sidebar {
+        width: 200px;
+    }
+
+    #content {
+        margin-left: 200px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #sidebar {
+        width: 100px;
+        padding: 10px;
+    }
+
+    #chat-history li {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    #content {
+        margin-left: 100px;
+        padding: 10px;
+    }
+}
+
+/* 📌 사이드바 스타일 */
+#sidebar {
+    width: 250px;
+    height: 100vh;
+    background: #fff;
+    border-right: 2px solid #ddd;
+    padding: 15px;
+    overflow-y: auto;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    left: 0;
+    top: 0;
+    margin-top: 60px; /* 액션바 높이만큼 여백 추가 */
+}
+
+#sidebar h3 {
+    font-size: 18px;
+    color: #333;
+    text-align: center;
+}
+
+/* 대화 목록 스타일 */
+#chat-history {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: block;
+}
+
+#chat-history li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+    border-radius: 6px;
+}
+
+#chat-history li:hover {
+    background: #f0f0f0;
+}
+
+/* 날짜 강조 */
+.history-date {
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* 메시지 스타일 */
+.history-item {
+    padding-left: 15px;
+    color: #555;
 }
