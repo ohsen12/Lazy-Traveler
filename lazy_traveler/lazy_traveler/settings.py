@@ -34,7 +34,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY가 설정되지 않았습니다! .env 파일을 확인하세요.")
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# ✅ SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
@@ -43,6 +43,9 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # Third-party apps
+    'daphne',     
+    'channels',   
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -69,6 +72,21 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+ASGI_APPLICATION = 'lazy_traveler.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('redis', 6379)],  # Redis 컨테이너의 IP 주소 사용
+        },
+        'OPTIONS': {
+                    'MAX_RETRIES': 10,
+                    'TIMEOUT': 30,
+        }
+    },
+}
 
 # CORS 설정
 CORS_ALLOW_ALL_ORIGINS = True
@@ -99,10 +117,15 @@ WSGI_APPLICATION = 'lazy_traveler.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# ✅ PostgreSQL 변경
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST'),  # Docker Compose에서 서비스 이름을 그대로 사용
+        'PORT': os.getenv('POSTGRES_PORT'),
     }
 }
 
@@ -149,11 +172,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Asia/Seoul'  # 한국 시간대
+TIME_ZONE = 'Asia/Seoul' # 대한민국 시간대
 
 USE_I18N = True
 
-USE_TZ = False # ✅ 서버의 로컬 시간대로 DB에 인스턴스가 저장됨
+USE_TZ = False # ✅ 서버 시간대
 
 
 # Static files (CSS, JavaScript, Images)
