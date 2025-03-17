@@ -1,6 +1,6 @@
 import os
 import math
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema import Document
@@ -16,13 +16,20 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def build_vector_store():
     try:
-        # 현재 작업 디렉토리 출력
         current_dir = os.getcwd()
         print(f"현재 작업 디렉토리: {current_dir}")
         
-        # 텍스트 파일 폴더 경로 확인
-        txt_folder = os.path.join(current_dir, "txt_folder")
+        chatbot_dir = os.path.join(current_dir, "chatbot")  # chatbot 디렉토리 경로
+        
+        txt_folder = os.path.join(chatbot_dir, "txt_folder")  # chatbot/txt_folder 경로
         print(f"텍스트 파일 폴더 경로: {txt_folder}")
+
+        # 폴더 존재 여부 확인
+        if not os.path.exists(txt_folder):
+            print(f"❌ 경로 오류: {txt_folder} 폴더가 존재하지 않습니다.")
+        else:
+            print(f"✅ 텍스트 폴더 경로: {txt_folder}")
+
         
         # 벡터 스토어 저장 경로 확인
         vector_store_path = os.path.join(current_dir, "vector_store")
