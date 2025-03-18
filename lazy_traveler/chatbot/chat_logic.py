@@ -10,6 +10,7 @@ from langchain.schema import AIMessage
 from datetime import datetime
 from django.contrib.auth import get_user_model
 User = get_user_model()
+from asgiref.sync import sync_to_async
 
 persist_dir = os.path.join(settings.BASE_DIR, 'chatbot', 'vector_store')
 
@@ -32,12 +33,15 @@ retriever = vector_store.as_retriever(search_kwargs={"k": 10})  # 최대 10개 �
 # LLM 설정
 llm = ChatOpenAI(model="gpt-4o-mini")
 
+
 # 대화 내역을 가져오는 함수
+@sync_to_async
 def get_context(session_id, max_turns=5):
     chat_history = ChatHistory.objects.filter(session_id=session_id).order_by("-created_at")[:max_turns]
     return "\n\n".join([f"User: {chat.message}\nBot: {chat.response}" for chat in reversed(chat_history)])
 
 # 유저 태그 가져오기
+@sync_to_async
 def get_user_tags(username):
     try:
         # 현재 세션에 해당하는 사용자 찾기
@@ -46,6 +50,10 @@ def get_user_tags(username):
         return tags
     except User.DoesNotExist:
         return []
+    
+@sync_to_async
+def retriever_invoke(search_query):
+    return retriever.invoke(search_query)
 
 
 # 프롬프트 정의
@@ -108,7 +116,7 @@ prompt = ChatPromptTemplate.from_template(
 
 
 
-def get_recommendation(user_query, session_id=None, username=None, latitude=None, longitude=None):
+async def get_recommendation(user_query, session_id=None, username=None, latitude=None, longitude=None):
     try:
         # 현재 시간 가져오기
         now = datetime.now()
@@ -122,7 +130,7 @@ def get_recommendation(user_query, session_id=None, username=None, latitude=None
             latitude, longitude = 37.5704, 126.9831
 
         # 사용자의 tags 가져오기
-        user_tags = get_user_tags(username)
+        user_tags = await get_user_tags(username)
         tags_query = " OR ".join(user_tags) if user_tags else ""
 
         print(f"🔍 현재 세션 ID: {session_id}")
@@ -138,11 +146,11 @@ def get_recommendation(user_query, session_id=None, username=None, latitude=None
         tags_context = f"사용자는 다음과 같은 관심사를 가지고 있습니다: {', '.join(user_tags)}" if user_tags else "사용자의 관심사 정보가 없습니다."
 
         # 대화 내역 가져오기
-        context = get_context(session_id)
+        context = await get_context(session_id)
 
         # 벡터 DB에서 관련 문서 검색 (tags 반영)
         search_query = f"{user_query} (위치: {latitude}, {longitude}, 시간: {time_of_day}) 태그: {tags_query}"
-        docs = retriever.invoke(search_query)
+        docs = await retriever_invoke(search_query)
         print(f"🔍 검색된 관련 문서 개수: {len(docs)}")
 
         if not docs:
@@ -155,8 +163,12 @@ def get_recommendation(user_query, session_id=None, username=None, latitude=None
         chain = prompt | llm
 
         # 템플릿에 context, location_context, time_context, user_query 전달
-        result = chain.invoke({"context": context, "location_context": location_context, "time_context": time_context, "question": user_query})
-
+        result = chain.invoke({
+            "context": context, 
+            "location_context": location_context, 
+            "time_context": time_context, 
+            "question": user_query
+        })
         # LLM의 응답 내용 가져오기
         result_content = result.content
 
