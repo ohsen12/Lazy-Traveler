@@ -1,4 +1,5 @@
 let map, marker, geocoder, infowindow;
+let socket;
 
 kakao.maps.load(() => {
     var container = document.getElementById('map');
@@ -65,9 +66,52 @@ function getAddressFromCoords(coords) {
     });
 }
 
+function connectWebSocket() {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        console.log("✅ WebSocket 이미 연결됨");
+        return;
+    }
+
+    // 로컬 스토리지에서 토큰을 가져와 Authorization 헤더에 추가
+    const token = localStorage.getItem("access_token");
+    const url = token ? `ws://localhost:8000/ws/chatbot/?token=${token}` : "ws://localhost:8000/ws/chatbot/";
+
+    socket = new WebSocket(url);
+
+    socket.onopen = function () {
+        console.log("✅ WebSocket 연결 성공!");
+    };
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        console.log("GPT-4o 응답:", data.response);
+
+        // 응답을 화면에 추가
+        appendMessage(data.response, "bot-response");
+
+        // 세션 ID 업데이트 (새 세션이 있으면 로컬 스토리지에 저장)
+        if (data.session_id) {
+            localStorage.setItem("session_id", data.session_id);
+        }
+    };
+
+    socket.onerror = function (event) {
+        console.log("❌ WebSocket 에러 발생:", event);
+        if (event && event.message) {
+            console.log("Error Message:", event.message);
+        }
+    };
+
+    socket.onclose = function () {
+        console.log("🔄 WebSocket 종료됨. 3초 후 재연결 시도...");
+        setTimeout(connectWebSocket, 10000);  // 3초 후 재연결
+    };
+}
+
+
 function sendMessage() {
-    const userMessage = document.getElementById("user-message").value;
-    if (userMessage.trim() === "") return;
+    const userMessage = document.getElementById("user-message").value.trim();
+    if (!userMessage) return;
 
     appendMessage(userMessage, "user-message");
 
@@ -76,46 +120,28 @@ function sendMessage() {
         message: userMessage,
         latitude: position.getLat().toFixed(6),
         longitude: position.getLng().toFixed(6),
+        session_id: localStorage.getItem("session_id") || "",
+        new_session: !localStorage.getItem("session_id")
     };
 
-    // 로컬 스토리지에서 토큰 가져오기 (예시: 'access_token')
-    const token = localStorage.getItem("access_token");
-
-    // 기존 session_id 가져오기
-    let sessionId = localStorage.getItem("session_id");
-
-    const headers = token ? {
-        'Authorization': `Bearer ${token}`  // 토큰이 있을 때만 Authorization 헤더 추가
-    } : {};
-
-    // 새 세션 시작하는 경우
-    const isNewSession = !sessionId;
-
-    if (isNewSession) {
-        sessionId = "";  // 새로운 session_id가 필요하므로 빈 문자열을 전달
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify(requestData));
+    } else {
+        console.warn("🚨 WebSocket이 닫혀 있어 Axios 요청을 시도합니다.");
+        axios.post("http://127.0.0.1:8000/chatbot/chat/", requestData)
+            .then(response => {
+                appendMessage(response.data.response, "bot-response");
+                if (response.data.session_id) {
+                    localStorage.setItem("session_id", response.data.session_id);
+                }
+            })
+            .catch(error => console.error("❌ 챗봇 응답 오류:", error));
     }
-
-    // 요청 데이터에 session_id 포함
-    requestData.session_id = sessionId;
-    requestData.new_session = isNewSession;
-
-    axios.post("http://127.0.0.1:8000/chatbot/chat/", requestData, { headers })
-        .then(response => {
-            const botResponse = response.data.response;
-            appendMessage(botResponse, "bot-response");
-
-            // 새로운 session_id가 생성되면 로컬 스토리지에 저장
-            if (response.data.session_id) {
-                localStorage.setItem("session_id", response.data.session_id);
-            }
-        })
-        .catch(error => {
-            console.error("❌ 챗봇 응답 오류:", error);
-        });
 
     document.getElementById("user-message").value = "";
 }
 
+// 채팅 메세지 화면 추가
 function appendMessage(message, type) {
     const chatBox = document.getElementById("chat-box");
 
@@ -131,7 +157,9 @@ function appendMessage(message, type) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// ✅ DOM 로드 시 웹소켓 연결 및 이벤트 리스너 추가
 document.addEventListener("DOMContentLoaded", function () {
+    connectWebSocket(); // 웹소켓 연결
     document.getElementById("send-btn").addEventListener("click", sendMessage);
     document.getElementById("user-message").addEventListener("keypress", function (event) {
         if (event.key === "Enter") {
@@ -140,9 +168,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+// 채팅 내역 및 세션 아이디 초기화
 function refreshChat() {
     document.getElementById('chat-box').innerHTML = ''; // 채팅 내용 초기화
-    console.log("챗봇 화면이 새로고침되었습니다."); // 디버깅 로그
+    loadChatHistory();
+    localStorage.removeItem("session_id"); //세션아이디 삭제
+    alert("챗봇 화면이 새로고침되었습니다."); // 디버깅 로그
 }
 
 function goToMypage() {
