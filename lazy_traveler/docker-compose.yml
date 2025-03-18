@@ -21,6 +21,7 @@ services:
       - ASGI_APPLICATION=lazy_traveler.asgi.application
       - REDIS_URL=redis://redis:6379/0  # Redis URL 환경 변수
       - DATABASE_URL=postgres://lazy_traveler:lazy_traveler_password@postgres:5432/lazy_traveler_db  # PostgreSQL DB 연결 URL
+
     depends_on:
       - redis
       - postgres  # Django가 PostgreSQL 서비스에 의존하도록 설정
@@ -29,6 +30,15 @@ services:
     volumes:
       - ../.env:/app/.env # .env 파일을 컨테이너로 마운트
     entrypoint: ["python", "/app/entrypoint.py"]  # entrypoint.py를 사용하여 초기화 작업 및 서버 실행
-
+  nginx:
+    build: ./nginx
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media 
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf   
+    ports:
+      - "80:80"
 volumes:
   postgres_data:  # PostgreSQL 서비스가 사용할 postgres_data라는 이름의 외부 볼륨 설정)
+  static_volume:
+  media_volume:

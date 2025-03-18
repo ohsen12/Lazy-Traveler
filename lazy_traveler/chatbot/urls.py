@@ -5,6 +5,6 @@ app_name = "chatbot"
 urlpatterns = [
     
     path("chat/", ChatBotView.as_view(), name="chatbot"),
-    path("chat-history/", ChatHistoryView.as_view(), name="chat_history"),
+    path("chat_history/", ChatHistoryView.as_view(), name="chat_history"),
 
 ]
