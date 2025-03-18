@@ -87,10 +87,11 @@ function closeChangePasswordModal() {
 async function changePassword(event) {
     event.preventDefault();  // 폼이 제출되는 기본 동작을 막음
 
+    const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
 
-    // 비밀번호 확인
+    // 새 비밀번호와 확인용 비밀번호가 같은지 체크
     if (newPassword !== confirmPassword) {
         alert("새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
         return;
@@ -98,6 +99,7 @@ async function changePassword(event) {
 
     try {
         const response = await axios.post('http://localhost:8000/accounts/update_password/', {
+            current_password: currentPassword, // 현재 비밀번호 추가
             new_password: newPassword
         }, {
             headers: {
@@ -111,9 +113,10 @@ async function changePassword(event) {
         }
     } catch (error) {
         console.error('비밀번호 변경 오류:', error);
-        alert('비밀번호 변경에 실패했습니다.');
+        alert(error.response?.data?.error || '비밀번호 변경에 실패했습니다.');
     }
 }
+
 
 
 
