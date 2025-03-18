@@ -11,7 +11,7 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
-persist_dir = os.path.join(settings.BASE_DIR, 'chatbot', 'vector_store')
+persist_dir = os.path.join(settings.BASE_DIR, 'vector_store')
 
 # .env 파일 로드
 load_dotenv()
