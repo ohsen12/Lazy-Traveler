@@ -1,0 +1,16 @@
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+  django:
+    build: .
+    environment:
+      - REDIS_URL=redis://redis:6379/0  # Django에서 Redis URL을 환경 변수로 설정
+    depends_on:
+      - redis
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../.env:/app/.env
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
