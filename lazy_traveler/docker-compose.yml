@@ -3,14 +3,31 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+
+  postgres:
+    image: postgres:latest  # 최신 PostgreSQL 이미지 사용
+    environment:
+      POSTGRES_USER: lazy_traveler  # PostgreSQL 사용자 이름
+      POSTGRES_PASSWORD: lazy_traveler_password  # PostgreSQL 비밀번호
+      POSTGRES_DB: lazy_traveler_db  # 데이터베이스 이름
+    ports:
+      - "5432:5432"  # PostgreSQL의 기본 포트 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # 데이터가 컨테이너 재시작 후에도 유지되게 볼륨 설정
+
   django:
     build: .
     environment:
-      - REDIS_URL=redis://redis:6379/0  # Django에서 Redis URL을 환경 변수로 설정
+      - REDIS_URL=redis://redis:6379/0  # Redis URL 환경 변수
+      - DATABASE_URL=postgres://lazy_traveler:lazy_traveler_password@postgres:5432/lazy_traveler_db  # PostgreSQL DB 연결 URL
     depends_on:
       - redis
+      - postgres  # Django가 PostgreSQL 서비스에 의존하도록 설정
     ports:
       - "8000:8000"
     volumes:
-      - ../.env:/app/.env
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+      - ../.env:/app/.env # .env 파일을 컨테이너로 마운트
+    entrypoint: ["python", "/app/entrypoint.py"]  # entrypoint.py를 사용하여 초기화 작업 및 서버 실행
+
+volumes:
+  postgres_data:  # PostgreSQL 서비스가 사용할 postgres_data라는 이름의 외부 볼륨 설정)

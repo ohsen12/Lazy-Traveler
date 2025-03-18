@@ -10,4 +10,4 @@ class ChatHistory(models.Model):
     session_id = models.CharField(max_length=255)  # 세션 ID
 
     def __str__(self):
-        return f"{self.username} - {self.message[:20]}"
+        return f"{self.user} - {self.message[:20]}"
