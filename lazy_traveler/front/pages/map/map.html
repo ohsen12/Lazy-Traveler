@@ -32,7 +32,7 @@
                 <!-- 대화 목록이 동적으로 추가됨 -->
             </ul>
         </div>
-
+    
         <!-- 📌 메인 컨텐츠 -->
         <div id="content">
             <h2>카카오맵 - 마커 위치 저장</h2>
@@ -42,15 +42,21 @@
             <!-- 📌 챗봇 대화창 -->
             <div id="chat-container">
                 <div id="map"></div>
-                <div id="chat-box"></div>
+                <div id="chat-box">
+                    <ul id="session-messages">
+                        <!-- 로딩 중 메시지가 동적으로 추가됨 -->
+                        <li id="loading-message" style="display: none;">🤖 로딩 중...</li>
+                    </ul>
+                </div>                            
                 <div id="chat-input">
                     <input type="text" id="user-message" placeholder="메시지를 입력하세요..." />
                     <button id="send-btn" onclick="sendMessage()">보내기</button>
                 </div>
             </div>
-        </div>
+        </div>    
     </div>
 
     <script src="map.js"></script>
 </body>
 </html>
+
