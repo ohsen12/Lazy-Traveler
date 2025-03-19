@@ -3,6 +3,7 @@ document.getElementById("login-form").addEventListener("submit", async function(
 
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
+    const messageDiv = document.getElementById('login-message');
 
     try {
         const response = await axios.post("http://localhost:8000/accounts/login/", {
@@ -19,10 +20,9 @@ document.getElementById("login-form").addEventListener("submit", async function(
             // ✅ 바로 페이지 이동 (alert 제거)
             window.location.href = 'http://127.0.0.1:5500/lazy_traveler/front/pages/map/map.html';
         } else {
-            alert("로그인 실패!");
+            messageDiv.textContent = '비밀번호가 일치하지 않습니다.';
         }
     } catch (error) {
-        alert("로그인 실패! 아이디 또는 비밀번호를 확인하세요.");
-        console.error(error.response?.data || error);
+            messageDiv.textContent = 'ID 혹은 비밀번호가 일치하지 않습니다.';
     }
 });
