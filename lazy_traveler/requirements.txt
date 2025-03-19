@@ -33,7 +33,6 @@ dataclasses-json==0.6.7
 Deprecated==1.2.18
 distro==1.9.0
 Django==4.2
-django-channels==0.7.0
 django-cors-headers==4.7.0
 django-environ==0.10.0
 django-filter==23.2
