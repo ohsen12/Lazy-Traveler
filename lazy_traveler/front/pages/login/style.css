@@ -1,0 +1,73 @@
+@font-face {
+  font-family: 'cafe24font';
+  src: url('/lazy_traveler/front/fonts/Cafe24Nyangi-W-v1.0.otf') format('opentype'),
+       url('/lazy_traveler/front/fonts/Cafe24Nyangi-W-v1.0.ttf') format('turetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'basicfont';
+  src: url('/lazy_traveler/front/fonts/온글잎.otf') format('opentype'),
+       url('/lazy_traveler/front/fonts/온글잎.ttf') format('turetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+body {
+    font-family: 'basicfont', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+.container {
+    text-align: center;
+}
+h1 {
+    font-family: 'cafe24font', sans-serif;
+    font-size: 40px;
+    margin-bottom: 20px;
+}
+.input-container {
+    margin-bottom: 10px;
+}
+.input-field {
+    font-family: 'basicfont', sans-serif;
+    font-size: 34px;
+    font-size: 1em;
+    padding: 10px;
+    width: 250px;
+    border: 2px solid #A6A5A5;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+.warning {
+    color: #FF0101;
+    font-size: 15px;
+    margin-bottom: 10px;
+}
+.button {
+    font-family: 'cafe24font', sans-serif;
+    font-size: 34px;
+    background-color: #5F5DE3;
+    color: #ffffff;
+    padding: 10px 80px;
+    text-decoration: none;
+    border-radius: 25px;
+    font-size: 1.2em;
+    border: none;
+}
+.links{
+    color: #A6A5A5;
+    font-size: 15px;
+    margin-top: 15px;
+}
+
+.links a{
+  color:#5F5DE3; 
+  font-size: 15px;
+  margin-top: 15px;
+}
