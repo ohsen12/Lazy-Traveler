@@ -62,7 +62,7 @@ def build_vector_store():
         print(f"총 {len(all_docs)} 개의 Document 객체 수집 완료.")
 
         # 4. embedding 도구 설정
-        embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         
         # 5. Chroma 벡터스토어 초기화
         vector_store = Chroma(persist_directory=vector_store_path, embedding_function=embeddings)
