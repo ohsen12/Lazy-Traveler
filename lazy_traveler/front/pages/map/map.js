@@ -1,9 +1,6 @@
 let map, marker, geocoder, infowindow;
-<<<<<<< HEAD
 let socket;
-=======
 let currentSessionId = null; 
->>>>>>> dev
 
 kakao.maps.load(() => {
     var container = document.getElementById('map');
@@ -72,7 +69,6 @@ function getAddressFromCoords(coords) {
     });
 }
 
-<<<<<<< HEAD
 function connectWebSocket() {
     if (socket && socket.readyState === WebSocket.OPEN) {
         console.log("✅ WebSocket 이미 연결됨");
@@ -120,36 +116,27 @@ function sendMessage() {
     const userMessage = document.getElementById("user-message").value.trim();
     if (!userMessage) return;
 
-    appendMessage(userMessage, "user-message");
-
-    const position = marker.getPosition();
-    const requestData = {
-        message: userMessage,
-        latitude: position.getLat().toFixed(6),
-        longitude: position.getLng().toFixed(6),
-        session_id: localStorage.getItem("session_id") || "",
-        new_session: !localStorage.getItem("session_id")
-    };
-
     if (socket.readyState === WebSocket.OPEN) {
+        appendMessage(userMessage, "user-message");
+
+        const position = marker.getPosition();
+        const requestData = {
+            message: userMessage,
+            latitude: position.getLat().toFixed(6),
+            longitude: position.getLng().toFixed(6),
+            session_id: localStorage.getItem("session_id") || "",
+            new_session: !localStorage.getItem("session_id")
+        };
+
         socket.send(JSON.stringify(requestData));
     } else {
-        console.warn("🚨 WebSocket이 닫혀 있어 Axios 요청을 시도합니다.");
-        axios.post("http://127.0.0.1:8000/chatbot/chat/", requestData)
-            .then(response => {
-                appendMessage(response.data.response, "bot-response");
-                if (response.data.session_id) {
-                    localStorage.setItem("session_id", response.data.session_id);
-                }
-            })
-            .catch(error => console.error("❌ 챗봇 응답 오류:", error));
+        console.warn("🚨 WebSocket이 닫혀 있어 메시지를 보낼 수 없습니다.");
     }
 
     document.getElementById("user-message").value = "";
 }
 
 // 채팅 메세지 화면 추가
-=======
 
 // 리프레시
 function refreshChat() {
@@ -176,7 +163,6 @@ function logout() {
 }
 
 
->>>>>>> dev
 function appendMessage(message, type) {
     const chatBox = document.getElementById("chat-box");
 
@@ -192,11 +178,7 @@ function appendMessage(message, type) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-<<<<<<< HEAD
 // ✅ DOM 로드 시 웹소켓 연결 및 이벤트 리스너 추가
-=======
-
->>>>>>> dev
 document.addEventListener("DOMContentLoaded", function () {
     connectWebSocket(); // 웹소켓 연결
     document.getElementById("send-btn").addEventListener("click", sendMessage);
@@ -322,63 +304,6 @@ function loadSessionMessages(session_id) {
 }
 
 
-// 메시지 보내기
-function sendMessage() {
-    const userMessage = document.getElementById("user-message").value;
-    if (userMessage.trim() === "") return;
-
-    appendUserMessage(userMessage);  // 사용자 메시지 추가
-
-    const position = marker.getPosition();
-    const requestData = {
-        message: userMessage,
-        latitude: position.getLat().toFixed(6),
-        longitude: position.getLng().toFixed(6),
-    };
-
-    // ✅ 새 세션 여부 확인
-    let sessionId = currentSessionId || localStorage.getItem("session_id");
-    const isNewSession = !sessionId || sessionId === ""; 
-
-    if (isNewSession) {
-        sessionId = "";  // 새로운 세션 ID 생성 요청
-        localStorage.removeItem("session_id"); // ✅ 기존 세션 완전 삭제
-        currentSessionId = null;
-    }
-
-    requestData.session_id = sessionId;
-    requestData.new_session = isNewSession;
-
-    // 챗봇 응답 영역에 로딩 중 메시지 추가
-    appendBotResponseWithLoading();
-
-    axios.post("http://127.0.0.1:8000/chatbot/chat/", requestData, {
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem("access_token")}`
-        }
-    })
-    .then(response => {
-        const botResponse = response.data.response;
-        
-        // 로딩 메시지를 실제 응답 메시지로 바꿈
-        updateBotResponse(botResponse);
-
-        // ✅ 새로운 session_id 저장
-        if (response.data.session_id) {
-            localStorage.setItem("session_id", response.data.session_id);
-            currentSessionId = response.data.session_id;
-        }
-
-        // 메시지 전송 후 대화 히스토리 갱신
-        loadChatHistory();  // 대화 히스토리 갱신 함수 호출
-
-    })
-    .catch(error => {
-        console.error("❌ 챗봇 응답 오류:", error);
-    });
-
-    document.getElementById("user-message").value = "";
-}
 
 
 // 사용자 메시지 추가
