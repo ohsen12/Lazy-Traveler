@@ -1,11 +1,9 @@
 import json
 import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from .models import ChatHistory
 from .chat_logic import get_recommendation
-from accounts.models import User  # 모델 임포트 (accounts_user 모델을 가져오기)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
