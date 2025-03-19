@@ -11,7 +11,8 @@ WORKDIR /app
 COPY requirements.txt /app/
 
 # 필요 패키지 설치 (레거시 해결 방식 적용)
-RUN pip install --no-cache-dir -r requirements.txt --use-deprecated=legacy-resolver
+#RUN pip install --no-cache-dir -r requirements.txt --use-deprecated=legacy-resolver
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 # 애플리케이션 소스 코드 복사
 COPY . /app/
