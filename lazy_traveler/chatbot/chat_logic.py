@@ -6,11 +6,11 @@ import os
 from dotenv import load_dotenv
 from .models import ChatHistory  
 from django.conf import settings
-from langchain.schema import AIMessage
 from datetime import datetime
 from django.contrib.auth import get_user_model
-User = get_user_model()
 from asgiref.sync import sync_to_async
+
+User = get_user_model()
 
 persist_dir = os.path.join(settings.BASE_DIR, 'vector_store')
 
@@ -28,7 +28,7 @@ vector_store = Chroma(
 )
 
 # 벡터 검색기 설정
-retriever = vector_store.as_retriever(search_kwargs={"k": 10})  # 최대 10개 문서 검색
+retriever = vector_store.as_retriever(search_kwargs={"k": 5})  # 최대 10개 문서 검색
 
 # LLM 설정
 llm = ChatOpenAI(model="gpt-4o-mini")
