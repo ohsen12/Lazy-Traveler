@@ -6,10 +6,12 @@ services:
 
   postgres:
     image: postgres:latest  # 최신 PostgreSQL 이미지 사용
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: lazy_traveler  # PostgreSQL 사용자 이름
-      POSTGRES_PASSWORD: lazy_traveler_password  # PostgreSQL 비밀번호
-      POSTGRES_DB: lazy_traveler_db  # 데이터베이스 이름
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"  # PostgreSQL의 기본 포트 5432
     volumes:
@@ -17,10 +19,11 @@ services:
 
   django:
     build: .
+    env_file:
+      - .env
     environment:
-      - REDIS_URL=redis://redis:6379/0  # Redis URL 환경 변수
-      - DATABASE_URL=postgres://lazy_traveler:lazy_traveler_password@postgres:5432/lazy_traveler_db  # PostgreSQL DB 연결 URL
-
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       - redis
       - postgres  # Django가 PostgreSQL 서비스에 의존하도록 설정
@@ -41,3 +44,4 @@ volumes:
   postgres_data:  # PostgreSQL 서비스가 사용할 postgres_data라는 이름의 외부 볼륨 설정)
   static_volume:
   media_volume:
+
