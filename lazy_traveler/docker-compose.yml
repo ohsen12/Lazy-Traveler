@@ -44,4 +44,3 @@ volumes:
   postgres_data:  # PostgreSQL 서비스가 사용할 postgres_data라는 이름의 외부 볼륨 설정)
   static_volume:
   media_volume:
-
