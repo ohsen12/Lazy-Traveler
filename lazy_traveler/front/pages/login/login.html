@@ -1,32 +1,36 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인</title>
+    <title>Lazy Traveler</title>
+    <!-- ✅ axios CDN 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="login.css">
 </head>
 <body>
-    <h1>로그인</h1>
-    
-    <form id="login-form">
-        
-        <label for="username"></label>
-        <input type="text" id="username" placeholder="아이디" required>
+  <div class="background">
+    <img src="/lazy_traveler/front/images/purple.svg" alt="purple background" class="purple-bg">
+    <img src="/lazy_traveler/front/images/star.svg" alt="star background" class="star-bg">
+  </div>
+  <form id="login-form">
+    <div class="container">
+        <img src="/lazy_traveler/front/images/logo.svg" alt="Lazy Traveler" class="logo">
+        <div class="input-container">
+            <input type="text" id="username" class="input-field" placeholder="ID를 입력해주세요">
+        </div>
+        <div class="input-container">
+            <input type="password" id="password" class="input-field" placeholder="비밀번호를 입력해주세요">
+        </div>
+        <div class="warning" id="login-message"></div>
+        <button class="button" type="submit">Login</button>
+  </form>
+        <div class="links">
+            아직 회원이 아니세요? 
+            <a href="http://127.0.0.1:5500/lazy_traveler/front/pages/signup/signup.html">회원가입 하러가기</a>
+        </div>
+    </div>
 
-        <label for="password"></label>
-        <input type="password" id="password" placeholder="비밀번호" required>
-
-        <button type="submit">로그인</button>
-        
-        <!-- 수정된 회원가입 버튼 -->
-        <button type="button" id="signup-link" onclick="window.location.href='http://127.0.0.1:5500/lazy_traveler/front/pages/signup/signup.html'">회원가입</button>
-    </form>
-
-    <!-- ✅ axios CDN 추가 -->
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-    <!-- ✅ login.js 연결 -->
     <script src="login.js"></script>
 </body>
 </html>

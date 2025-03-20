@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lazy Traveler</title>
+    <!-- 필수 스크립트 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script type="text/javascript" 
+        src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5769d7f320e2be4038750917809a900a&libraries=services"></script>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 왼쪽 사이드바 -->
+        <div id="sidebar" class="sidebar">
+            <h2>Chat History</h2>
+            <ul id="chat-history">
+                <!-- 대화 히스토리가 동적으로 추가됨 -->
+            </ul>
+        </div>
+        <!-- 오른쪽 메인 컨텐츠 영역 -->
+        <div class="main-content">        
+            <header>
+            <div class="logo-container">   
+                <a href="http://127.0.0.1:5500/lazy_traveler/front/pages/main/main.html" class="logo-link"> 
+                    <h1>Lazy Traveler</h1>
+                </a>
+                    </h1>
+            <button class="refresh-btn" onclick="refreshChat()">
+                <img src="../../images/refresh.svg" alt="Refresh">
+            </button>
+            </div>
+            <div class="user-menu">
+                <a href="http://127.0.0.1:5500/lazy_traveler/front/pages/mypage/mypage.html" class="profile-icon" onclick="goToMypage()">
+                    <img src="../../images/mypage.svg" alt="Profile">
+                </a>
+                <a href="#" class="logout" onclick="logout()">Logout</a>
+            </div>
+        </header>
+        <div id="chat-container">
+            <div id="chat-box">
+                <!-- 시스템 메시지를 bot-message 클래스로 변경 -->
+                <div class="message bot-message">
+                    안녕하세요? [User_ID]님. Lazy Traveler예요.<br>
+                    어느 장소에서 여행하는 루트를 추천해드릴까요?
+                </div>
+
+                <!-- 위치 정보 섹션 -->
+                <div class="location-section">
+                    <button class="location-button" onclick="getUserLocation()">
+                        📍 현재 내 위치로 이동
+                    </button>
+                    <p id="location-info">📍 현재 위치: 종각역 (37.5704, 126.9831)</p>
+                    <div id="map"></div>
+                    <p>고객님의 현재 위치는 종각역 입니다. <br>
+                        핀을 움직여, 일정을 시작하실 위치를 변경해 보세요! </p>
+                </div>
+
+                <!-- 메시지들이 추가될 영역 -->
+                <div id="messages-container">
+                    <!-- 동적으로 메시지가 추가됨 -->
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <input type="text" id="user-message" placeholder="궁금한 질문을 남겨주세요">
+                <button id="send-btn" onclick="sendMessage()">
+                    <img src="../../images/send.svg" alt="Send">
+                </button>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
