@@ -23,16 +23,23 @@ print("Database is ready!")
 
 # 벡터 DB 구축 스크립트 실행
 print("Running vector database build script...")
-subprocess.run(["python", "chatbot/build_vector_store.py"])
+subprocess.run(["python", "chatbot/build_vector_store.py"], check=True)
 
 # Django 마이그레이션 
 print("Running makemigrations for all apps...")
-subprocess.run(["python", "manage.py", "makemigrations"])
+subprocess.run(["python", "manage.py", "makemigrations"], check=True)
 
 # Django 마이그레이션
 print("Applying migrations...")
-subprocess.run(["python", "manage.py", "migrate"])
+subprocess.run(["python", "manage.py", "migrate"], check=True)
 
 # Django 서버 실행
 print("Starting Django server...")
-subprocess.run(["python", "manage.py", "runserver", "0.0.0.0:8000"])
+subprocess.run([
+    "gunicorn",
+    "lazy_traveler.wsgi:application",
+    "--bind", "0.0.0.0:8000",
+    "--workers", "3",
+    "--threads", "2",
+], check=True)
+
