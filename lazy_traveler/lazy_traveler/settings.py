@@ -37,8 +37,7 @@ if not SECRET_KEY:
 # ✅ SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # Application definition
 
@@ -66,7 +65,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    #'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -88,9 +87,15 @@ CHANNEL_LAYERS = {
 }
 
 # CORS 설정
-CORS_ALLOW_ALL_ORIGINS = True
+#CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '127.0.0.1,localhost').split(',')
+
 CORS_ALLOW_CREDENTIALS = True
 
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '127.0.0.1,localhost').split(',')
+
+# ALB에서 SSL 종료되기 때문
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ROOT_URLCONF = 'lazy_traveler.urls'
 
