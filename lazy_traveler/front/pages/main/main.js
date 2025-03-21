@@ -1,6 +1,7 @@
 let map, marker, geocoder, infowindow;
 let socket;
-let currentSessionId = null; 
+let currentSessionId = null;
+let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
 
 kakao.maps.load(() => {
     var container = document.getElementById('map');
@@ -69,6 +70,63 @@ function getAddressFromCoords(coords) {
     });
 }
 
+//첫시작 대화창 및 user-menu숨기기
+document.addEventListener("DOMContentLoaded", async function() {
+    try {
+        // 토큰 확인
+        const token = localStorage.getItem("access_token");
+        const botMessage = document.querySelector(".message.bot-message");
+        const logoutButton = document.querySelector(".logout");
+
+        // 토큰이 없으면 비로그인자의 메시지 처리
+        if (!token) {
+            if (botMessage) {
+                botMessage.innerHTML = `
+                    안녕하세요? 고객님. Lazy Traveler에요.<br>
+                    저는 종로에서 여행하는 일정을 스케줄링 해드립니다.<br>
+                    보다 정확한 답변을 원하시면, 로그인 하신 후 질문해주세요!
+                `;
+            }
+            // 로그인하지 않은 경우, logout 버튼만 숨기기
+            if (logoutButton) {
+                logoutButton.style.display = "none";
+            }
+            return; // 비로그인자의 경우 나머지 로직 실행하지 않음
+        }
+
+        // 로그인한 경우 logout 버튼 표시
+        if (logoutButton) {
+            logoutButton.style.display = "block";
+        }
+
+        // 토큰이 있을 경우 서버에서 유저 데이터 가져오기
+        const response = await axios.get("http://localhost:8000/accounts/mypage/", {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        const { username = "고객님", tags = "" } = response.data;
+        const tagList = tags ? tags.split(',') : []; // 태그를 배열로 처리
+
+        // 시스템 메시지 동적으로 변경
+        if (botMessage) {
+            botMessage.innerHTML = `
+                안녕하세요? ${username}님. Lazy Traveler예요.<br>
+                저는 종로에서 여행하는 일정을 스케줄링 해드립니다.<br>
+                ${tagList.length > 0 ? `고객님의 [${tagList.join(", ")}] 태그를 기반으로 코스를 제안해 드릴까요?` : 
+                "어느 장소에서 여행하는 루트를 추천해드릴까요?"}
+            `;
+        }
+
+    } catch (error) {
+        console.error("오류 발생:", error);
+    }
+});
+
+
+
 //웹 소켓
 function connectWebSocket() {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -88,14 +146,16 @@ function connectWebSocket() {
 
     socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
-        console.log("GPT-4o 응답:", data.response);
+        console.log("GPT-4 응답:", data.response);
 
-        // 응답을 화면에 추가
-        appendMessage(data.response, "bot-response");
+        // 로딩 메시지 업데이트
+        updateBotResponse(data.response);
 
-        // 세션 ID 업데이트 (새 세션이 있으면 로컬 스토리지에 저장)
+        // 세션 ID 업데이트
         if (data.session_id) {
             localStorage.setItem("session_id", data.session_id);
+            // 응답을 받은 후 채팅 히스토리를 업데이트
+            reloadChatHistory();
         }
     };
 
@@ -119,7 +179,9 @@ function sendMessage() {
     if (!userMessage) return;
 
     if (socket.readyState === WebSocket.OPEN) {
+        hasStartedChat = true; // 대화 시작 표시
         appendMessage(userMessage, "user-message");
+        appendBotResponseWithLoading();
 
         const position = marker.getPosition();
         const requestData = {
@@ -138,7 +200,6 @@ function sendMessage() {
     document.getElementById("user-message").value = "";
 }
 
-// 채팅 메세지 화면 추가
 
 // 리프레시
 function refreshChat() {
@@ -155,17 +216,26 @@ function logout() {
     localStorage.removeItem("access_token");  // ✅ 엑세스 토큰 삭제
     localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
     alert("로그아웃 되었습니다.");
-    window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
+    window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/main/main.html";
 }
 
 // 대화 내역 불러오기
 function loadChatHistory() {
     console.log("대화 기록을 불러오는 중...");
 
+    const token = localStorage.getItem("access_token");
+
+    // 토큰이 없는 경우 로그인 메시지와 버튼을 표시
+    if (!token) {
+        displayLoginMessage();
+        return;  // 토큰이 없으면 대화 내역을 불러오지 않음
+    }
+
+    // 토큰이 있는 경우 대화 내역 불러오기
     axios.get("http://127.0.0.1:8000/chatbot/chat_history/", {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer " + localStorage.getItem("access_token"),
+            "Authorization": "Bearer " + token,
         }
     })
     .then(response => {
@@ -174,56 +244,21 @@ function loadChatHistory() {
         const historyList = document.getElementById("chat-history");
         historyList.innerHTML = ""; // 기존 목록 초기화
 
-        // 날짜별로 세션 내역 추가
+        // 데이터 처리
         data.forEach(group => {
-            const date = group.date;
+            const { date, sessions } = group;
             console.log(`날짜: ${date}`);
 
-            let dateItem = document.createElement("li");
-            dateItem.textContent = `${date} ▼`;
-            dateItem.classList.add("accordion");
+            // 날짜 항목 생성
+            const dateItem = createDateItem(date);
             historyList.appendChild(dateItem);
 
-            // 각 날짜의 세션 목록을 숨겨놓기
-            let sessionList = document.createElement("li");
-            sessionList.classList.add("accordion-content");
-
-            group.sessions.forEach(session => {
-                console.log(`세션 ID: ${session.session_id}, 첫 메시지: ${session.first_message}`);
-
-                let sessionItem = document.createElement("li");
-                sessionItem.classList.add("history-item");
-
-                sessionItem.innerHTML = `
-                    <span style="color:gray;">${session.created_at}</span>
-                    <strong>${session.first_message}</strong>
-                `;
-
-                // 세션 클릭 시 해당 세션의 대화 내역 불러오기
-                sessionItem.onclick = () => loadSessionMessages(session.session_id);
-
-                sessionList.appendChild(sessionItem);
-            });
-
+            // 세션 목록 항목 생성
+            const sessionList = createSessionList(sessions);
             historyList.appendChild(sessionList);
 
             // 아코디언 기능 추가
-            dateItem.onclick = function() {
-                this.classList.toggle("active");
-                
-                // ▲과 ▼을 서로 바꿔줍니다
-                if (this.textContent.includes("▲")) {
-                    this.textContent = `${date} ▼`;  // ▲ -> ▼로 변경
-                } else {
-                    this.textContent = `${date} ▲`;  // ▼ -> ▲로 변경
-                }
-
-                if (sessionList.style.display === "block") {
-                    sessionList.style.display = "none";
-                } else {
-                    sessionList.style.display = "block";
-                }
-            };
+            toggleAccordion(dateItem, sessionList);
         });
     })
     .catch(error => {
@@ -231,45 +266,103 @@ function loadChatHistory() {
     });
 }
 
-function initializeMap() {
-    const container = document.getElementById("map");
+// 로그인 메시지 및 버튼을 표시하는 함수
+function displayLoginMessage() {
+    const historyList = document.getElementById("chat-history");
+    historyList.innerHTML = ""; // 기존 목록 초기화
 
-    // #map 요소가 없으면 실행 안 함
-    if (!container) {
-        console.error("🛑 지도 컨테이너가 없습니다! #map을 찾을 수 없음.");
-        return;
-    }
+    const loginMessage = document.createElement("li");
+    loginMessage.classList.add("login-message");  // 로그인 메시지 클래스 추가
 
-    kakao.maps.load(() => {
-        var options = {
-            center: new kakao.maps.LatLng(37.5704, 126.9831), // 기본 위치: 종각역
-            level: 3
+    loginMessage.innerHTML = `
+        <p class="login-text">로그인 하신 후, <br> 이용 가능합니다. <button class="login-btn">로그인 하러 가기</button></p>
+    `;
+
+    const loginButton = loginMessage.querySelector(".login-btn");
+    loginButton.onclick = () => window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";  // 로그인 페이지로 이동
+
+    historyList.appendChild(loginMessage);
+}
+
+// 날짜 항목 생성
+function createDateItem(date) {
+    const dateItem = document.createElement("li");
+    dateItem.textContent = `${date} ▼`;
+    dateItem.classList.add("accordion");
+    return dateItem;
+}
+
+// 세션 목록 항목 생성
+function createSessionList(sessions) {
+    const sessionList = document.createElement("li");
+    sessionList.classList.add("accordion-content");
+
+    sessions.forEach(session => {
+        console.log(`세션 ID: ${session.session_id}, 첫 메시지: ${session.first_message}`);
+
+        const sessionItem = document.createElement("li");
+        sessionItem.classList.add("history-item");
+        sessionItem.innerHTML = `
+            <span>${session.created_at}</span>
+            <strong>${session.first_message}</strong>
+        `;
+
+        // 현재 세션이 선택된 세션인지 확인
+        if (session.session_id === currentSessionId) {
+            sessionItem.classList.add("selected");
+        }
+
+        // 세션 클릭 시 해당 세션의 대화 내역 불러오기
+        sessionItem.onclick = () => {
+            // 모든 세션에서 selected 클래스 제거
+            document.querySelectorAll(".history-item").forEach(item => {
+                item.classList.remove("selected");
+            });
+            // 클릭된 세션에 selected 클래스 추가
+            sessionItem.classList.add("selected");
+            loadSessionMessages(session.session_id);
         };
 
-        map = new kakao.maps.Map(container, options);
-        geocoder = new kakao.maps.services.Geocoder();
-
-        // 기본 마커 (종각역)
-        marker = new kakao.maps.Marker({
-            position: new kakao.maps.LatLng(37.5704, 126.9831),
-            map: map
-        });
-
-        // 정보창 추가
-        infowindow = new kakao.maps.InfoWindow({
-            content: `<div style="padding:5px;">📍 종각역</div>`
-        });
-        infowindow.open(map, marker);
-
-        // 지도 클릭 시 마커 이동 및 주소 업데이트
-        kakao.maps.event.addListener(map, "click", function(event) {
-            var position = event.latLng;
-            marker.setPosition(position);
-            getAddressFromCoords(position);
-        });
-
-        console.log("✅ Kakao 지도 초기화 완료!");
+        sessionList.appendChild(sessionItem);
     });
+
+    return sessionList;
+}
+
+// 아코디언 기능 처리
+function toggleAccordion(dateItem, sessionList) {
+    dateItem.onclick = function() {
+        this.classList.toggle("active");
+
+        // ▲과 ▼을 서로 바꿔줍니다
+        this.textContent = this.textContent.includes("▲") 
+            ? `${this.textContent.replace("▲", "▼")}`
+            : `${this.textContent.replace("▼", "▲")}`;
+
+        sessionList.style.display = sessionList.style.display === "block" ? "none" : "block";
+    };
+}
+
+//대화 버튼 비활성화 
+function toggleChatInput(disable) {
+    const userMessageInput = document.getElementById("user-message");
+    const sendButton = document.getElementById("send-btn");
+
+    if (disable) {
+        userMessageInput.disabled = true;
+        userMessageInput.value = "이전 대화에서는 추가 대화가 불가능합니다."; // 메시지 고정
+        userMessageInput.style.color = "#888"; // 회색으로 변경 (비활성화 느낌)
+        sendButton.disabled = true;
+        sendButton.style.opacity = "0.5"; // 버튼 비활성화 효과
+        sendButton.style.backgroundColor = "#FFFFFF"; // 버튼 색상 변경
+    } else {
+        userMessageInput.disabled = false;
+        userMessageInput.value = ""; // 입력 가능할 때 기존 메시지 삭제
+        userMessageInput.style.color = "#000"; // 검정색으로 복원
+        sendButton.disabled = false;
+        sendButton.style.opacity = "1"; // 버튼 활성화 효과
+        sendButton.style.backgroundColor = ""; // 원래 스타일로 복원
+    }
 }
 
 function loadSessionMessages(session_id) {
@@ -278,54 +371,67 @@ function loadSessionMessages(session_id) {
     currentSessionId = session_id;
     localStorage.setItem("session_id", session_id);
 
-    axios.get(`http://127.0.0.1:8000/chatbot/chat_history/?session_id=${session_id}`, {
+    // 먼저 사용자 정보를 가져옵니다.
+    const token = localStorage.getItem("access_token");
+    
+    // 사용자 정보를 가져온 후 채팅 내역을 불러옵니다.
+    axios.get("http://localhost:8000/accounts/mypage/", {
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + localStorage.getItem("access_token"),
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
         }
     })
-    .then(response => {
-        console.log(`세션 ${session_id} 메시지 불러오기 성공:`, response.data);
-        const messages = response.data;
+    .then(userResponse => {
+        const { username = "고객님", tags = "" } = userResponse.data;
+        const tagList = tags ? tags.split(',') : [];
 
-        const chatBox = document.getElementById("chat-box");
-        chatBox.innerHTML = ""; // 기존 메시지 삭제
+        // 채팅 내역을 불러옵니다.
+        return axios.get(`http://127.0.0.1:8000/chatbot/chat_history/?session_id=${session_id}`, {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token,
+            }
+        }).then(response => {
+            console.log(`세션 ${session_id} 메시지 불러오기 성공:`, response.data);
+            const messages = response.data;
 
-        // ✅ 기본 UI 요소 추가
-        const defaultMessage = document.createElement("div");
-        defaultMessage.classList.add("message", "bot-message");
-        defaultMessage.innerHTML = `
-            안녕하세요? [User_ID]님. Lazy Traveler예요.<br>
-            어느 장소에서 여행하는 루트를 추천해드릴까요?
-        `;
-        chatBox.appendChild(defaultMessage);
+            const chatBox = document.getElementById("chat-box");
+            chatBox.innerHTML = ""; // 기존 메시지 삭제
 
-        const locationSection = document.createElement("div");
-        locationSection.classList.add("location-section");
-        locationSection.innerHTML = `
-            <button class="location-button" onclick="getUserLocation()">
-                📍 현재 내 위치로 이동
-            </button>
-            <p id="location-info">📍 현재 위치: 종각역 (37.5704, 126.9831)</p>
-            <div id="map"></div>
-            <p>고객님의 현재 위치는 종각역 입니다. <br>
-                핀을 움직여, 일정을 시작하실 위치를 변경해 보세요! </p>
-        `;
-        chatBox.appendChild(locationSection);
+            // 기본 UI 요소 추가
+            const defaultMessage = document.createElement("div");
+            defaultMessage.classList.add("message", "bot-message");
+            defaultMessage.innerHTML = `
+                안녕하세요? ${username}님. Lazy Traveler예요.<br>
+                저는 종로에서 여행하는 일정을 스케줄링 해드립니다.<br>
+                ${tagList.length > 0 ? `고객님의 [${tagList.join(", ")}] 태그를 기반으로 코스를 제안해 드릴까요?` : 
+                "어느 장소에서 여행하는 루트를 추천해드릴까요?"}
+            `;
+            chatBox.appendChild(defaultMessage);
 
-        // ✅ 📌 지도 초기화 함수 실행
-        setTimeout(() => {
-            initializeMap(); // #map이 추가된 후 실행해야 함
-        }, 100); // 100ms 후 실행 (DOM 업데이트 시간 확보)
+            const locationSection = document.createElement("div");
+            locationSection.classList.add("location-section");
+            locationSection.innerHTML = `
+                <p>고객님의 현재 위치는 종각역입니다. <br>
+                    핀을 움직여, 일정을 시작하실 위치를 변경해 보세요! </p>
+            `;
+            chatBox.appendChild(locationSection);
 
-        // ✅ 메시지 목록 추가
-        messages.forEach(chat => {
-            appendMessage(chat.message, "user-message");
-            appendMessage(chat.response, "bot-response");
+            toggleChatInput(true);
+
+            // 메시지 목록 추가
+            messages.forEach(chat => {
+                appendMessage(chat.message, "user-message");
+                appendMessage(chat.response, "bot-response");
+            });
+
+            // 히스토리 조회 시 스크롤을 최상단으로 이동
+            chatBox.scrollTop = 0;
+            hasStartedChat = false; // 새로운 세션을 로드할 때 대화 시작 상태 초기화
         });
     })
     .catch(error => {
-        console.error("대화 기록 불러오기 실패:", error);
+        console.error("데이터 불러오기 실패:", error);
     });
 }
 
@@ -335,19 +441,63 @@ function appendMessage(message, type) {
     // 새로운 메시지 컨테이너 생성
     const messageContainer = document.createElement("div");
     messageContainer.classList.add("message", type);
-    messageContainer.textContent = message; // textContent로 텍스트 추가
-    messageContainer.style.opacity = "0";  // 처음에는 투명하게 설정
-
+    messageContainer.textContent = message;
+    
     // 채팅박스에 새 메시지 추가
     chatBox.appendChild(messageContainer);
 
-    // 약간의 지연 후 메시지를 표시 (부드러운 애니메이션 가능)
-    setTimeout(() => {
-        messageContainer.style.opacity = "1";
-        messageContainer.style.transition = "opacity 0.3s ease-in-out"; // 0.3초 동안 자연스럽게 나타나게 함
-    }, 50); // 50ms 후 표시
+    // 대화가 시작된 경우에만 스크롤을 최하단으로 이동
+    if (hasStartedChat) {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+}
 
-    // 메시지가 추가된 후, 스크롤을 최신 메시지로 이동
+
+// 사용자 메시지 추가
+function appendUserMessage(message) {
+    const chatBox = document.getElementById("chat-box");
+    const userMessage = document.createElement("li");
+    userMessage.classList.add("message", "user-message");
+    userMessage.textContent = message;
+    chatBox.scrollTop = chatBox.scrollHeight;
+    chatBox.appendChild(userMessage);
+    
+}
+
+// 챗봇 응답에 로딩 메시지 추가
+function appendBotResponseWithLoading() {
+    const chatBox = document.getElementById("chat-box");
+
+    // 로딩 메시지 컨테이너 생성
+    const botResponse = document.createElement("ul");
+    botResponse.classList.add("message", "bot-response");
+    
+    const loadingMessage = document.createElement("span");
+    loadingMessage.id = "bot-loading-message";
+    loadingMessage.textContent = "🤖 로딩 중...";  // 로딩 메시지 내용
+
+    botResponse.appendChild(loadingMessage);
+    chatBox.appendChild(botResponse);
+
+    // 채팅박스에 새 메시지를 추가한 후 스크롤을 최신 메시지로 이동
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// 챗봇 응답 메시지 업데이트
+function updateBotResponse(responseMessage) {
+    const chatBox = document.getElementById("chat-box");
+    const lastBotResponse = chatBox.lastElementChild;
+
+    // 로딩 메시지를 포함한 마지막 응답 찾기
+    if (lastBotResponse && lastBotResponse.classList.contains("bot-response")) {
+        const loadingMessage = lastBotResponse.querySelector("#bot-loading-message");
+
+        // 로딩 메시지 있는 경우, 해당 span의 텍스트를 응답 메시지로 변경
+        if (loadingMessage) {
+            loadingMessage.textContent = responseMessage;  // 로딩 메시지를 응답 메시지로 교체
+        }
+    }
+    // 응답이 추가된 후, 스크롤을 최신 메시지로 이동
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
@@ -364,43 +514,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-// 사용자 메시지 추가
-function appendUserMessage(message) {
-    const chatBox = document.getElementById("chat-box");
-    const userMessage = document.createElement("li");
-    userMessage.classList.add("message", "user-message");
-    userMessage.textContent = message;
-    chatBox.appendChild(userMessage);
-}
-
-
-// 챗봇 응답에 로딩 메시지 추가
-function appendBotResponseWithLoading() {
-    const chatBox = document.getElementById("chat-box");
-    const botResponse = document.createElement("li");
-    botResponse.classList.add("message", "bot-response");
-    
-    const loadingMessage = document.createElement("span");
-    loadingMessage.id = "bot-loading-message";
-    loadingMessage.textContent = "🤖 로딩 중...";  // 로딩 메시지 내용
-
-    botResponse.appendChild(loadingMessage);
-    chatBox.appendChild(botResponse);
-}
-
-// 챗봇 응답 메시지 업데이트
-function updateBotResponse(responseMessage) {
-    const chatBox = document.getElementById("chat-box");
-    const lastBotResponse = chatBox.lastElementChild;
-    
-    if (lastBotResponse && lastBotResponse.classList.contains("bot-response")) {
-        lastBotResponse.textContent = responseMessage;  // 응답 메시지로 변경
-        
-    }
-}
-
-
-// 페이지가 새로 고쳐지기 전에 localStorage에서 session_id를 삭제
+// ✅ 페이지가 새로 고쳐지기 전에 localStorage에서 session_id를 삭제
 window.addEventListener('beforeunload', function() {
     localStorage.removeItem("session_id");
     currentSessionId = null;
@@ -411,4 +525,99 @@ window.addEventListener('beforeunload', function() {
 // 페이지가 로드될 때 대화 기록 불러오기
 window.onload = function() {
     loadChatHistory();
+    // 페이지 로드 시 스크롤을 최상단으로 이동
+    const chatBox = document.getElementById("chat-box");
+    if (chatBox) {
+        chatBox.scrollTop = 0;
+    }
+    hasStartedChat = false; // 페이지 로드 시 대화 시작 상태 초기화
 };
+
+// 마이페이지 이동
+function goToMypage() {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+        // 비로그인 상태일 때 로그인 페이지로 이동
+        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
+    } else {
+        // 로그인 상태일 때 마이페이지로 이동
+        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/mypage/mypage.html";
+    }
+}
+
+// 채팅 히스토리 다시 로드하는 함수
+function reloadChatHistory() {
+    console.log("채팅 히스토리 다시 로드 중...");
+
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    // 현재 열려있는 아코디언의 날짜를 저장
+    const openAccordions = [];
+    document.querySelectorAll('.accordion').forEach(accordion => {
+        if (accordion.classList.contains('active')) {
+            openAccordions.push(accordion.textContent.split(' ')[0]); // 날짜 부분만 저장
+        }
+    });
+
+    axios.get("http://127.0.0.1:8000/chatbot/chat_history/", {
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token,
+        }
+    })
+    .then(response => {
+        console.log("채팅 히스토리 업데이트 성공:", response.data);
+        const data = response.data;
+        const historyList = document.getElementById("chat-history");
+        historyList.innerHTML = "";
+
+        data.forEach(group => {
+            const { date, sessions } = group;
+            
+            // 날짜 항목 생성
+            const dateItem = createDateItem(date);
+            historyList.appendChild(dateItem);
+
+            // 세션 목록 항목 생성
+            const sessionList = createSessionList(sessions);
+            historyList.appendChild(sessionList);
+
+            // 이전에 열려있던 아코디언이면 다시 열기
+            if (openAccordions.includes(date)) {
+                dateItem.classList.add('active');
+                dateItem.textContent = `${date} ▲`;
+                sessionList.style.display = 'block';
+            }
+
+            // 아코디언 기능 추가
+            toggleAccordion(dateItem, sessionList);
+        });
+    })
+    .catch(error => {
+        console.error("채팅 히스토리 업데이트 실패:", error);
+    });
+}
+
+// 코치마크 관련 함수
+function showCoachmark() {
+    const accessToken = localStorage.getItem('access_token');
+    const hasSeenCoachmark = localStorage.getItem('has_seen_coachmark');
+    
+    if (!accessToken && !hasSeenCoachmark) {
+        document.querySelector('.coachmark-container').classList.add('show');
+        localStorage.setItem('has_seen_coachmark', 'true');
+    }
+}
+
+function hideCoachmark() {
+    document.querySelector('.coachmark-container').classList.remove('show');
+}
+
+// 페이지 로드 시 코치마크 표시
+document.addEventListener('DOMContentLoaded', () => {
+    showCoachmark();
+    
+    // 코치마크 닫기 버튼 이벤트 리스너
+    document.querySelector('.coachmark-close').addEventListener('click', hideCoachmark);
+});

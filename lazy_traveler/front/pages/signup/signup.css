@@ -76,6 +76,7 @@ body {
 .id-group {
     display: flex;
     gap: 10px;
+    font-size: 17px;
 }
 
 input[type="text"], input[type="password"] {
@@ -84,7 +85,7 @@ input[type="text"], input[type="password"] {
     padding: 15px;
     border: 1px solid #DDDDDD;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 17px;
     box-sizing: border-box;
     outline: none;
     color: #666666;
@@ -107,7 +108,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     background-color: white;
     color: #5F5DE3;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 17px;
     transition: all 0.2s;
 }
 
@@ -129,7 +130,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .tags-header p {
     font-family: 'basicfont', sans-serif;
-    font-size: 18px;
+    font-size: 17px;
     color: #727272;
     margin: 0;
 }
@@ -192,7 +193,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .footer {
     text-align: center;
-    font-size: 14px;
+    font-size: 17px;
     color: #A6A5A5;
 }
 
