@@ -11,7 +11,7 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
-persist_dir = os.path.join(settings.BASE_DIR, 'chatbot', 'vector_store')
+persist_dir = os.path.join(settings.BASE_DIR, 'chatbot', 'vector')
 
 # .env 파일 로드
 load_dotenv()
@@ -19,12 +19,24 @@ load_dotenv()
 # API key 설정
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# ✅ vector_store.py에서 생성한 벡터 DB 불러오기
-embeddings = OpenAIEmbeddings()
+# settings.BASE_DIR의 경로가 올바르게 설정되어 있는지 확인
+persist_dir = os.path.join(settings.BASE_DIR, 'chatbot', 'vector_2')
+
+# 경로가 존재하는지 확인하고, 없으면 생성
+if not os.path.exists(persist_dir):
+    os.makedirs(persist_dir)
+
+# embeddings 도구 설정
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+
+# Chroma DB 로드
 vector_store = Chroma(
-    persist_directory=persist_dir,  
-    embedding_function=embeddings  
+    collection_name="combined_collection",
+    embedding_function=embeddings,
+    persist_directory=persist_dir
 )
+
+
 
 # 벡터 검색기 설정
 retriever = vector_store.as_retriever(search_kwargs={"k": 10})  # 최대 10개 문서 검색
@@ -110,6 +122,9 @@ prompt = ChatPromptTemplate.from_template(
 
 def get_recommendation(user_query, session_id=None, username=None, latitude=None, longitude=None):
     try:
+        # 정상적으로 로드된 경우 출력
+        print(f"Chroma DB loaded from: {persist_dir}")
+
         # 현재 시간 가져오기
         now = datetime.now()
         current_hour = now.hour
@@ -139,6 +154,14 @@ def get_recommendation(user_query, session_id=None, username=None, latitude=None
 
         # 대화 내역 가져오기
         context = get_context(session_id)
+
+        # Chroma에서 similarity_search_with_score 메서드를 호출하여 유사한 문서 검색
+        results = vector_store.similarity_search_with_score(user_query, k=1)
+        #질문 유사도 계산 후 반환
+        for res, score in results:
+            if score < 1.0:
+                answer = res.metadata.get('answer', 'Unknown answer')  # 'answer' 키값을 가져옴
+                return answer 
 
         # 벡터 DB에서 관련 문서 검색 (tags 반영)
         search_query = f"{user_query} (위치: {latitude}, {longitude}, 시간: {time_of_day}) 태그: {tags_query}"
