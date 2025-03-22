@@ -1,11 +1,11 @@
 // 맵 페이지로 이동
 function goToMap() {
-    window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/map/map.html";
+    window.location.href = "lazy-traveler.store";
 }
 
 document.addEventListener("DOMContentLoaded", async function() {
     try {
-        const response = await axios.get("http://localhost:8000/accounts/mypage/", {
+        const response = await axios.get("api.lazy-traveler.store", {
             headers: {
                 "Authorization": "Bearer " + localStorage.getItem("access_token"),
                 "Content-Type": "application/json"
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 function logout() {
     const refreshToken = localStorage.getItem("refresh_token");
     
-    axios.post("http://localhost:8000/accounts/logout/", {
+    axios.post("api.lazy-traveler.store", {
         refresh_token: refreshToken
     }, {
         headers: {
@@ -51,7 +51,7 @@ function logout() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("session_id");
         alert("로그아웃되었습니다.");
-        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
+        window.location.href = "lazy-traveler.store";
     })
     .catch(error => {
         console.error("로그아웃 오류:", error);
@@ -76,7 +76,7 @@ function delete_account() {
         return;
     }
 
-    axios.delete('http://localhost:8000/accounts/delete_account/', {
+    axios.delete('api.lazy-traveler.store', {
         headers: {
             'Authorization': `Bearer ${accessToken}`
         }
@@ -86,7 +86,7 @@ function delete_account() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("session_id");
         alert("회원 탈퇴가 완료되었습니다.");
-        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
+        window.location.href = "lazy-traveler.store";
     })
     .catch(error => {
         console.error("회원탈퇴 오류:", error);
@@ -141,7 +141,7 @@ async function changePassword(event) {
     }
 
     try {
-        const response = await axios.post('http://localhost:8000/accounts/update_password/', {
+        const response = await axios.post('api.lazy-traveler.store', {
             current_password: currentPassword,
             new_password: newPassword
         }, {
@@ -193,7 +193,7 @@ function clearTagErrorMessage() {
 
 const getTags = async () => {
     try {
-        const response = await axios.get("http://localhost:8000/accounts/update_tags/", {
+        const response = await axios.get("api.lazy-traveler.store", {
             headers: {
                 'Authorization': 'Bearer ' + localStorage.getItem('access_token')
             }
@@ -241,7 +241,7 @@ document.getElementById('save-tags-btn').addEventListener('click', async () => {
     }
 
     try {
-        const response = await axios.put("http://localhost:8000/accounts/update_tags/", {
+        const response = await axios.put("api.lazy-traveler.store", {
             tags: selectedTags.join(',')
         }, {
             headers: {
