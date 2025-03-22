@@ -1,15 +1,33 @@
+// 맵 페이지로 이동
+function goToMap() {
+    window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/map/map.html";
+}
+
 document.addEventListener("DOMContentLoaded", async function() {
     try {
         const response = await axios.get("http://localhost:8000/accounts/mypage/", {
             headers: {
-                "Authorization": "Bearer " + localStorage.getItem("access_token"), // ✅ 토큰 인증 필요
+                "Authorization": "Bearer " + localStorage.getItem("access_token"),
                 "Content-Type": "application/json"
             }
         });
 
         const data = response.data;
         document.getElementById("username").textContent = data.username;
-        document.getElementById("tags").textContent = data.tags ? data.tags : "없음";
+        
+        // 태그 표시
+        const tagsContainer = document.getElementById("tags");
+        tagsContainer.innerHTML = ''; // 기존 태그 초기화
+        
+        if (data.tags) {
+            const tags = data.tags.split(',');
+            tags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag';
+                tagElement.textContent = tag;
+                tagsContainer.appendChild(tagElement);
+            });
+        }
     } catch (error) {
         console.error("오류 발생:", error);
         document.getElementById("username").textContent = "오류 발생";
@@ -17,53 +35,58 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 });
 
-
-// ✅ 로그아웃
+// 로그아웃
 function logout() {
-    localStorage.removeItem("refresh_token");  // ✅ 리프레시 토큰 삭제
-    localStorage.removeItem("access_token");  // ✅ 엑세스 토큰 삭제
-    localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
-    alert("로그아웃 되었습니다.");
-    window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
+    const refreshToken = localStorage.getItem("refresh_token");
+    
+    axios.post("http://localhost:8000/accounts/logout/", {
+        refresh_token: refreshToken
+    }, {
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("access_token")
+        }
+    })
+    .then(() => {
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("session_id");
+        alert("로그아웃되었습니다.");
+        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
+    })
+    .catch(error => {
+        console.error("로그아웃 오류:", error);
+        alert("로그아웃 중 오류가 발생했습니다.");
+    });
 }
 
+// 회원 탈퇴 모달 관련
+function openWithdrawModal() {
+    document.getElementById('withdraw-modal').style.display = 'block';
+}
+
+function closeWithdrawModal() {
+    document.getElementById('withdraw-modal').style.display = 'none';
+}
 
 // 회원 탈퇴
 function delete_account() {
-    const accessToken = localStorage.getItem('access_token');  // 로컬 스토리지에서 엑세스 토큰 가져오기
-
+    const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
         alert("엑세스 토큰이 없습니다. 로그인해주세요.");
         return;
     }
 
-    // 사용자에게 회원 탈퇴 확인 요청
-    const isConfirmed = confirm("정말 탈퇴하시겠습니까?🥹 탈퇴 시 모든 정보가 사라집니다❗️");
-    if (!isConfirmed) {
-        return;  // 사용자가 취소하면 함수 종료
-    }
-
-    // 계정 삭제 요청
     axios.delete('http://localhost:8000/accounts/delete_account/', {
         headers: {
-            'Authorization': `Bearer ${accessToken}`  // Authorization 헤더에 엑세스 토큰 추가
+            'Authorization': `Bearer ${accessToken}`
         }
     })
     .then(response => {
-        console.log('서버 응답:', response);  // 서버 응답 데이터 확인
-        if (response.data.message) {
-            alert(response.data.message);  // 응답 메시지 출력
-        } else {
-            console.log('응답 메시지 없음:', response.data);  // 응답 데이터가 예상과 다를 때 확인
-        }
-
-        // 토큰 삭제
-        localStorage.removeItem("refresh_token");  // ✅ 리프레시 토큰 삭제
-        localStorage.removeItem("access_token");  // ✅ 엑세스 토큰 삭제
-        localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
-        
-        // 로그인 페이지로 리다이렉트
-        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html"; 
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("session_id");
+        alert("회원 탈퇴가 완료되었습니다.");
+        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
     })
     .catch(error => {
         console.error("회원탈퇴 오류:", error);
@@ -71,140 +94,174 @@ function delete_account() {
     });
 }
 
-
-
-// 비밀번호 변경 모달 열기
+// 비밀번호 변경 모달 관련
 function openChangePasswordModal() {
     document.getElementById('change-password-modal').style.display = "block";
+    // 에러 메시지 초기화
+    hideAllPasswordErrors();
+    // 입력 필드 초기화
+    document.getElementById('current-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
 }
 
-// 비밀번호 변경 모달 닫기
 function closeChangePasswordModal() {
     document.getElementById('change-password-modal').style.display = "none";
+    hideAllPasswordErrors();
 }
 
-// 비밀번호 변경 처리
+function hideAllPasswordErrors() {
+    document.getElementById('current-password-error').style.display = 'none';
+    document.getElementById('same-password-error').style.display = 'none';
+    document.getElementById('confirm-password-error').style.display = 'none';
+}
+
+function showPasswordErrors(errors) {
+    hideAllPasswordErrors();
+    errors.forEach(errorId => {
+        document.getElementById(errorId).style.display = 'block';
+    });
+}
+
 async function changePassword(event) {
-    event.preventDefault();  // 폼이 제출되는 기본 동작을 막음
+    event.preventDefault();
+    hideAllPasswordErrors();
 
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
 
-    // 새 비밀번호와 확인용 비밀번호가 같은지 체크
+    const errors = [];
+
+    // 새 비밀번호 일치 여부 확인
     if (newPassword !== confirmPassword) {
-        alert("새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        errors.push('confirm-password-error');
+        showPasswordErrors(errors);
         return;
     }
 
     try {
         const response = await axios.post('http://localhost:8000/accounts/update_password/', {
-            current_password: currentPassword, // 현재 비밀번호 추가
+            current_password: currentPassword,
             new_password: newPassword
         }, {
             headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
             }
         });
 
-        if (response.status === 200) {
-            alert("비밀번호가 성공적으로 변경되었습니다.");
-            closeChangePasswordModal();  // 모달 닫기
-        }
+        alert("비밀번호가 성공적으로 변경되었습니다.");
+        closeChangePasswordModal();
     } catch (error) {
-        console.error('비밀번호 변경 오류:', error);
-        alert(error.response?.data?.error || '비밀번호 변경에 실패했습니다.');
+        if (error.response?.data?.error) {
+            if (error.response.data.error.includes('기존 비밀번호와 동일')) {
+                errors.push('same-password-error');
+            }
+            if (error.response.data.error.includes('현재 비밀번호가 일치하지 않습니다')) {
+                errors.push('current-password-error');
+            }
+            showPasswordErrors(errors);
+        } else {
+            alert("비밀번호 변경에 실패했습니다.");
+        }
     }
 }
 
-
-
-
-// 모달 열기
+// 태그 변경 모달 관련
 function openChangeTagsModal() {
     document.getElementById('change-tags-modal').style.display = 'block';
-    getTags();  // 모달 열 때 태그 불러오기
+    clearTagErrorMessage();
+    getTags();
 }
 
-// 모달 닫기
 function closeChangeTagsModal() {
     document.getElementById('change-tags-modal').style.display = 'none';
+    clearTagErrorMessage();
 }
 
-// 태그 변경 요청
-const getTags = async () => {
-    const accessToken = localStorage.getItem("access_token");  // 로컬 스토리지에서 엑세스 토큰 가져오기
+function showTagErrorMessage() {
+    const errorMessage = document.querySelector('.tag-error-message');
+    errorMessage.textContent = '최소 한 개 이상의 태그를 선택해주세요';
+    errorMessage.classList.add('show');
+}
 
+function clearTagErrorMessage() {
+    const errorMessage = document.querySelector('.tag-error-message');
+    errorMessage.textContent = '';
+    errorMessage.classList.remove('show');
+}
+
+const getTags = async () => {
     try {
-        const response = await axios.get("http://127.0.0.1:8000/accounts/update_tags/", {
+        const response = await axios.get("http://localhost:8000/accounts/update_tags/", {
             headers: {
-                'Authorization': `Bearer ${accessToken}`  // Authorization 헤더에 토큰 추가
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
             }
         });
 
-        const currentTags = response.data.tags.split(',');  // 쉼표로 태그 나누기
-        const availableTags = ['공원', '관광명소', '베이커리', '베트남 음식','브런치', '비건', '서점', '양식', '일식', '전시', '주점', '중식', '카페', '태국 음식', '피자', '한식', '햄버거']; 
+        const currentTags = response.data.tags ? response.data.tags.split(',') : [];
+        const availableTags = ['공원', '관광명소', '베이커리', '베트남 음식', '브런치', '비건', '서점', '양식', '일식', '전시', '주점', '중식', '카페', '태국 음식', '피자', '한식', '햄버거'];
+
+        // 태그 버튼 생성
+        const availableTagsContainer = document.getElementById('available-tags');
+        availableTagsContainer.innerHTML = '';
+        
+        availableTags.forEach(tag => {
+            const tagButton = document.createElement('button');
+            tagButton.className = 'tag-btn' + (currentTags.includes(tag) ? ' active' : '');
+            tagButton.textContent = tag;
+            tagButton.onclick = () => tagButton.classList.toggle('active');
+            availableTagsContainer.appendChild(tagButton);
+        });
 
         // 현재 태그 표시
         const currentTagsContainer = document.getElementById('current-tags');
-        currentTagsContainer.innerHTML = '';  // 기존 태그 초기화
+        currentTagsContainer.innerHTML = '';
+        
         currentTags.forEach(tag => {
-            const tagElement = document.createElement('button');
-            tagElement.classList.add('tag-button', 'selected');
-            tagElement.textContent = tag;
-            tagElement.disabled = true;  // 현재 태그는 클릭 불가
-            currentTagsContainer.appendChild(tagElement);
-        });
-
-        // 추가할 수 있는 태그 표시
-        const availableTagsContainer = document.getElementById('available-tags');
-        availableTagsContainer.innerHTML = '';  // 기존 태그 초기화
-        availableTags.forEach(tag => {
-            const tagElement = document.createElement('button');
-            tagElement.classList.add('tag-button');
-            tagElement.textContent = tag;
-            
-            // 선택된 태그는 'selected' 클래스 추가
-            if (currentTags.includes(tag)) {
-                tagElement.classList.add('selected');
-            }
-
-            tagElement.onclick = () => tagElement.classList.toggle('selected');
-            availableTagsContainer.appendChild(tagElement);
+            const tagButton = document.createElement('button');
+            tagButton.className = 'tag-btn active';
+            tagButton.textContent = tag;
+            tagButton.disabled = true;
+            currentTagsContainer.appendChild(tagButton);
         });
     } catch (error) {
         console.error("태그 불러오기 실패:", error);
+        alert("태그를 불러오는데 실패했습니다.");
     }
 };
 
-const saveTags = async () => {
-    const accessToken = localStorage.getItem("access_token");  // 로컬 스토리지에서 엑세스 토큰 가져오기
+document.getElementById('save-tags-btn').addEventListener('click', async () => {
+    const selectedTags = Array.from(document.querySelectorAll('#available-tags .tag-btn.active'))
+        .map(btn => btn.textContent);
 
-    const selectedTags = [];
-    document.querySelectorAll('#available-tags .tag-button.selected').forEach(button => {
-        selectedTags.push(button.textContent);
-    });
-
-    // 선택된 태그들을 쉼표로 구분된 문자열로 변환
-    const tagsString = selectedTags.join(',');
+    if (selectedTags.length === 0) {
+        showTagErrorMessage();
+        return;
+    }
 
     try {
-        const response = await axios.put("http://127.0.0.1:8000/accounts/update_tags/", {
-            tags: tagsString  // 쉼표로 구분된 태그 문자열
+        const response = await axios.put("http://localhost:8000/accounts/update_tags/", {
+            tags: selectedTags.join(',')
         }, {
             headers: {
-                'Authorization': `Bearer ${accessToken}`,  // Authorization 헤더에 토큰 추가
-                'Content-Type': 'application/json'  // JSON 형식으로 요청
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                'Content-Type': 'application/json'
             }
         });
-        alert(response.data.message);
+
+        alert("태그가 성공적으로 변경되었습니다.");
+        closeChangeTagsModal();
+        location.reload();
     } catch (error) {
-        console.error("태그 저장 실패:", error.response?.data || error);
-        alert("태그 저장 실패.");
+        console.error("태그 저장 실패:", error);
+        alert("태그 저장에 실패했습니다.");
     }
-};
+});
 
-document.getElementById('save-tags-btn').addEventListener('click', saveTags);
-
-// 페이지 로딩 시 태그 불러오기
-window.onload = getTags;
+// 태그 선택 시 에러 메시지 제거
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('tag-btn')) {
+        clearTagErrorMessage();
+    }
+});
