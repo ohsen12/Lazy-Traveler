@@ -37,9 +37,11 @@ subprocess.run(["python", "manage.py", "migrate"], check=True)
 print("Starting Django server...")
 subprocess.run([
     "gunicorn",
-    "lazy_traveler.wsgi:application",
+    "lazy_traveler.asgi:application",
+    "-k", "uvicorn.workers.UvicornWorker",
     "--bind", "0.0.0.0:8000",
     "--workers", "3",
     "--threads", "2",
 ], check=True)
+
 

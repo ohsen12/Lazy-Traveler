@@ -163,7 +163,7 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
         chain = prompt | llm
 
         # 템플릿에 context, location_context, time_context, user_query 전달
-        result = chain.invoke({
+        result = await chain.ainvoke({
             "context": context, 
             "location_context": location_context, 
             "time_context": time_context, 
