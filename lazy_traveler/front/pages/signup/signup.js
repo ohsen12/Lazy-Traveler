@@ -37,7 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await axios.post('https://api.lazy-traveler.store/accounts/check_username/', {
                 username: username
-            });
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                withCredentials: true  // 이 부분 추가해보기
+            })
 
             if (response.status === 200) {
                 showMessage(idMessage, '사용 가능한 ID입니다', true);
