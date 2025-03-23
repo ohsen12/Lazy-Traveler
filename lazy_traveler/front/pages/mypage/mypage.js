@@ -1,6 +1,6 @@
 // 맵 페이지로 이동
 function goToMap() {
-    window.location.href = "lazy-traveler.store";
+    window.location.href = "https://lazy-traveler.store";
 }
 
 document.addEventListener("DOMContentLoaded", async function() {
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 function logout() {
     const refreshToken = localStorage.getItem("refresh_token");
     
-    axios.post("api.lazy-traveler.store", {
+    axios.post("https://api.lazy-traveler.store", {
         refresh_token: refreshToken
     }, {
         headers: {
@@ -51,7 +51,7 @@ function logout() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("session_id");
         alert("로그아웃되었습니다.");
-        window.location.href = "lazy-traveler.store";
+        window.location.href = "https://lazy-traveler.store";
     })
     .catch(error => {
         console.error("로그아웃 오류:", error);
@@ -76,7 +76,7 @@ function delete_account() {
         return;
     }
 
-    axios.delete('api.lazy-traveler.store', {
+    axios.delete('https://api.lazy-traveler.store', {
         headers: {
             'Authorization': `Bearer ${accessToken}`
         }
@@ -86,7 +86,7 @@ function delete_account() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("session_id");
         alert("회원 탈퇴가 완료되었습니다.");
-        window.location.href = "lazy-traveler.store";
+        window.location.href = "https://lazy-traveler.store";
     })
     .catch(error => {
         console.error("회원탈퇴 오류:", error);
@@ -141,7 +141,7 @@ async function changePassword(event) {
     }
 
     try {
-        const response = await axios.post('api.lazy-traveler.store', {
+        const response = await axios.post('https://api.lazy-traveler.store', {
             current_password: currentPassword,
             new_password: newPassword
         }, {
@@ -193,7 +193,7 @@ function clearTagErrorMessage() {
 
 const getTags = async () => {
     try {
-        const response = await axios.get("api.lazy-traveler.store", {
+        const response = await axios.get("https://api.lazy-traveler.store", {
             headers: {
                 'Authorization': 'Bearer ' + localStorage.getItem('access_token')
             }
@@ -241,7 +241,7 @@ document.getElementById('save-tags-btn').addEventListener('click', async () => {
     }
 
     try {
-        const response = await axios.put("api.lazy-traveler.store", {
+        const response = await axios.put("https://api.lazy-traveler.store", {
             tags: selectedTags.join(',')
         }, {
             headers: {

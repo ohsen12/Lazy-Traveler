@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
 
         // 토큰이 있을 경우 서버에서 유저 데이터 가져오기
-        const response = await axios.get("api.lazy-traveler.store", {
+        const response = await axios.get("https://api.lazy-traveler.store", {
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"

@@ -6,7 +6,7 @@ document.getElementById("login-form").addEventListener("submit", async function(
     const messageDiv = document.getElementById('login-message');
 
     try {
-        const response = await axios.post("api.lazy-traveler.store", {
+        const response = await axios.post("https://api.lazy-traveler.store", {
             username: username,
             password: password
         });
@@ -18,7 +18,7 @@ document.getElementById("login-form").addEventListener("submit", async function(
             localStorage.setItem("refresh_token", response.data.refresh);
 
             // ✅ 바로 페이지 이동 (alert 제거)
-            window.location.href = 'lazy-traveler.store';
+            window.location.href = 'https://lazy-traveler.store';
         } else {
             messageDiv.textContent = '비밀번호가 일치하지 않습니다.';
         }
