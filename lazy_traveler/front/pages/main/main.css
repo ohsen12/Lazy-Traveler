@@ -1,11 +1,11 @@
 @font-face {
     font-family: 'cafe24font';
-    src: url('/lazy_traveler/front/fonts/Cafe24Nyangi-W-v1.0.otf') format('opentype');
+    src: url('/fonts/Cafe24Nyangi-W-v1.0.otf') format('opentype');
 }
 
 @font-face {
     font-family: 'basicfont';
-    src: url('/lazy_traveler/front/fonts/온글잎.otf') format('opentype');
+    src: url('/fonts/온글잎.otf') format('opentype');
 }
 
 body {

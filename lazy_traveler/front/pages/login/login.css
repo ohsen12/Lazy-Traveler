@@ -1,15 +1,15 @@
 @font-face {
     font-family: 'cafe24font';
-    src: url('/lazy_traveler/front/fonts/Cafe24Nyangi-W-v1.0.otf') format('opentype'),
-         url('/lazy_traveler/front/fonts/Cafe24Nyangi-W-v1.0.ttf') format('turetype');
+    src: url('/fonts/Cafe24Nyangi-W-v1.0.otf') format('opentype'),
+         url('/fonts/Cafe24Nyangi-W-v1.0.ttf') format('turetype');
     font-weight: normal;
     font-style: normal;
 }
   
 @font-face {
     font-family: 'basicfont';
-    src: url('/lazy_traveler/front/fonts/온글잎.otf') format('opentype'),
-         url('/lazy_traveler/front/fonts/온글잎.ttf') format('turetype');
+    src: url('/fonts/온글잎.otf') format('opentype'),
+         url('/fonts/온글잎.ttf') format('turetype');
     font-weight: normal;
     font-style: normal;
 }
