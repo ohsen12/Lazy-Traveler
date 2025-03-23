@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
 
         // 토큰이 있을 경우 서버에서 유저 데이터 가져오기
-        const response = await axios.get("api.lazy-traveler.store", {
+        const response = await axios.get("https://api.lazy-traveler.store/accounts/mypage/", {
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
@@ -137,8 +137,8 @@ function connectWebSocket() {
     // 로컬 스토리지에서 토큰을 가져와 Authorization 헤더에 추가
     const token = localStorage.getItem("access_token");
     const url = token 
-        ? `wss://api.lazy-traveler.store/ws/chat/?token=${token}` 
-        : "wss://api.lazy-traveler.store/ws/chat/";
+    ? `wss://api.lazy-traveler.store/ws/chat/?token=${token}` 
+    : "wss://api.lazy-traveler.store/ws/chat/";
 
     socket = new WebSocket(url);
 
@@ -218,7 +218,7 @@ function logout() {
     localStorage.removeItem("access_token");  // ✅ 엑세스 토큰 삭제
     localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
     alert("로그아웃 되었습니다.");
-    window.location.href = "lazy-traveler.store";
+    window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/main/main.html";
 }
 
 // 대화 내역 불러오기
@@ -234,7 +234,7 @@ function loadChatHistory() {
     }
 
     // 토큰이 있는 경우 대화 내역 불러오기
-    axios.get("api.lazy-traveler.store", {
+    axios.get("https://api.lazy-traveler.store/chatbot/chat_history/", {
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + token,
@@ -281,7 +281,7 @@ function displayLoginMessage() {
     `;
 
     const loginButton = loginMessage.querySelector(".login-btn");
-    loginButton.onclick = () => window.location.href = "lazy-traveler.store";  // 로그인 페이지로 이동
+    loginButton.onclick = () => window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/login/login.html";  // 로그인 페이지로 이동
 
     historyList.appendChild(loginMessage);
 }
@@ -377,7 +377,7 @@ function loadSessionMessages(session_id) {
     const token = localStorage.getItem("access_token");
     
     // 사용자 정보를 가져온 후 채팅 내역을 불러옵니다.
-    axios.get("api.lazy-traveler.store", {
+    axios.get("https://api.lazy-traveler.store/accounts/mypage/", {
         headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -540,10 +540,10 @@ function goToMypage() {
     const token = localStorage.getItem("access_token");
     if (!token) {
         // 비로그인 상태일 때 로그인 페이지로 이동
-        window.location.href = "lazy-traveler.store";
+        window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/login/login.html";
     } else {
         // 로그인 상태일 때 마이페이지로 이동
-        window.location.href = "lazy-traveler.store";
+        window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/mypage/mypage.html";
     }
 }
 
@@ -562,7 +562,7 @@ function reloadChatHistory() {
         }
     });
 
-    axios.get("api.lazy-traveler.store", {
+    axios.get("https://api.lazy-traveler.store/chatbot/chat_history/", {
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + token,

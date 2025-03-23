@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await axios.post('api.lazy-traveler.store', {
+            const response = await axios.post('https://api.lazy-traveler.store/accounts/check_username/', {
                 username: username
             });
 
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await axios.post('api.lazy-traveler.store', {
+            const response = await axios.post('https://api.lazy-traveler.store/accounts/signup/', {
                 username: username,
                 password: password,
                 password2: password2,
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.status === 201 || response.status === 200) {
                 alert('회원가입이 완료되었습니다.');
                 // 로그인 페이지로 이동
-                window.location.href = 'lazy-traveler.store';
+                window.location.href = 'https://lazy-traveler.store/lazy_traveler/front/pages/login/login.html';
             }
         } catch (error) {
             console.error('회원가입 오류:', error);
@@ -158,6 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 로그인 페이지 이동 링크
     document.querySelector('.footer a').addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = 'lazy-traveler.store';
+        window.location.href = 'https://lazy-traveler.store/lazy_traveler/front/pages/login/login.html';
     });
 });
