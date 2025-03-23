@@ -218,7 +218,7 @@ function logout() {
     localStorage.removeItem("access_token");  // ✅ 엑세스 토큰 삭제
     localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
     alert("로그아웃 되었습니다.");
-    window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/main/main.html";
+    window.location.href = "https://lazy-traveler.store/pages/main/main.html";
 }
 
 // 대화 내역 불러오기
@@ -281,7 +281,7 @@ function displayLoginMessage() {
     `;
 
     const loginButton = loginMessage.querySelector(".login-btn");
-    loginButton.onclick = () => window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/login/login.html";  // 로그인 페이지로 이동
+    loginButton.onclick = () => window.location.href = "https://lazy-traveler.store/pages/login/login.html";  // 로그인 페이지로 이동
 
     historyList.appendChild(loginMessage);
 }
@@ -540,10 +540,10 @@ function goToMypage() {
     const token = localStorage.getItem("access_token");
     if (!token) {
         // 비로그인 상태일 때 로그인 페이지로 이동
-        window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/login/login.html";
+        window.location.href = "https://lazy-traveler.store/pages/login/login.html";
     } else {
         // 로그인 상태일 때 마이페이지로 이동
-        window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/mypage/mypage.html";
+        window.location.href = "https://lazy-traveler.store/pages/mypage/mypage.html";
     }
 }
 

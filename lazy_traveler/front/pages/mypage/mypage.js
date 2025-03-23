@@ -1,6 +1,6 @@
 // 맵 페이지로 이동
 function goToMap() {
-    window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/map/map.html";
+    window.location.href = "https://lazy-traveler.store/pages/map/map.html";
 }
 
 document.addEventListener("DOMContentLoaded", async function() {
@@ -51,7 +51,7 @@ function logout() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("session_id");
         alert("로그아웃되었습니다.");
-        window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/login/login.html";
+        window.location.href = "https://lazy-traveler.store/pages/login/login.html";
     })
     .catch(error => {
         console.error("로그아웃 오류:", error);
@@ -86,7 +86,7 @@ function delete_account() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("session_id");
         alert("회원 탈퇴가 완료되었습니다.");
-        window.location.href = "https://lazy-traveler.store/lazy_traveler/front/pages/login/login.html";
+        window.location.href = "https://lazy-traveler.store/pages/login/login.html";
     })
     .catch(error => {
         console.error("회원탈퇴 오류:", error);
