@@ -27,15 +27,15 @@ chroma_db = Chroma(
 print(f"전체 문서 개수: {chroma_db._collection.count()}")
 
 # 4. 사용자 질문에 대해 벡터화 및 유사도 검색 수행
-user_question = ""
+user_question = "관심사 말고 위치로만 추천 가능해?"
 
 # 5. Chroma에서 similarity_search_with_score 메서드를 호출하여 유사한 문서 검색
-results = chroma_db.similarity_search_with_score(user_question, k=1)
+results = chroma_db.similarity_search_with_relevance_scores(user_question, k=1)
 
 # 6. 유사도 점수와 함께 결과 출력
 
 for res, score in results:
-    # if score >= 0.1:
-    print(f"* {res.metadata}")
+    if score >= 0.1:
+        print(f"* {res.metadata}")
     print(f"* [유사도점수 ={score}]")    
     # print(f"* [SIM={score:3f}] {res.page_content} [{res.metadata}]")
