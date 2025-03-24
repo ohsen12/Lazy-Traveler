@@ -30,7 +30,7 @@ class SignupView(APIView):
             user = serializer.save()  # 새 사용자 생성
             return Response(
                 {
-                    "message": "Sign-up completed.",
+                    "message": "회원가입 완료",
                     "id": user.id, 
                     "username":user.username,
                     "tags": user.tags
@@ -80,7 +80,7 @@ class LogoutView(BaseUserView):
             token.blacklist()
             return Response(
                 {
-                    "message": "Successfully logged out.",
+                    "message": "로그아웃 완료",
                     "username": request.user.username
                 }, status=status.HTTP_200_OK
             )
@@ -171,4 +171,4 @@ class DeleteAccountView(BaseUserView):
         # 로그인한 사용자를 DB에서 삭제한다.
         request.user.delete()
         # 성공 메세지 반환
-        return Response({"message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "회원 탈퇴가 완료되었습니다."}, status=status.HTTP_204_NO_CONTENT)
