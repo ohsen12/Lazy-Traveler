@@ -180,6 +180,12 @@ function sendMessage() {
     const userMessage = document.getElementById("user-message").value.trim();
     if (!userMessage) return;
 
+    if (!socket) {
+        console.warn("🚨 WebSocket이 초기화되지 않았습니다. 연결을 시도합니다...");
+        connectWebSocket(); // 연결 시도 (이미 연결 시도하고 있다면 중복 방지 로직도 고려 가능)
+        return;
+    }
+    
     if (socket.readyState === WebSocket.OPEN) {
         hasStartedChat = true; // 대화 시작 표시
         appendMessage(userMessage, "user-message");
