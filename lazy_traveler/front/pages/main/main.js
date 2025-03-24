@@ -4,6 +4,12 @@ let currentSessionId = null;
 let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
 
 document.addEventListener("DOMContentLoaded", () => {
+    // 페이지 로드 시 채팅창 최상단으로 스크롤
+    const chatBox = document.getElementById("chat-box");
+    if (chatBox) {
+        chatBox.scrollTop = 0;
+    }
+    
     kakao.maps.load(() => {
         initKakaoMap();  
         initChatUI();
@@ -689,3 +695,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 코치마크 닫기 버튼 이벤트 리스너
     document.querySelector('.coachmark-close').addEventListener('click', hideCoachmark);
 });
+
+// 메인 페이지로 이동
+function goToMain() {
+    window.location.href = "https://lazy-traveler.store/pages/main/main.html";
+}
