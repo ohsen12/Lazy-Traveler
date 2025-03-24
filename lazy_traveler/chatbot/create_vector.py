@@ -73,6 +73,8 @@ for json_filename in json_files:
             "name": place.get('name', 'Unknown'),
             "category": place.get('category', 'Unknown'),
             "address": place.get('address', 'Unknown'),
+            "latitude": place.get('latitude', 0),  # 위도 추가
+            "longitude": place.get('longitude', 0),  # 경도 추가
             "rating": place.get('rating', 'N/A'),
             "review_count": place.get('review_count', 'N/A'),
             "opening_hours": ', '.join(place.get('opening_hours', [])) if isinstance(place.get('opening_hours', []), list) else str(place.get('opening_hours', 'N/A')),
