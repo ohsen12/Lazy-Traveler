@@ -42,7 +42,7 @@ vector_store = Chroma(
 retriever = vector_store.as_retriever(search_kwargs={"k": 5})  # 최대 10개 문서 검색
 
 # LLM 설정
-llm = ChatOpenAI(model="gpt-3.5-turbo")
+llm = ChatOpenAI(model="gpt-4o-mini")
 
 # 대화 내역을 가져오는 함수
 def get_context(session_id, max_turns=5):
