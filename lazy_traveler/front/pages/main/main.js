@@ -667,7 +667,7 @@ function reloadChatHistory() {
     });
 }
 
-// 코치마크 관련 함수
+// ✅ 코치마크 관련 함수
 function showCoachmark() {
     const accessToken = localStorage.getItem('access_token');
     const hasSeenCoachmark = localStorage.getItem('has_seen_coachmark');
