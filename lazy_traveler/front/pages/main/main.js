@@ -3,35 +3,7 @@ let socket;
 let currentSessionId = null;
 let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
 
-kakao.maps.load(() => {
-    var container = document.getElementById('map');
-    var options = { 
-        center: new kakao.maps.LatLng(37.5704, 126.9831), // 기본 위치: 종각역
-        level: 3 
-    };
-    map = new kakao.maps.Map(container, options);
-    geocoder = new kakao.maps.services.Geocoder();
 
-    // 기본 마커 (종각역)
-    marker = new kakao.maps.Marker({
-        position: new kakao.maps.LatLng(37.5704, 126.9831),
-        map: map
-    });
-
-    // 정보창 추가
-    infowindow = new kakao.maps.InfoWindow({
-        content: `<div style="padding:5px;">📍 종각역</div>`
-    });
-    infowindow.open(map, marker);
-
-    // 지도 클릭 시 마커 이동 및 주소 업데이트
-    kakao.maps.event.addListener(map, "click", function(event) {
-        var position = event.latLng;
-        marker.setPosition(position);
-        getAddressFromCoords(position);
-
-    });
-});
 
 
 // 현재 위치 가져오기
@@ -119,7 +91,36 @@ document.addEventListener("DOMContentLoaded", async function() {
                 "어느 장소에서 여행하는 루트를 추천해드릴까요?"}
             `;
         }
-
+        
+        kakao.maps.load(() => {
+            var container = document.getElementById('map');
+            var options = { 
+                center: new kakao.maps.LatLng(37.5704, 126.9831), // 기본 위치: 종각역
+                level: 3 
+            };
+            map = new kakao.maps.Map(container, options);
+            geocoder = new kakao.maps.services.Geocoder();
+        
+            // 기본 마커 (종각역)
+            marker = new kakao.maps.Marker({
+                position: new kakao.maps.LatLng(37.5704, 126.9831),
+                map: map
+            });
+        
+            // 정보창 추가
+            infowindow = new kakao.maps.InfoWindow({
+                content: `<div style="padding:5px;">📍 종각역</div>`
+            });
+            infowindow.open(map, marker);
+        
+            // 지도 클릭 시 마커 이동 및 주소 업데이트
+            kakao.maps.event.addListener(map, "click", function(event) {
+                var position = event.latLng;
+                marker.setPosition(position);
+                getAddressFromCoords(position);
+        
+            });
+        });    
     } catch (error) {
         console.error("오류 발생:", error);
     }
@@ -185,7 +186,7 @@ function sendMessage() {
         connectWebSocket(); // 연결 시도 (이미 연결 시도하고 있다면 중복 방지 로직도 고려 가능)
         return;
     }
-    
+
     if (socket.readyState === WebSocket.OPEN) {
         hasStartedChat = true; // 대화 시작 표시
         appendMessage(userMessage, "user-message");
