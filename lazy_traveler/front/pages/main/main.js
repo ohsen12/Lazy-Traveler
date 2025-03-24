@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatBox = document.getElementById("chat-box");
     if (chatBox) {
         chatBox.scrollTop = 0;
+        // 스크롤 위치 초기화 후 localStorage에서 플래그 제거
+        localStorage.removeItem('scrollToTop');
     }
     
     kakao.maps.load(() => {
@@ -698,5 +700,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 메인 페이지로 이동
 function goToMain() {
+    localStorage.setItem('scrollToTop', 'true');
     window.location.href = "https://lazy-traveler.store/pages/main/main.html";
 }
