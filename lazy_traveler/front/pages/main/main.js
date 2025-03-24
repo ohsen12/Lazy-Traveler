@@ -4,13 +4,16 @@ let currentSessionId = null;
 let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
 
 document.addEventListener("DOMContentLoaded", () => {
-    initKakaoMap();
-    initWebSocket();
-    initChatUI();
+    kakao.maps.load(() => {
+        initKakaoMap();  
+        initChatUI();
+        connectWebSocket();
+        showCoachmark();
+    });
 });
 
 function initKakaoMap() {
-    kakao.maps.load(() => {
+    
         console.log("✅ Kakao Maps 로드 완료");
 
         const container = document.getElementById('map');
@@ -39,7 +42,7 @@ function initKakaoMap() {
         });
 
         console.log("✅ Kakao 지도 초기화 완료");
-    });
+    
 }
 
 // 현재 위치 가져오기
