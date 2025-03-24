@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import ChatHistory
 from .serializers import ChatHistorySerializer
-from .chat_logic import get_recommendation
+from .recommendation_service import get_recommendation
 from django.db.models import Min
 from collections import defaultdict
 
