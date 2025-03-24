@@ -1,5 +1,5 @@
 // 메인 페이지로 이동
-function goToMap() {
+function goToMain() {
     window.location.href = "https://lazy-traveler.store/pages/main/main.html";
 }
 
