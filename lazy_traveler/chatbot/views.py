@@ -2,7 +2,7 @@ import uuid
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import ChatHistory
 from .serializers import ChatHistorySerializer
 from .chat_logic import get_recommendation
@@ -12,6 +12,9 @@ from collections import defaultdict
 
 
 class ChatBotView(APIView):
+    
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         """
         로그인한 사용자만 session_id를 부여받고, 대화 내역을 DB에 저장합니다.
