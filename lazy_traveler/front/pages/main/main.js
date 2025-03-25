@@ -2,6 +2,7 @@ let map, marker, geocoder, infowindow;
 let socket;
 let currentSessionId = null;
 let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
+let isProcessingMessage = false; // 메시지 처리 중 상태를 추적하는 변수 추가
 
 document.addEventListener("DOMContentLoaded", () => {
     kakao.maps.load(() => {
@@ -90,22 +91,22 @@ function getAddressFromCoords(coords) {
 function initChatUI() {
     connectWebSocket();
     
-    document.getElementById("send-btn").addEventListener("click", sendMessage);
+    document.getElementById("send-btn").addEventListener("click", () => {
+        if (!isProcessingMessage) {
+            processAndSendMessage();
+        }
+    });
     
-    // 키보드 이벤트 리스너 수정
-    document.getElementById("user-message").addEventListener("keydown", function (event) {
-        // Enter 키가 눌렸고 Shift 키가 눌리지 않은 경우에만 처리
+    const messageInput = document.getElementById("user-message");
+    
+    // keydown 대신 keyup 이벤트 사용
+    messageInput.addEventListener("keyup", function(event) {
         if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault(); // 기본 동작 방지
+            event.preventDefault();
             
-            // 입력값이 있을 때만 메시지 전송
-            const messageInput = document.getElementById("user-message");
-            const message = messageInput.value.trim();
-            
-            if (message) {
-                sendMessage();
-                // 메시지 전송 후 입력창 초기화
-                messageInput.value = "";
+            // 이미 처리 중인 메시지가 없을 때만 실행
+            if (!isProcessingMessage) {
+                processAndSendMessage();
             }
         }
     });
@@ -221,26 +222,33 @@ function connectWebSocket() {
 }
 
 
-// 사용자 메시지 보내기
-function sendMessage() {
-    const userMessageInput = document.getElementById("user-message");
-    const userMessage = userMessageInput.value.trim();
+// 메시지 처리 및 전송을 담당하는 새로운 함수
+function processAndSendMessage() {
+    const messageInput = document.getElementById("user-message");
+    const message = messageInput.value.trim();
     
-    if (!userMessage) return;
-
+    if (!message || isProcessingMessage) return;
+    
+    isProcessingMessage = true; // 처리 시작
+    
+    // 입력창 초기화를 메시지 처리 전에 수행
+    messageInput.value = "";
+    
+    // 실제 메시지 전송
     if (!socket) {
         console.warn("🚨 WebSocket이 초기화되지 않았습니다. 연결을 시도합니다...");
+        isProcessingMessage = false;
         return;
     }
 
     if (socket.readyState === WebSocket.OPEN) {
-        hasStartedChat = true; // 대화 시작 표시
-        appendMessage(userMessage, "user-message");
+        hasStartedChat = true;
+        appendMessage(message, "user-message");
         appendBotResponseWithLoading();
 
         const position = marker.getPosition();
         const requestData = {
-            message: userMessage,
+            message: message,
             latitude: position.getLat().toFixed(6),
             longitude: position.getLng().toFixed(6),
             session_id: localStorage.getItem("session_id") || "",
@@ -248,9 +256,21 @@ function sendMessage() {
         };
 
         socket.send(JSON.stringify(requestData));
-        userMessageInput.value = ""; // 메시지 전송 후 입력창 초기화
+        
+        // 메시지 전송 후 일정 시간 뒤에 상태 초기화
+        setTimeout(() => {
+            isProcessingMessage = false;
+        }, 500);
     } else {
         console.warn("🚨 WebSocket이 닫혀 있어 메시지를 보낼 수 없습니다.");
+        isProcessingMessage = false;
+    }
+}
+
+// sendMessage 함수를 processAndSendMessage로 대체
+function sendMessage() {
+    if (!isProcessingMessage) {
+        processAndSendMessage();
     }
 }
 
