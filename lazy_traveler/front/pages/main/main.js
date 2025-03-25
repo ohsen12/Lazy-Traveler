@@ -5,7 +5,6 @@ let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추�
 
 document.addEventListener("DOMContentLoaded", () => {
     kakao.maps.load(() => {
-        scrollChatToTop();
         initKakaoMap();  
         initChatUI();
         connectWebSocket();
@@ -14,36 +13,39 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initKakaoMap() {
+    console.log("✅ Kakao Maps 로드 완료");
+
+    const container = document.getElementById('map');
+    const options = {
+        center: new kakao.maps.LatLng(37.5704, 126.9831),
+        level: 3
+    };
+
+    map = new kakao.maps.Map(container, options);
+    geocoder = new kakao.maps.services.Geocoder();
+
+    marker = new kakao.maps.Marker({
+        position: new kakao.maps.LatLng(37.5704, 126.9831),
+        map: map
+    });
+
+    infowindow = new kakao.maps.InfoWindow({
+        content: `<div style="padding:5px;">📍 종각역</div>`
+    });
+    infowindow.open(map, marker);
+
+    kakao.maps.event.addListener(map, "click", (event) => {
+        const position = event.latLng;
+        marker.setPosition(position);
+        getAddressFromCoords(position);
+    });
+
+    console.log("✅ Kakao 지도 초기화 완료");
     
-        console.log("✅ Kakao Maps 로드 완료");
-
-        const container = document.getElementById('map');
-        const options = {
-            center: new kakao.maps.LatLng(37.5704, 126.9831),
-            level: 3
-        };
-
-        map = new kakao.maps.Map(container, options);
-        geocoder = new kakao.maps.services.Geocoder();
-
-        marker = new kakao.maps.Marker({
-            position: new kakao.maps.LatLng(37.5704, 126.9831),
-            map: map
-        });
-
-        infowindow = new kakao.maps.InfoWindow({
-            content: `<div style="padding:5px;">📍 종각역</div>`
-        });
-        infowindow.open(map, marker);
-
-        kakao.maps.event.addListener(map, "click", (event) => {
-            const position = event.latLng;
-            marker.setPosition(position);
-            getAddressFromCoords(position);
-        });
-
-        console.log("✅ Kakao 지도 초기화 완료");
-    
+    // 지도 초기화 완료 후 채팅창 스크롤을 최상단으로 이동
+    setTimeout(() => {
+        scrollChatToTop();
+    }, 100);
 }
 
 // 현재 위치 가져오기
@@ -112,9 +114,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         const botMessage = document.querySelector(".message.bot-message");
         const logoutButton = document.querySelector(".logout");
 
-        // 채팅창 스크롤을 최상단으로 이동
-        scrollChatToTop();
-
         // 토큰이 없으면 비로그인자의 메시지 처리
         if (!token) {
             if (botMessage) {
@@ -128,7 +127,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             if (logoutButton) {
                 logoutButton.style.display = "none";
             }
-            return; // 비로그인자의 경우 나머지 로직 실행하지 않음
+            return;
         }
 
         // 로그인한 경우 logout 버튼 표시
@@ -145,7 +144,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
 
         const { username = "고객님", tags = "" } = response.data;
-        const tagList = tags ? tags.split(',') : []; // 태그를 배열로 처리
+        const tagList = tags ? tags.split(',') : [];
 
         // 시스템 메시지 동적으로 변경
         if (botMessage) {
@@ -157,35 +156,11 @@ document.addEventListener("DOMContentLoaded", async function() {
             `;
         }
 
-        kakao.maps.load(() => {
-            var container = document.getElementById('map');
-            var options = { 
-                center: new kakao.maps.LatLng(37.5704, 126.9831), // 기본 위치: 종각역
-                level: 3 
-            };
-            map = new kakao.maps.Map(container, options);
-            geocoder = new kakao.maps.services.Geocoder();
-        
-            // 기본 마커 (종각역)
-            marker = new kakao.maps.Marker({
-                position: new kakao.maps.LatLng(37.5704, 126.9831),
-                map: map
-            });
-        
-            // 정보창 추가
-            infowindow = new kakao.maps.InfoWindow({
-                content: `<div style="padding:5px;">📍 종각역</div>`
-            });
-            infowindow.open(map, marker);
-        
-            // 지도 클릭 시 마커 이동 및 주소 업데이트
-            kakao.maps.event.addListener(map, "click", function(event) {
-                var position = event.latLng;
-                marker.setPosition(position);
-                getAddressFromCoords(position);
-        
-            });
-        });    
+        // 채팅창 스크롤을 최상단으로 이동
+        setTimeout(() => {
+            scrollChatToTop();
+        }, 100);
+
     } catch (error) {
         console.error("오류 발생:", error);
     }
@@ -602,13 +577,11 @@ window.addEventListener('beforeunload', function() {
 // 페이지가 로드될 때 대화 기록 불러오기
 window.onload = function() {
     loadChatHistory();
-    hasStartedChat = false; // 페이지 로드 시 대화 시작 상태 초기화
-    // DOM이 완전히 로드된 후 스크롤 위치 조정
+    hasStartedChat = false;
+    
+    // 채팅창 스크롤을 최상단으로 이동
     setTimeout(() => {
-        const chatBox = document.getElementById("chat-box");
-        if (chatBox) {
-            chatBox.scrollTop = 0;
-        }
+        scrollChatToTop();
     }, 100);
 };
 
