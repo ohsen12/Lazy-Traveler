@@ -6,8 +6,8 @@ from .openai_chroma_config import function_vector_store, retriever, llm
 
 
 async def get_recommendation(user_query, session_id=None, username=None, latitude=None, longitude=None):
-    # now = datetime.now()
-    now = datetime(2025, 3, 27, 14, 30, 0)
+    now = datetime.now()
+    # now = datetime(2025, 3, 27, 14, 30, 0)
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     start_time = now
 
