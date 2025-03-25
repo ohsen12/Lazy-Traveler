@@ -3,7 +3,7 @@ import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import ChatHistory
-from .chat_logic import get_recommendation
+from .recommendation_service import get_recommendation
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -74,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": user_query,
                 "response": response_text,
                 "session_id": self.session_id
-            }))
+            }, ensure_ascii=False))
 
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({"error": "잘못된 JSON 형식입니다."}))

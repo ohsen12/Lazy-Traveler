@@ -14,6 +14,9 @@ media
 
 # Chroma vector store
 vector_store
+vector_2
+vector_function
+vector_place 
 
 # If your build process includes running collectstatic, then you probably don't need or want to include staticfiles/
 # in your Git repository. Update and uncomment the following line accordingly.
