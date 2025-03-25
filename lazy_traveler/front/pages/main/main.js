@@ -4,53 +4,50 @@ let currentSessionId = null;
 let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 페이지 로드 시 채팅창 최상단으로 스크롤
-    const chatBox = document.getElementById("chat-box");
-    if (chatBox) {
-        chatBox.scrollTop = 0;
-        // 스크롤 위치 초기화 후 localStorage에서 플래그 제거
-        localStorage.removeItem('scrollToTop');
-    }
-    
     kakao.maps.load(() => {
         initKakaoMap();  
         initChatUI();
         connectWebSocket();
         showCoachmark();
+        // 페이지 로드 시 스크롤을 최상단으로 이동
+        setTimeout(scrollChatToTop, 100);
     });
 });
 
 function initKakaoMap() {
+    console.log("✅ Kakao Maps 로드 완료");
+
+    const container = document.getElementById('map');
+    const options = {
+        center: new kakao.maps.LatLng(37.5704, 126.9831),
+        level: 3
+    };
+
+    map = new kakao.maps.Map(container, options);
+    geocoder = new kakao.maps.services.Geocoder();
+
+    marker = new kakao.maps.Marker({
+        position: new kakao.maps.LatLng(37.5704, 126.9831),
+        map: map
+    });
+
+    infowindow = new kakao.maps.InfoWindow({
+        content: `<div style="padding:5px;">📍 종각역</div>`
+    });
+    infowindow.open(map, marker);
+
+    kakao.maps.event.addListener(map, "click", (event) => {
+        const position = event.latLng;
+        marker.setPosition(position);
+        getAddressFromCoords(position);
+    });
+
+    console.log("✅ Kakao 지도 초기화 완료");
     
-        console.log("✅ Kakao Maps 로드 완료");
-
-        const container = document.getElementById('map');
-        const options = {
-            center: new kakao.maps.LatLng(37.5704, 126.9831),
-            level: 3
-        };
-
-        map = new kakao.maps.Map(container, options);
-        geocoder = new kakao.maps.services.Geocoder();
-
-        marker = new kakao.maps.Marker({
-            position: new kakao.maps.LatLng(37.5704, 126.9831),
-            map: map
-        });
-
-        infowindow = new kakao.maps.InfoWindow({
-            content: `<div style="padding:5px;">📍 종각역</div>`
-        });
-        infowindow.open(map, marker);
-
-        kakao.maps.event.addListener(map, "click", (event) => {
-            const position = event.latLng;
-            marker.setPosition(position);
-            getAddressFromCoords(position);
-        });
-
-        console.log("✅ Kakao 지도 초기화 완료");
-    
+    // 지도 초기화 완료 후 채팅창 스크롤을 최상단으로 이동
+    setTimeout(() => {
+        scrollChatToTop();
+    }, 100);
 }
 
 // 현재 위치 가져오기
@@ -103,8 +100,9 @@ function initChatUI() {
     showCoachmark();
 
     document.getElementById("send-btn").addEventListener("click", sendMessage);
-    document.getElementById("user-message").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
+    document.getElementById("user-message").addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault(); // Enter 키의 기본 동작 방지
             sendMessage();
         }
     });
@@ -131,7 +129,9 @@ document.addEventListener("DOMContentLoaded", async function() {
             if (logoutButton) {
                 logoutButton.style.display = "none";
             }
-            return; // 비로그인자의 경우 나머지 로직 실행하지 않음
+            // 스크롤을 최상단으로 이동
+            setTimeout(scrollChatToTop, 100);
+            return;
         }
 
         // 로그인한 경우 logout 버튼 표시
@@ -148,7 +148,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
 
         const { username = "고객님", tags = "" } = response.data;
-        const tagList = tags ? tags.split(',') : []; // 태그를 배열로 처리
+        const tagList = tags ? tags.split(',') : [];
 
         // 시스템 메시지 동적으로 변경
         if (botMessage) {
@@ -160,35 +160,9 @@ document.addEventListener("DOMContentLoaded", async function() {
             `;
         }
 
-        kakao.maps.load(() => {
-            var container = document.getElementById('map');
-            var options = { 
-                center: new kakao.maps.LatLng(37.5704, 126.9831), // 기본 위치: 종각역
-                level: 3 
-            };
-            map = new kakao.maps.Map(container, options);
-            geocoder = new kakao.maps.services.Geocoder();
-        
-            // 기본 마커 (종각역)
-            marker = new kakao.maps.Marker({
-                position: new kakao.maps.LatLng(37.5704, 126.9831),
-                map: map
-            });
-        
-            // 정보창 추가
-            infowindow = new kakao.maps.InfoWindow({
-                content: `<div style="padding:5px;">📍 종각역</div>`
-            });
-            infowindow.open(map, marker);
-        
-            // 지도 클릭 시 마커 이동 및 주소 업데이트
-            kakao.maps.event.addListener(map, "click", function(event) {
-                var position = event.latLng;
-                marker.setPosition(position);
-                getAddressFromCoords(position);
-        
-            });
-        });    
+        // 스크롤을 최상단으로 이동
+        setTimeout(scrollChatToTop, 100);
+
     } catch (error) {
         console.error("오류 발생:", error);
     }
@@ -281,6 +255,7 @@ function sendMessage() {
 function refreshChat() {
     localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
     currentSessionId = null;  // ✅ 메모리에서도 초기
+    hasStartedChat = false;  // 대화 시작 상태 초기화
     window.location.reload(); // 페이지 새로고침화
     console.log("챗봇 화면이 새로고침되었습니다.");
 }
@@ -501,8 +476,7 @@ function loadSessionMessages(session_id) {
                 appendMessage(chat.response, "bot-response");
             });
 
-            // 히스토리 조회 시 스크롤을 최상단으로 이동
-            chatBox.scrollTop = 0;
+            scrollChatToTop();
             hasStartedChat = false; // 새로운 세션을 로드할 때 대화 시작 상태 초기화
         });
     })
@@ -524,7 +498,7 @@ function appendMessage(message, type) {
 
     // 대화가 시작된 경우에만 스크롤을 최하단으로 이동
     if (hasStartedChat) {
-        chatBox.scrollTop = chatBox.scrollHeight;
+        scrollChatToBottom();
     }
 }
 
@@ -535,9 +509,8 @@ function appendUserMessage(message) {
     const userMessage = document.createElement("li");
     userMessage.classList.add("message", "user-message");
     userMessage.textContent = message;
-    chatBox.scrollTop = chatBox.scrollHeight;
     chatBox.appendChild(userMessage);
-    
+    scrollChatToBottom();
 }
 
 // 챗봇 응답에 로딩 메시지 추가
@@ -554,9 +527,7 @@ function appendBotResponseWithLoading() {
 
     botResponse.appendChild(loadingMessage);
     chatBox.appendChild(botResponse);
-
-    // 채팅박스에 새 메시지를 추가한 후 스크롤을 최신 메시지로 이동
-    chatBox.scrollTop = chatBox.scrollHeight;
+    scrollChatToBottom();
 }
 
 // 챗봇 응답 메시지 업데이트
@@ -573,16 +544,16 @@ function updateBotResponse(responseMessage) {
             loadingMessage.textContent = responseMessage;  // 로딩 메시지를 응답 메시지로 교체
         }
     }
-    // 응답이 추가된 후, 스크롤을 최신 메시지로 이동
-    chatBox.scrollTop = chatBox.scrollHeight;
+    scrollChatToBottom();
 }
 
 // ✅ DOM 로드 시 웹소켓 연결 및 이벤트 리스너 추가
 document.addEventListener("DOMContentLoaded", function () {
     connectWebSocket(); // 웹소켓 연결
     document.getElementById("send-btn").addEventListener("click", sendMessage);
-    document.getElementById("user-message").addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
+    document.getElementById("user-message").addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault(); // Enter 키의 기본 동작 방지
             sendMessage();
         }
     });
@@ -601,12 +572,9 @@ window.addEventListener('beforeunload', function() {
 // 페이지가 로드될 때 대화 기록 불러오기
 window.onload = function() {
     loadChatHistory();
+    hasStartedChat = false;
     // 페이지 로드 시 스크롤을 최상단으로 이동
-    const chatBox = document.getElementById("chat-box");
-    if (chatBox) {
-        chatBox.scrollTop = 0;
-    }
-    hasStartedChat = false; // 페이지 로드 시 대화 시작 상태 초기화
+    setTimeout(scrollChatToTop, 100);
 };
 
 // 마이페이지 이동
@@ -700,6 +668,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 메인 페이지로 이동
 function goToMain() {
-    localStorage.setItem('scrollToTop', 'true');
     window.location.href = "https://lazy-traveler.store/pages/main/main.html";
+}
+
+// 채팅창 스크롤을 최상단으로 이동시키는 함수
+function scrollChatToTop() {
+    const chatBox = document.getElementById("chat-box");
+    if (chatBox) {
+        chatBox.scrollTop = 0;
+    }
+}
+
+// 채팅창 스크롤을 최하단으로 이동시키는 함수
+function scrollChatToBottom() {
+    const chatBox = document.getElementById("chat-box");
+    if (chatBox) {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 }

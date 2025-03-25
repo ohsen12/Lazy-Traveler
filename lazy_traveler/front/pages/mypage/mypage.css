@@ -439,6 +439,12 @@ hr {
     cursor: pointer;
 }
 
+.save-btn:disabled {
+    background-color: #E9E9E9;
+    color: #A6A5A5;
+    cursor: not-allowed;
+}
+
 /* 모달 표시 클래스 */
 .modal.show {
     display: block;

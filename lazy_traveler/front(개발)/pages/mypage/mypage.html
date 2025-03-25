@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lazy Traveler</title>
+    <link rel="stylesheet" href="mypage.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <img src="/lazy_traveler/front/images/logo.svg" alt="Lazy Traveler" class="logo" onclick="window.location.href='http://127.0.0.1:5500/lazy_traveler/front/pages/main/main.html'">
+        <img src="/lazy_traveler/front/images/logout.svg" alt="Logout" class="logout" onclick="logout()">
+    </div>
+
+    <div class="main-content">
+        <div class="section">
+            <div class="section-title">나의 정보</div>
+            <div class="info-group">
+                <div class="info-row">
+                    <div class="label">User ID</div>
+                    <div class="value" id="username"></div>
+                    <div class="note">※ID는 변경이 불가합니다</div>
+                </div>
+                <div class="info-row">
+                    <div class="label">Password</div>
+                    <button class="change-btn" onclick="openChangePasswordModal()">비밀번호 변경하기</button>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">나의 태그</div>
+                <button class="edit-tags-btn" onclick="openChangeTagsModal()">관심태그 변경하기</button>
+            </div>
+            <div class="tags" id="tags">
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="footer">
+            <div class="footer-content">
+                <span>앗, Lazy Traveler를 더 이상 이용하지 않으시나요?</span>
+                <a onclick="openWithdrawModal()">회원 탈퇴하기</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 태그 변경 모달 -->
+    <div class="modal" id="change-tags-modal">
+        <div class="modal-content">
+            <div class="modal-header centered-modal-header">
+                <h2>태그 변경하기</h2>
+                <button class="close-btn" onclick="closeChangeTagsModal()">&times;</button>
+            </div>
+            <div class="tag-section">
+                <div class="tag-section-title">현재 나의 태그</div>
+                <div id="current-tags" class="tag-grid"></div>
+                <div class="tag-section-divider"></div>
+                <div class="tag-section-header">
+                    <div class="tag-section-title">선택 가능한 태그</div>
+                    <div class="message tag-error-message"></div>
+                </div>
+                <div id="available-tags" class="tag-grid"></div>
+            </div>
+            <button class="save-btn" id="save-tags-btn">변경내역 저장하기</button>
+        </div>
+    </div>
+
+    <!-- 비밀번호 변경 모달 -->
+    <div class="modal" id="change-password-modal">
+        <div class="modal-content">
+            <div class="modal-header centered-modal-header">
+                <h2>비밀번호 변경하기</h2>
+                <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
+            </div>
+            <div class="password-form">
+                <div class="form-group">
+                    <label>현재 비밀번호</label>
+                    <input type="password" id="current-password" placeholder="현재 비밀번호를 입력해주세요">
+                </div>
+                <div class="form-group">
+                    <label>새 비밀번호</label>
+                    <input type="password" id="new-password" placeholder="새 비밀번호를 입력해주세요">
+                </div>
+                <div class="form-group">
+                    <label>새 비밀번호 재입력</label>
+                    <input type="password" id="confirm-password" placeholder="새 비밀번호를 다시 입력해주세요">
+                </div>
+                <div class="error-messages">
+                    <div class="error-message" id="same-password-error">* 새 비밀번호는 기존 비밀번호와 동일하게 사용하실 수 없습니다</div>
+                    <div class="error-message" id="confirm-password-error">* 새 비밀번호가 일치하지 않습니다</div>
+                    <div class="error-message" id="current-password-error">* 현재 비밀번호가 일치하지 않습니다</div>
+                </div>
+            </div>
+            <button class="save-btn" onclick="changePassword(event)">변경내역 저장하기</button>
+        </div>
+    </div>
+
+    <!-- 회원 탈퇴 모달 -->
+    <div class="modal" id="withdraw-modal">
+        <div class="modal-content">
+            <div class="modal-header withdraw-modal-header">
+                <button class="close-btn" onclick="closeWithdrawModal()">&times;</button>
+                <h2>회원 탈퇴</h2>
+            </div>
+            <div class="withdraw-content">
+                <p class="withdraw-title">정말 회원 탈퇴를 진행하시겠어요?</p>
+                <p class="withdraw-desc">회원 탈퇴 시, 모든 데이터가 삭제됩니다</p>
+                <div class="button-group">
+                    <button class="withdraw-btn" onclick="delete_account()">회원 탈퇴</button>
+                    <button class="cancel-btn" onclick="closeWithdrawModal()">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="mypage.js"></script>
+</body>
+</html>
