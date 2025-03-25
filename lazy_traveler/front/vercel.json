@@ -1,0 +1,10 @@
+{
+    "root": "front",
+    "redirects": [
+      {
+        "source": "/",
+        "destination": "/pages/main/main.html",
+        "permanent": true
+      }
+    ]
+  }
