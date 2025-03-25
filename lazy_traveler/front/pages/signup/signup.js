@@ -145,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = 'https://lazy-traveler.store/pages/login/login.html';
             }
         } catch (error) {
-            console.error('회원가입 오류:', error);
             if (error.response?.data?.detail) {
                 showMessage(passwordMessage, error.response.data.detail, false);
             } else {

@@ -195,7 +195,6 @@ function connectWebSocket() {
 
     socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
-        console.log("GPT-4 응답:", data.response);
 
         // 로딩 메시지 업데이트
         updateBotResponse(data.response);
@@ -218,10 +217,7 @@ function connectWebSocket() {
     };
 
     socket.onerror = function (event) {
-        console.log("❌ WebSocket 에러 발생:", event);
-        if (event && event.message) {
-            console.log("Error Message:", event.message);
-        }
+        console.log("❌ WebSocket 연결 오류");
     };
 
     socket.onclose = function () {
@@ -324,8 +320,6 @@ function logout() {
 // 대화 내역 불러오기
 function loadChatHistory() {
     return new Promise((resolve) => {
-        console.log("대화 기록을 불러오는 중...");
-
         const token = localStorage.getItem("access_token");
 
         if (!token) {
@@ -341,7 +335,6 @@ function loadChatHistory() {
             }
         })
         .then(response => {
-            console.log("대화 기록 불러오기 성공:", response.data);
             const data = response.data;
             const historyList = document.getElementById("chat-history");
             historyList.innerHTML = "";
@@ -359,7 +352,7 @@ function loadChatHistory() {
             resolve();
         })
         .catch(error => {
-            console.error("대화 기록 불러오기 실패:", error);
+            console.error("대화 기록을 불러올 수 없습니다.");
             resolve();
         });
     });
@@ -397,8 +390,6 @@ function createSessionList(sessions) {
     sessionList.classList.add("accordion-content");
 
     sessions.forEach(session => {
-        console.log(`세션 ID: ${session.session_id}, 첫 메시지: ${session.first_message}`);
-
         const sessionItem = document.createElement("li");
         sessionItem.classList.add("history-item");
         sessionItem.innerHTML = `
@@ -465,8 +456,6 @@ function toggleChatInput(disable) {
 }
 
 function loadSessionMessages(session_id) {
-    console.log(`세션 ${session_id}의 메시지를 불러오는 중...`);
-
     currentSessionId = session_id;
     localStorage.setItem("session_id", session_id);
 
@@ -491,7 +480,6 @@ function loadSessionMessages(session_id) {
                 "Authorization": "Bearer " + token,
             }
         }).then(response => {
-            console.log(`세션 ${session_id} 메시지 불러오기 성공:`, response.data);
             const messages = response.data;
 
             const chatBox = document.getElementById("chat-box");
@@ -529,7 +517,7 @@ function loadSessionMessages(session_id) {
         });
     })
     .catch(error => {
-        console.error("데이터 불러오기 실패:", error);
+        console.error("데이터를 불러올 수 없습니다.");
     });
 }
 
@@ -638,8 +626,6 @@ function goToMypage() {
 
 // 채팅 히스토리 다시 로드하는 함수
 function reloadChatHistory() {
-    console.log("채팅 히스토리 다시 로드 중...");
-
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
@@ -658,7 +644,6 @@ function reloadChatHistory() {
         }
     })
     .then(response => {
-        console.log("채팅 히스토리 업데이트 성공:", response.data);
         const data = response.data;
         const historyList = document.getElementById("chat-history");
         historyList.innerHTML = "";
@@ -686,7 +671,7 @@ function reloadChatHistory() {
         });
     })
     .catch(error => {
-        console.error("채팅 히스토리 업데이트 실패:", error);
+        console.error("채팅 히스토리를 업데이트할 수 없습니다.");
     });
 }
 
