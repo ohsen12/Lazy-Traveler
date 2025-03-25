@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
         initChatUI();
         connectWebSocket();
         showCoachmark();
+        // 페이지 로드 시 스크롤을 최상단으로 이동
+        setTimeout(scrollChatToTop, 100);
     });
 });
 
@@ -127,6 +129,8 @@ document.addEventListener("DOMContentLoaded", async function() {
             if (logoutButton) {
                 logoutButton.style.display = "none";
             }
+            // 스크롤을 최상단으로 이동
+            setTimeout(scrollChatToTop, 100);
             return;
         }
 
@@ -156,10 +160,8 @@ document.addEventListener("DOMContentLoaded", async function() {
             `;
         }
 
-        // 채팅창 스크롤을 최상단으로 이동
-        setTimeout(() => {
-            scrollChatToTop();
-        }, 100);
+        // 스크롤을 최상단으로 이동
+        setTimeout(scrollChatToTop, 100);
 
     } catch (error) {
         console.error("오류 발생:", error);
@@ -496,10 +498,7 @@ function appendMessage(message, type) {
 
     // 대화가 시작된 경우에만 스크롤을 최하단으로 이동
     if (hasStartedChat) {
-        chatBox.scrollTop = chatBox.scrollHeight;
-    } else {
-        // 대화가 시작되지 않은 경우 최상단으로 스크롤
-        chatBox.scrollTop = 0;
+        scrollChatToBottom();
     }
 }
 
@@ -510,9 +509,8 @@ function appendUserMessage(message) {
     const userMessage = document.createElement("li");
     userMessage.classList.add("message", "user-message");
     userMessage.textContent = message;
-    chatBox.scrollTop = chatBox.scrollHeight;
     chatBox.appendChild(userMessage);
-    
+    scrollChatToBottom();
 }
 
 // 챗봇 응답에 로딩 메시지 추가
@@ -529,9 +527,7 @@ function appendBotResponseWithLoading() {
 
     botResponse.appendChild(loadingMessage);
     chatBox.appendChild(botResponse);
-
-    // 채팅박스에 새 메시지를 추가한 후 스크롤을 최신 메시지로 이동
-    chatBox.scrollTop = chatBox.scrollHeight;
+    scrollChatToBottom();
 }
 
 // 챗봇 응답 메시지 업데이트
@@ -548,8 +544,7 @@ function updateBotResponse(responseMessage) {
             loadingMessage.textContent = responseMessage;  // 로딩 메시지를 응답 메시지로 교체
         }
     }
-    // 응답이 추가된 후, 스크롤을 최신 메시지로 이동
-    chatBox.scrollTop = chatBox.scrollHeight;
+    scrollChatToBottom();
 }
 
 // ✅ DOM 로드 시 웹소켓 연결 및 이벤트 리스너 추가
@@ -578,11 +573,8 @@ window.addEventListener('beforeunload', function() {
 window.onload = function() {
     loadChatHistory();
     hasStartedChat = false;
-    
-    // 채팅창 스크롤을 최상단으로 이동
-    setTimeout(() => {
-        scrollChatToTop();
-    }, 100);
+    // 페이지 로드 시 스크롤을 최상단으로 이동
+    setTimeout(scrollChatToTop, 100);
 };
 
 // 마이페이지 이동
@@ -684,5 +676,13 @@ function scrollChatToTop() {
     const chatBox = document.getElementById("chat-box");
     if (chatBox) {
         chatBox.scrollTop = 0;
+    }
+}
+
+// 채팅창 스크롤을 최하단으로 이동시키는 함수
+function scrollChatToBottom() {
+    const chatBox = document.getElementById("chat-box");
+    if (chatBox) {
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 }
