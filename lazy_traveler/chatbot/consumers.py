@@ -74,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": user_query,
                 "response": response_text,
                 "session_id": self.session_id
-            }))
+            }, ensure_ascii=False))
 
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({"error": "잘못된 JSON 형식입니다."}))

@@ -1,4 +1,5 @@
 import math
+import random
 from .models import ChatHistory
 from django.contrib.auth import get_user_model
 from datetime import timedelta
@@ -89,24 +90,30 @@ def build_schedule_by_categories(sorted_places, schedule_categories, start_time)
     ]
 
     for i, category in enumerate(schedule_categories):
-        for place in sorted_places:
-            metadata = place.metadata
-            if metadata.get('place_id') in used_place_ids:
-                continue  # 이미 사용한 장소 패스
+        # 해당 category에 해당하는 후보 장소들을 추출 (이미 선택된 장소 제외)
+        candidate_places = [
+            place for place in sorted_places
+            if place.metadata.get('place_id') not in used_place_ids
+            and category in CATEGORY_MAPPING
+            and place.metadata.get('category') in CATEGORY_MAPPING[category]
+        ]
 
-            if category in CATEGORY_MAPPING and metadata.get('category') in CATEGORY_MAPPING[category]:
-                used_place_ids.add(metadata.get('place_id'))
-                schedule.append({
-                    "time": time_slots[i],
-                    "desc": category,
-                    "name": metadata.get('name'),
-                    "category": metadata.get('category'),
-                    "address": metadata.get('address'),
-                    "distance_km": f"{metadata.get('distance', 0):.2f}km",
-                    "rating": metadata.get('rating'),
-                    "website": metadata.get('website')
-                })
-                break
+        # 랜덤으로 하나 선택
+        if candidate_places:
+            selected_place = random.choice(candidate_places)
+            metadata = selected_place.metadata
+            used_place_ids.add(metadata.get('place_id'))
+
+            schedule.append({
+                "time": time_slots[i],
+                "desc": category,
+                "name": metadata.get('name'),
+                "category": metadata.get('category'),
+                "address": metadata.get('address'),
+                "distance_km": f"{metadata.get('distance', 0):.2f}km",
+                "rating": metadata.get('rating'),
+                "website": metadata.get('website')
+            })
 
     return schedule
 

@@ -6,7 +6,8 @@ from .openai_chroma_config import function_vector_store, retriever, llm
 
 
 async def get_recommendation(user_query, session_id=None, username=None, latitude=None, longitude=None):
-    now = datetime.now()
+    # now = datetime.now()
+    now = datetime(2025, 3, 27, 14, 30, 0)
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     start_time = now
 
@@ -17,7 +18,7 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
 
     if question_type == "function":
         # 기능 벡터DB에서 검색된 문서 가져오기
-        function_docs = await function_vector_store.similarity_search(user_query, k=3)
+        function_docs =  function_vector_store.similarity_search(user_query, k=3)
 
         # 벡터 검색 결과가 없을 경우 예외처리
         if not function_docs:
@@ -57,7 +58,7 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
         "query": user_query
     })
     transformed_query = transformed_query_result['text']
-    print(f"[DEBUG] 변환된 쿼리: {transformed_query}")
+    # print(f"[DEBUG] 변환된 쿼리: {transformed_query}")
     
     # 문서 검색
     search_query = f"{transformed_query} (위치: {latitude}, {longitude}) 관련 태그: {user_categories}"
@@ -66,14 +67,14 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
 
     # 거리 정렬
     sorted_docs = await sort_places_by_distance(docs, latitude, longitude)
-    print(sorted_docs)
+    # print(sorted_docs)
 
     schedule = await build_schedule_by_categories(sorted_docs, schedule_categories, start_time)
-    print("schedule:", schedule )
+    # print("schedule:", schedule )
 
     # 5. 스케줄을 텍스트로 변환
     schedule_text = await schedule_to_text(schedule)
-    print("schedule_text:", schedule_text )
+    # print("schedule_text:", schedule_text )
 
     # 기존 컨텍스트에 추가
     context = await get_context(session_id)
@@ -89,6 +90,6 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
         "time_context": f"현재 시간은 {current_time}입니다.",
         "question": user_query
     })
-    print("result:", result)
+    # print("result:", result)
 
     return result.content.strip() if result.content else "추천을 제공할 수 없습니다."
