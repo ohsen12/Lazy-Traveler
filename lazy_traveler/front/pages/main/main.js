@@ -95,8 +95,9 @@ function initChatUI() {
     showCoachmark();
 
     document.getElementById("send-btn").addEventListener("click", sendMessage);
-    document.getElementById("user-message").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
+    document.getElementById("user-message").addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault(); // Enter 키의 기본 동작 방지
             sendMessage();
         }
     });
@@ -579,8 +580,9 @@ function updateBotResponse(responseMessage) {
 document.addEventListener("DOMContentLoaded", function () {
     connectWebSocket(); // 웹소켓 연결
     document.getElementById("send-btn").addEventListener("click", sendMessage);
-    document.getElementById("user-message").addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
+    document.getElementById("user-message").addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault(); // Enter 키의 기본 동작 방지
             sendMessage();
         }
     });
