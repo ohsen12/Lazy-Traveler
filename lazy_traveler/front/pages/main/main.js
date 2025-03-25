@@ -276,6 +276,7 @@ function sendMessage() {
 function refreshChat() {
     localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
     currentSessionId = null;  // ✅ 메모리에서도 초기
+    hasStartedChat = false;  // 대화 시작 상태 초기화
     window.location.reload(); // 페이지 새로고침화
     console.log("챗봇 화면이 새로고침되었습니다.");
 }
@@ -519,6 +520,9 @@ function appendMessage(message, type) {
     // 대화가 시작된 경우에만 스크롤을 최하단으로 이동
     if (hasStartedChat) {
         chatBox.scrollTop = chatBox.scrollHeight;
+    } else {
+        // 대화가 시작되지 않은 경우 최상단으로 스크롤
+        chatBox.scrollTop = 0;
     }
 }
 
@@ -595,8 +599,14 @@ window.addEventListener('beforeunload', function() {
 // 페이지가 로드될 때 대화 기록 불러오기
 window.onload = function() {
     loadChatHistory();
-    scrollChatToTop();
     hasStartedChat = false; // 페이지 로드 시 대화 시작 상태 초기화
+    // DOM이 완전히 로드된 후 스크롤 위치 조정
+    setTimeout(() => {
+        const chatBox = document.getElementById("chat-box");
+        if (chatBox) {
+            chatBox.scrollTop = 0;
+        }
+    }, 100);
 };
 
 // 마이페이지 이동
