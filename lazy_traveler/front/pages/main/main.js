@@ -91,10 +91,22 @@ function initChatUI() {
     connectWebSocket();
     
     document.getElementById("send-btn").addEventListener("click", sendMessage);
+    
+    // 키보드 이벤트 리스너 수정
     document.getElementById("user-message").addEventListener("keydown", function (event) {
+        // Enter 키가 눌렸고 Shift 키가 눌리지 않은 경우에만 처리
         if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            sendMessage();
+            event.preventDefault(); // 기본 동작 방지
+            
+            // 입력값이 있을 때만 메시지 전송
+            const messageInput = document.getElementById("user-message");
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                sendMessage();
+                // 메시지 전송 후 입력창 초기화
+                messageInput.value = "";
+            }
         }
     });
 }
@@ -211,7 +223,9 @@ function connectWebSocket() {
 
 // 사용자 메시지 보내기
 function sendMessage() {
-    const userMessage = document.getElementById("user-message").value.trim();
+    const userMessageInput = document.getElementById("user-message");
+    const userMessage = userMessageInput.value.trim();
+    
     if (!userMessage) return;
 
     if (!socket) {
@@ -234,11 +248,10 @@ function sendMessage() {
         };
 
         socket.send(JSON.stringify(requestData));
+        userMessageInput.value = ""; // 메시지 전송 후 입력창 초기화
     } else {
         console.warn("🚨 WebSocket이 닫혀 있어 메시지를 보낼 수 없습니다.");
     }
-
-    document.getElementById("user-message").value = "";
 }
 
 
@@ -535,16 +548,9 @@ function updateBotResponse(responseMessage) {
     scrollChatToBottom();
 }
 
-// ✅ DOM 로드 시 웹소켓 연결 및 이벤트 리스너 추가
+// ✅ DOM 로드 시 웹소켓 연결 및 이벤트 리스너 추가 부분 제거 (중복 방지)
 document.addEventListener("DOMContentLoaded", function () {
     connectWebSocket(); // 웹소켓 연결
-    document.getElementById("send-btn").addEventListener("click", sendMessage);
-    document.getElementById("user-message").addEventListener("keydown", function (event) {
-        if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault(); // Enter 키의 기본 동작 방지
-            sendMessage();
-        }
-    });
 });
 
 
