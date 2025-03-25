@@ -210,7 +210,10 @@ const getTags = async () => {
             const tagButton = document.createElement('button');
             tagButton.className = 'tag-btn' + (currentTags.includes(tag) ? ' active' : '');
             tagButton.textContent = tag;
-            tagButton.onclick = () => tagButton.classList.toggle('active');
+            tagButton.onclick = () => {
+                tagButton.classList.toggle('active');
+                checkTagChanges(currentTags);
+            };
             availableTagsContainer.appendChild(tagButton);
         });
 
@@ -225,11 +228,27 @@ const getTags = async () => {
             tagButton.disabled = true;
             currentTagsContainer.appendChild(tagButton);
         });
+
+        // 초기 상태에서 저장 버튼 비활성화
+        document.getElementById('save-tags-btn').disabled = true;
     } catch (error) {
         console.error("태그 불러오기 실패:", error);
         alert("태그를 불러오는데 실패했습니다.");
     }
 };
+
+// 태그 변경 여부 확인 함수
+function checkTagChanges(originalTags) {
+    const selectedTags = Array.from(document.querySelectorAll('#available-tags .tag-btn.active'))
+        .map(btn => btn.textContent);
+    
+    // 태그 개수가 다르거나, 선택된 태그 중 하나라도 원래 태그와 다른 경우
+    const hasChanges = selectedTags.length !== originalTags.length ||
+        selectedTags.some(tag => !originalTags.includes(tag)) ||
+        originalTags.some(tag => !selectedTags.includes(tag));
+    
+    document.getElementById('save-tags-btn').disabled = !hasChanges;
+}
 
 document.getElementById('save-tags-btn').addEventListener('click', async () => {
     const selectedTags = Array.from(document.querySelectorAll('#available-tags .tag-btn.active'))
