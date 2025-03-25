@@ -5,6 +5,7 @@ let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추�
 
 document.addEventListener("DOMContentLoaded", () => {
     kakao.maps.load(() => {
+        scrollChatToTop();
         initKakaoMap();  
         initChatUI();
         connectWebSocket();
