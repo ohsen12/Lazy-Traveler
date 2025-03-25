@@ -206,6 +206,15 @@ function connectWebSocket() {
             // 응답을 받은 후 채팅 히스토리를 업데이트
             reloadChatHistory();
         }
+
+        // 응답이 완료되면 입력창과 전송 버튼 다시 활성화
+        const messageInput = document.getElementById("user-message");
+        const sendButton = document.getElementById("send-btn");
+        messageInput.disabled = false;
+        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
+        sendButton.disabled = false;
+        sendButton.style.opacity = "1";
+        isProcessingMessage = false;
     };
 
     socket.onerror = function (event) {
@@ -226,15 +235,27 @@ function connectWebSocket() {
 function processAndSendMessage() {
     const messageInput = document.getElementById("user-message");
     const message = messageInput.value.trim();
+    const sendButton = document.getElementById("send-btn");
     
     if (!message || isProcessingMessage) return;
     
     isProcessingMessage = true; // 처리 시작
     
+    // 입력창과 전송 버튼 비활성화
+    messageInput.disabled = true;
+    messageInput.style.backgroundColor = "#f0f0f0";
+    sendButton.disabled = true;
+    sendButton.style.opacity = "0.5";
+    
     // 실제 메시지 전송
     if (!socket) {
         console.warn("🚨 WebSocket이 초기화되지 않았습니다. 연결을 시도합니다...");
         isProcessingMessage = false;
+        // 입력창과 전송 버튼 다시 활성화
+        messageInput.disabled = false;
+        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
+        sendButton.disabled = false;
+        sendButton.style.opacity = "1";
         return;
     }
 
@@ -262,14 +283,14 @@ function processAndSendMessage() {
         });
 
         socket.send(JSON.stringify(requestData));
-        
-        // 메시지 전송 후 일정 시간 뒤에 상태 초기화
-        setTimeout(() => {
-            isProcessingMessage = false;
-        }, 500);
     } else {
         console.warn("🚨 WebSocket이 닫혀 있어 메시지를 보낼 수 없습니다.");
         isProcessingMessage = false;
+        // 입력창과 전송 버튼 다시 활성화
+        messageInput.disabled = false;
+        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
+        sendButton.disabled = false;
+        sendButton.style.opacity = "1";
     }
 }
 
