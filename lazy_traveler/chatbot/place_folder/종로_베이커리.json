@@ -84,27 +84,6 @@
         "place_id": "ChIJJU07lr6ifDURb--Fk_GM8LA"
     },
     {
-        "name": "파리바게뜨 경복궁역점",
-        "category": "베이커리",
-        "address": "대한민국 서울특별시 종로구 체부동 53",
-        "latitude": 37.576589,
-        "longitude": 126.9722198,
-        "rating": 4.0,
-        "review_count": 261,
-        "opening_hours": [
-            "월요일: 오전 6:00 ~ 오전 12:30",
-            "화요일: 오전 6:00 ~ 오전 12:30",
-            "수요일: 오전 6:00 ~ 오전 12:30",
-            "목요일: 오전 6:00 ~ 오전 12:30",
-            "금요일: 오전 6:00 ~ 오전 12:30",
-            "토요일: 오전 6:00 ~ 오전 12:30",
-            "일요일: 오전 6:00 ~ 오전 12:30"
-        ],
-        "phone": "02-735-6158",
-        "website": "https://maps.google.com/?cid=876040262706897779",
-        "place_id": "ChIJLShSvZWifDURc6OVO_pRKAw"
-    },
-    {
         "name": "더베이커스테이블",
         "category": "베이커리",
         "address": "대한민국 서울특별시 종로구 삼청로 126",
@@ -124,27 +103,6 @@
         "phone": "02-725-0777",
         "website": "https://maps.google.com/?cid=2120294373637730061",
         "place_id": "ChIJEd1w4kCjfDURDa_vv3_MbB0"
-    },
-    {
-        "name": "파리바게뜨카페광화문점",
-        "category": "베이커리",
-        "address": "대한민국 서울특별시 종로구 당주동 100",
-        "latitude": 37.5718016,
-        "longitude": 126.9728397,
-        "rating": 4.1,
-        "review_count": 86,
-        "opening_hours": [
-            "월요일: 오전 7:30 ~ 오후 10:00",
-            "화요일: 오전 7:30 ~ 오후 10:00",
-            "수요일: 오전 7:30 ~ 오후 10:00",
-            "목요일: 오전 7:30 ~ 오후 9:00",
-            "금요일: 오전 7:30 ~ 오후 9:00",
-            "토요일: 오전 7:30 ~ 오후 9:00",
-            "일요일: 오전 7:30 ~ 오후 9:00"
-        ],
-        "phone": "02-736-8202",
-        "website": "https://maps.google.com/?cid=7056720242394992359",
-        "place_id": "ChIJ8euOc5OifDUR5w5DH6yB7mE"
     },
     {
         "name": "파리크라상 광화문점",
@@ -315,6 +273,27 @@
         "place_id": "ChIJ9_Zi9PejfDURFi0uxcKgHto"
     },
     {
+        "name": "익선동 카페 식물 | Ikseondong Bar & Cafe SIKMUL Coffee | 益善洞バー & カフェ SIKMUL | 益善洞酒吧 & 咖啡廳",
+        "category": "베이커리",
+        "address": "대한민국 서울특별시 종로구 돈화문로11다길 46-1",
+        "latitude": 37.57377209999999,
+        "longitude": 126.9896496,
+        "rating": 4.5,
+        "review_count": 288,
+        "opening_hours": [
+            "월요일: 오전 11:00 ~ 오후 11:00",
+            "화요일: 오전 11:00 ~ 오후 11:00",
+            "수요일: 오전 11:00 ~ 오후 11:00",
+            "목요일: 오전 11:00 ~ 오후 11:00",
+            "금요일: 오전 11:00 ~ 오후 11:00",
+            "토요일: 오전 11:00 ~ 오후 11:00",
+            "일요일: 오전 11:00 ~ 오후 11:00"
+        ],
+        "phone": "02-742-7582",
+        "website": "https://maps.google.com/?cid=10681241952583603180",
+        "place_id": "ChIJqfJLrd2ifDUR7NO-1_ZkO5Q"
+    },
+    {
         "name": "런던베이글뮤지엄 안국점",
         "category": "베이커리",
         "address": "대한민국 서울특별시 종로구 북촌로4길 20",
@@ -420,34 +399,13 @@
         "place_id": "ChIJM6_C3A2jfDUR63s7txajyug"
     },
     {
-        "name": "파리바게뜨 종로세무서점",
-        "category": "베이커리",
-        "address": "대한민국 서울특별시 종로구 58-1 종로오피스텔 1층",
-        "latitude": 37.574041,
-        "longitude": 126.9886058,
-        "rating": 4.1,
-        "review_count": 112,
-        "opening_hours": [
-            "월요일: 오전 7:00 ~ 오후 11:00",
-            "화요일: 오전 7:00 ~ 오후 11:00",
-            "수요일: 오전 7:00 ~ 오후 11:00",
-            "목요일: 오전 7:00 ~ 오후 11:00",
-            "금요일: 오전 7:00 ~ 오후 11:00",
-            "토요일: 오전 7:00 ~ 오후 11:00",
-            "일요일: 오전 7:00 ~ 오후 11:00"
-        ],
-        "phone": "02-764-8204",
-        "website": "https://maps.google.com/?cid=17385119411888836672",
-        "place_id": "ChIJfeZsA92ifDURQNBhq_5ZRPE"
-    },
-    {
         "name": "우즈베이커리 익선점",
         "category": "베이커리",
         "address": "대한민국 서울특별시 종로구 돈화문로11나길 31",
         "latitude": 37.5740681,
         "longitude": 126.990076,
         "rating": 4.3,
-        "review_count": 121,
+        "review_count": 122,
         "opening_hours": [
             "월요일: 오전 10:00 ~ 오후 10:00",
             "화요일: 오전 10:00 ~ 오후 10:00",
@@ -468,7 +426,7 @@
         "latitude": 37.5742403,
         "longitude": 126.9908612,
         "rating": 5.0,
-        "review_count": 282,
+        "review_count": 286,
         "opening_hours": [
             "월요일: 오전 11:00 ~ 오후 7:00",
             "화요일: 오전 11:00 ~ 오후 7:00",
@@ -502,27 +460,6 @@
         "phone": "02-747-9208",
         "website": "https://maps.google.com/?cid=7636135306557295749",
         "place_id": "ChIJcxx3pQajfDURhYwqdJoA-Wk"
-    },
-    {
-        "name": "파리바게뜨 종로구청점",
-        "category": "베이커리",
-        "address": "대한민국 서울특별시 종로구 삼봉로 95",
-        "latitude": 37.5722162,
-        "longitude": 126.9827505,
-        "rating": 4.1,
-        "review_count": 176,
-        "opening_hours": [
-            "월요일: 오전 7:30 ~ 오후 9:30",
-            "화요일: 오전 7:30 ~ 오후 9:30",
-            "수요일: 오전 7:30 ~ 오후 9:30",
-            "목요일: 오전 7:30 ~ 오후 9:30",
-            "금요일: 오전 7:30 ~ 오후 9:30",
-            "토요일: 오전 7:30 ~ 오후 9:30",
-            "일요일: 오전 7:30 ~ 오후 9:30"
-        ],
-        "phone": "02-737-6330",
-        "website": "https://maps.google.com/?cid=16418670877453678986",
-        "place_id": "ChIJ2-W0pOmifDURinmtVizW2uM"
     },
     {
         "name": "빌리엔젤 셀렉트 광화문점",
@@ -615,7 +552,7 @@
         "latitude": 37.56954410000001,
         "longitude": 126.9999452,
         "rating": 4.4,
-        "review_count": 206,
+        "review_count": 207,
         "opening_hours": [
             "월요일: 오전 10:00 ~ 오후 7:00",
             "화요일: 오전 10:00 ~ 오후 7:00",
@@ -672,46 +609,25 @@
         "place_id": "ChIJj6yuyi6jfDURzIO1EludKd0"
     },
     {
-        "name": "파리바게뜨 혜화로타리",
+        "name": "익선동 카페 식물 | Ikseondong Bar & Cafe SIKMUL Coffee | 益善洞バー & カフェ SIKMUL | 益善洞酒吧 & 咖啡廳",
         "category": "베이커리",
-        "address": "대한민국 서울특별시 종로구 혜화동 126-3",
-        "latitude": 37.5852551,
-        "longitude": 127.000689,
-        "rating": 3.7,
-        "review_count": 43,
+        "address": "대한민국 서울특별시 종로구 돈화문로11다길 46-1",
+        "latitude": 37.57377209999999,
+        "longitude": 126.9896496,
+        "rating": 4.5,
+        "review_count": 288,
         "opening_hours": [
-            "월요일: 오전 7:30 ~ 오후 10:00",
-            "화요일: 오전 7:30 ~ 오후 10:00",
-            "수요일: 오전 7:30 ~ 오후 10:00",
-            "목요일: 오전 7:30 ~ 오후 10:00",
-            "금요일: 오전 7:30 ~ 오후 10:00",
-            "토요일: 오전 7:30 ~ 오후 10:00",
-            "일요일: 오전 7:30 ~ 오후 10:00"
+            "월요일: 오전 11:00 ~ 오후 11:00",
+            "화요일: 오전 11:00 ~ 오후 11:00",
+            "수요일: 오전 11:00 ~ 오후 11:00",
+            "목요일: 오전 11:00 ~ 오후 11:00",
+            "금요일: 오전 11:00 ~ 오후 11:00",
+            "토요일: 오전 11:00 ~ 오후 11:00",
+            "일요일: 오전 11:00 ~ 오후 11:00"
         ],
-        "phone": "02-764-0011",
-        "website": "https://maps.google.com/?cid=10304527347570867869",
-        "place_id": "ChIJY8lpOiujfDURnX5C4gYJAY8"
-    },
-    {
-        "name": "뚜레쥬르 카페대학로점",
-        "category": "베이커리",
-        "address": "대한민국 서울특별시 종로구 대명길 9",
-        "latitude": 37.58334139999999,
-        "longitude": 127.000945,
-        "rating": 4.1,
-        "review_count": 68,
-        "opening_hours": [
-            "월요일: 오전 11:00 ~ 오후 8:30",
-            "화요일: 오전 9:30 ~ 오후 9:00",
-            "수요일: 오전 9:30 ~ 오후 9:00",
-            "목요일: 오전 9:30 ~ 오후 9:00",
-            "금요일: 오전 9:30 ~ 오후 9:00",
-            "토요일: 오전 11:00 ~ 오후 9:30",
-            "일요일: 오전 11:00 ~ 오후 8:30"
-        ],
-        "phone": "02-741-7077",
-        "website": "https://maps.google.com/?cid=5169645209321664836",
-        "place_id": "ChIJx74BoSujfDURRPFqjO1Evkc"
+        "phone": "02-742-7582",
+        "website": "https://maps.google.com/?cid=10681241952583603180",
+        "place_id": "ChIJqfJLrd2ifDUR7NO-1_ZkO5Q"
     },
     {
         "name": "파리크라상 광화문점",
@@ -754,48 +670,6 @@
         "phone": "정보 없음",
         "website": "https://maps.google.com/?cid=11389412048107795431",
         "place_id": "ChIJUT45SkujfDUR5_MEAOpRD54"
-    },
-    {
-        "name": "파리바게뜨 종로구청점",
-        "category": "베이커리",
-        "address": "대한민국 서울특별시 종로구 삼봉로 95",
-        "latitude": 37.5722162,
-        "longitude": 126.9827505,
-        "rating": 4.1,
-        "review_count": 176,
-        "opening_hours": [
-            "월요일: 오전 7:30 ~ 오후 9:30",
-            "화요일: 오전 7:30 ~ 오후 9:30",
-            "수요일: 오전 7:30 ~ 오후 9:30",
-            "목요일: 오전 7:30 ~ 오후 9:30",
-            "금요일: 오전 7:30 ~ 오후 9:30",
-            "토요일: 오전 7:30 ~ 오후 9:30",
-            "일요일: 오전 7:30 ~ 오후 9:30"
-        ],
-        "phone": "02-737-6330",
-        "website": "https://maps.google.com/?cid=16418670877453678986",
-        "place_id": "ChIJ2-W0pOmifDURinmtVizW2uM"
-    },
-    {
-        "name": "파리바게뜨 종로세무서점",
-        "category": "베이커리",
-        "address": "대한민국 서울특별시 종로구 58-1 종로오피스텔 1층",
-        "latitude": 37.574041,
-        "longitude": 126.9886058,
-        "rating": 4.1,
-        "review_count": 112,
-        "opening_hours": [
-            "월요일: 오전 7:00 ~ 오후 11:00",
-            "화요일: 오전 7:00 ~ 오후 11:00",
-            "수요일: 오전 7:00 ~ 오후 11:00",
-            "목요일: 오전 7:00 ~ 오후 11:00",
-            "금요일: 오전 7:00 ~ 오후 11:00",
-            "토요일: 오전 7:00 ~ 오후 11:00",
-            "일요일: 오전 7:00 ~ 오후 11:00"
-        ],
-        "phone": "02-764-8204",
-        "website": "https://maps.google.com/?cid=17385119411888836672",
-        "place_id": "ChIJfeZsA92ifDURQNBhq_5ZRPE"
     },
     {
         "name": "익선주택",
@@ -867,7 +741,7 @@
         "latitude": 37.5740681,
         "longitude": 126.990076,
         "rating": 4.3,
-        "review_count": 121,
+        "review_count": 122,
         "opening_hours": [
             "월요일: 오전 10:00 ~ 오후 10:00",
             "화요일: 오전 10:00 ~ 오후 10:00",
@@ -888,7 +762,7 @@
         "latitude": 37.5742403,
         "longitude": 126.9908612,
         "rating": 5.0,
-        "review_count": 282,
+        "review_count": 286,
         "opening_hours": [
             "월요일: 오전 11:00 ~ 오후 7:00",
             "화요일: 오전 11:00 ~ 오후 7:00",
