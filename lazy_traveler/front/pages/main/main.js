@@ -118,6 +118,9 @@ document.addEventListener("DOMContentLoaded", async function() {
         const botMessage = document.querySelector(".message.bot-message");
         const logoutButton = document.querySelector(".logout");
 
+        // 채팅창 스크롤을 최상단으로 이동
+        scrollChatToTop();
+
         // 토큰이 없으면 비로그인자의 메시지 처리
         if (!token) {
             if (botMessage) {
@@ -501,8 +504,7 @@ function loadSessionMessages(session_id) {
                 appendMessage(chat.response, "bot-response");
             });
 
-            // 히스토리 조회 시 스크롤을 최상단으로 이동
-            chatBox.scrollTop = 0;
+            scrollChatToTop();
             hasStartedChat = false; // 새로운 세션을 로드할 때 대화 시작 상태 초기화
         });
     })
@@ -601,11 +603,7 @@ window.addEventListener('beforeunload', function() {
 // 페이지가 로드될 때 대화 기록 불러오기
 window.onload = function() {
     loadChatHistory();
-    // 페이지 로드 시 스크롤을 최상단으로 이동
-    const chatBox = document.getElementById("chat-box");
-    if (chatBox) {
-        chatBox.scrollTop = 0;
-    }
+    scrollChatToTop();
     hasStartedChat = false; // 페이지 로드 시 대화 시작 상태 초기화
 };
 
@@ -700,6 +698,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 메인 페이지로 이동
 function goToMain() {
-    localStorage.setItem('scrollToTop', 'true');
     window.location.href = "https://lazy-traveler.store/pages/main/main.html";
+}
+
+// 채팅창 스크롤을 최상단으로 이동시키는 함수
+function scrollChatToTop() {
+    const chatBox = document.getElementById("chat-box");
+    if (chatBox) {
+        chatBox.scrollTop = 0;
+    }
 }
