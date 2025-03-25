@@ -25,7 +25,6 @@ def get_user_tags(username):
         return ""
    
 # 거리 계산 함수
-@sync_to_async
 def calculate_distance(lat1, lon1, lat2, lon2):
     lat1 = float(lat1)
     lon1 = float(lon1)

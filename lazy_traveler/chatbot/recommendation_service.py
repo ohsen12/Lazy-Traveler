@@ -13,7 +13,7 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
     if latitude is None or longitude is None:
         latitude, longitude = 37.5704, 126.9831
 
-    question_type =await classify_question_with_vector(user_query)
+    question_type = await classify_question_with_vector(user_query)
 
     if question_type == "function":
         # 기능 벡터DB에서 검색된 문서 가져오기
@@ -62,7 +62,7 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
     # 문서 검색
     search_query = f"{transformed_query} (위치: {latitude}, {longitude}) 관련 태그: {user_categories}"
 
-    docs = await retriever.invoke(search_query)
+    docs = await retriever.ainvoke(search_query)
 
     # 거리 정렬
     sorted_docs = await sort_places_by_distance(docs, latitude, longitude)

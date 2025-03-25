@@ -24,28 +24,27 @@ def build_vector_store():
 
         current_dir = os.getcwd()
 
-        function_vector_dir = os.path.join(current_dir, 'chatbot', 'vector_function')
-        place_vector_dir = os.path.join(current_dir, 'chatbot', 'vector_place')
+        function_vector_dir = os.path.join(current_dir, 'vector_function')
+        place_vector_dir = os.path.join(current_dir,'vector_place')
 
-        # 벡터 DB가 존재하는지 확인 후 생성
-        if not os.path.exists(function_vector_dir) or not os.listdir(function_vector_dir):
-            os.makedirs(function_vector_dir, exist_ok=True)
-            function_vector_store = Chroma(
-                collection_name="function_collection",
-                embedding_function=embeddings,
-                persist_directory=function_vector_dir
-            )
+        os.makedirs(function_vector_dir, exist_ok=True)
+        os.makedirs(place_vector_dir, exist_ok=True)
 
-        if not os.path.exists(place_vector_dir) or not os.listdir(place_vector_dir):
-            os.makedirs(place_vector_dir, exist_ok=True)
-            place_vector_store = Chroma(
-                collection_name="place_collection",
-                embedding_function=embeddings,
-                persist_directory=place_vector_dir
-            )
+        function_vector_store = Chroma(
+            collection_name="function_collection",
+            embedding_function=embeddings,
+            persist_directory=function_vector_dir
+        )
+
+        place_vector_store = Chroma(
+            collection_name="place_collection",
+            embedding_function=embeddings,
+            persist_directory=place_vector_dir
+)
 
         # 4. 질문 응답 데이터 추출 및 벡터화 (function_collection용)
-        qa_folder = "qa_folder"  # 질문 응답 데이터가 들어있는 폴더
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        qa_folder = os.path.join(script_dir, "qa_folder")
         qa_files = [f for f in os.listdir(qa_folder) if f.endswith(".json")]
 
         all_questions = []
@@ -73,8 +72,8 @@ def build_vector_store():
                 all_metadatas_qa.append(metadata)
 
         # 5. 장소 데이터 추출 및 벡터화 (place_collection용)
-        place_folder = "place_folder"  # 장소 데이터가 들어있는 폴더
-        place_files = [f for f in os.listdir(place_folder) if f.endswith(".json")]
+        place_folder = os.path.join(script_dir, "place_folder")
+        place_files = [f for f in os.listdir(place_folder) if f.endswith(".json")] 
 
         all_texts_places = []
         all_metadatas_places = []
