@@ -1302,6 +1302,27 @@
         "place_id": "ChIJ5w9dhNS8fDURqAExV9QeRuI"
     },
     {
+        "name": "쌈지길",
+        "category": "쇼핑",
+        "address": "대한민국 서울특별시 종로구 인사동길 44",
+        "latitude": 37.5743024,
+        "longitude": 126.9849036,
+        "rating": 4.4,
+        "review_count": 1366,
+        "opening_hours": [
+            "월요일: 오전 10:30 ~ 오후 8:30",
+            "화요일: 오전 10:30 ~ 오후 8:30",
+            "수요일: 오전 10:30 ~ 오후 8:30",
+            "목요일: 오전 10:30 ~ 오후 8:30",
+            "금요일: 오전 10:30 ~ 오후 8:30",
+            "토요일: 오전 10:30 ~ 오후 8:30",
+            "일요일: 오전 10:30 ~ 오후 8:30"
+        ],
+        "phone": "02-736-0088",
+        "website": "https://maps.google.com/?cid=9104350961053911688",
+        "place_id": "ChIJQRutlcKifDURiMoaUPYmWX4"
+    },
+    {
         "name": "광화문광장",
         "category": "관광명소",
         "address": "대한민국 서울특별시 종로구 세종대로 172",
