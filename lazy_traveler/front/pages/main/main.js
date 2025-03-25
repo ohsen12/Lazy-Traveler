@@ -231,13 +231,6 @@ function processAndSendMessage() {
     
     isProcessingMessage = true; // 처리 시작
     
-    // 입력창 초기화 및 커서 위치 리셋
-    messageInput.value = "";
-    messageInput.style.height = "24px"; // 높이 초기화
-    messageInput.scrollTop = 0; // 스크롤 위치 초기화
-    messageInput.selectionStart = 0; // 커서 위치 처음으로
-    messageInput.selectionEnd = 0; // 선택 영역 초기화
-    
     // 실제 메시지 전송
     if (!socket) {
         console.warn("🚨 WebSocket이 초기화되지 않았습니다. 연결을 시도합니다...");
@@ -258,6 +251,15 @@ function processAndSendMessage() {
             session_id: localStorage.getItem("session_id") || "",
             new_session: !localStorage.getItem("session_id")
         };
+
+        // 메시지를 전송한 후에 입력창 초기화
+        requestAnimationFrame(() => {
+            messageInput.value = "";
+            messageInput.style.height = "24px"; // 높이 초기화
+            messageInput.scrollTop = 0; // 스크롤 위치 초기화
+            messageInput.selectionStart = 0; // 커서 위치 처음으로
+            messageInput.selectionEnd = 0; // 선택 영역 초기화
+        });
 
         socket.send(JSON.stringify(requestData));
         
