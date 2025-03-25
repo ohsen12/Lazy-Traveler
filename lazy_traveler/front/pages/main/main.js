@@ -4,14 +4,6 @@ let currentSessionId = null;
 let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 페이지 로드 시 채팅창 최상단으로 스크롤
-    const chatBox = document.getElementById("chat-box");
-    if (chatBox) {
-        chatBox.scrollTop = 0;
-        // 스크롤 위치 초기화 후 localStorage에서 플래그 제거
-        localStorage.removeItem('scrollToTop');
-    }
-    
     kakao.maps.load(() => {
         initKakaoMap();  
         initChatUI();
