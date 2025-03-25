@@ -9,8 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
         initChatUI();
         connectWebSocket();
         showCoachmark();
-        // 페이지 로드 시 스크롤을 최상단으로 이동
-        setTimeout(scrollChatToTop, 100);
     });
 });
 
@@ -43,11 +41,6 @@ function initKakaoMap() {
     });
 
     console.log("✅ Kakao 지도 초기화 완료");
-    
-    // 지도 초기화 완료 후 채팅창 스크롤을 최상단으로 이동
-    setTimeout(() => {
-        scrollChatToTop();
-    }, 100);
 }
 
 // 현재 위치 가져오기
@@ -96,13 +89,11 @@ function getAddressFromCoords(coords) {
 
 function initChatUI() {
     connectWebSocket();
-    loadChatHistory();
-    showCoachmark();
-
+    
     document.getElementById("send-btn").addEventListener("click", sendMessage);
     document.getElementById("user-message").addEventListener("keydown", function (event) {
         if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault(); // Enter 키의 기본 동작 방지
+            event.preventDefault();
             sendMessage();
         }
     });
@@ -272,48 +263,45 @@ function logout() {
 
 // 대화 내역 불러오기
 function loadChatHistory() {
-    console.log("대화 기록을 불러오는 중...");
+    return new Promise((resolve) => {
+        console.log("대화 기록을 불러오는 중...");
 
-    const token = localStorage.getItem("access_token");
+        const token = localStorage.getItem("access_token");
 
-    // 토큰이 없는 경우 로그인 메시지와 버튼을 표시
-    if (!token) {
-        displayLoginMessage();
-        return;  // 토큰이 없으면 대화 내역을 불러오지 않음
-    }
-
-    // 토큰이 있는 경우 대화 내역 불러오기
-    axios.get("https://api.lazy-traveler.store/chatbot/chat_history/", {
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token,
+        if (!token) {
+            displayLoginMessage();
+            resolve();
+            return;
         }
-    })
-    .then(response => {
-        console.log("대화 기록 불러오기 성공:", response.data);
-        const data = response.data;
-        const historyList = document.getElementById("chat-history");
-        historyList.innerHTML = ""; // 기존 목록 초기화
 
-        // 데이터 처리
-        data.forEach(group => {
-            const { date, sessions } = group;
-            console.log(`날짜: ${date}`);
+        axios.get("https://api.lazy-traveler.store/chatbot/chat_history/", {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token,
+            }
+        })
+        .then(response => {
+            console.log("대화 기록 불러오기 성공:", response.data);
+            const data = response.data;
+            const historyList = document.getElementById("chat-history");
+            historyList.innerHTML = "";
 
-            // 날짜 항목 생성
-            const dateItem = createDateItem(date);
-            historyList.appendChild(dateItem);
+            data.forEach(group => {
+                const { date, sessions } = group;
+                const dateItem = createDateItem(date);
+                historyList.appendChild(dateItem);
 
-            // 세션 목록 항목 생성
-            const sessionList = createSessionList(sessions);
-            historyList.appendChild(sessionList);
+                const sessionList = createSessionList(sessions);
+                historyList.appendChild(sessionList);
 
-            // 아코디언 기능 추가
-            toggleAccordion(dateItem, sessionList);
+                toggleAccordion(dateItem, sessionList);
+            });
+            resolve();
+        })
+        .catch(error => {
+            console.error("대화 기록 불러오기 실패:", error);
+            resolve();
         });
-    })
-    .catch(error => {
-        console.error("대화 기록 불러오기 실패:", error);
     });
 }
 
@@ -570,11 +558,17 @@ window.addEventListener('beforeunload', function() {
 
 
 // 페이지가 로드될 때 대화 기록 불러오기
-window.onload = function() {
-    loadChatHistory();
+window.onload = async function() {
     hasStartedChat = false;
-    // 페이지 로드 시 스크롤을 최상단으로 이동
-    setTimeout(scrollChatToTop, 100);
+    
+    // 채팅 히스토리를 먼저 로드
+    await loadChatHistory();
+    
+    // 모든 초기화가 완료된 후 스크롤을 최상단으로 이동
+    setTimeout(() => {
+        scrollChatToTop();
+        console.log("스크롤을 최상단으로 이동");
+    }, 200);
 };
 
 // 마이페이지 이동
@@ -676,13 +670,14 @@ function scrollChatToTop() {
     const chatBox = document.getElementById("chat-box");
     if (chatBox) {
         chatBox.scrollTop = 0;
+        console.log("채팅창 스크롤 위치:", chatBox.scrollTop);
     }
 }
 
 // 채팅창 스크롤을 최하단으로 이동시키는 함수
 function scrollChatToBottom() {
     const chatBox = document.getElementById("chat-box");
-    if (chatBox) {
+    if (chatBox && hasStartedChat) {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 }
