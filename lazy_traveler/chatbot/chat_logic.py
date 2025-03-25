@@ -39,8 +39,6 @@ vector_store = Chroma(
     persist_directory=persist_dir
 )
 
-
-
 # 벡터 검색기 설정
 retriever = vector_store.as_retriever(search_kwargs={"k": 5})  # 최대 10개 문서 검색
 

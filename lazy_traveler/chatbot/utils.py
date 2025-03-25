@@ -3,15 +3,18 @@ from .models import ChatHistory
 from django.contrib.auth import get_user_model
 from datetime import timedelta
 from .openai_chroma_config import function_vector_store, place_vector_store
+from asgiref.sync import sync_to_async
+
 User = get_user_model()
 
-
 # 대화 내역을 가져오는 함수
+@sync_to_async
 def get_context(session_id, max_turns=5):
     chat_history = ChatHistory.objects.filter(session_id=session_id).order_by("-created_at")[:max_turns]
     return "\n\n".join([f"User: {chat.message}\nBot: {chat.response}" for chat in reversed(chat_history)])
 
 # 유저 태그 가져오기
+@sync_to_async
 def get_user_tags(username):
     try:
         # 현재 세션에 해당하는 사용자 찾기
@@ -22,6 +25,7 @@ def get_user_tags(username):
         return ""
    
 # 거리 계산 함수
+@sync_to_async
 def calculate_distance(lat1, lon1, lat2, lon2):
     lat1 = float(lat1)
     lon1 = float(lon1)
@@ -37,6 +41,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     return R * c  # km
 
 # 거리 계산 및 정렬
+@sync_to_async
 def sort_places_by_distance(places, latitude, longitude):
     for place in places:
         lat = float(place.metadata.get('latitude', 0))
@@ -47,6 +52,7 @@ def sort_places_by_distance(places, latitude, longitude):
     return sorted(places, key=lambda x: x.metadata.get('distance', float('inf')))
 
 # 스케줄 LLM전 정제
+@sync_to_async
 def schedule_to_text(schedule):
     """
     스케줄 데이터를 텍스트로 변환해서 LLM에 넘길 수 있도록 준비
@@ -74,6 +80,7 @@ CATEGORY_MAPPING = {
 }
 
 # 카테고리별 스케줄
+@sync_to_async
 def build_schedule_by_categories(sorted_places, schedule_categories, start_time):
     schedule = []
     used_place_ids = set()
@@ -105,6 +112,7 @@ def build_schedule_by_categories(sorted_places, schedule_categories, start_time)
     return schedule
 
 #태그데이터 대분류로 변경
+@sync_to_async
 def map_tags_to_categories(user_tags):
     mapped_categories = set()
 
@@ -120,6 +128,7 @@ def map_tags_to_categories(user_tags):
     return list(mapped_categories)
 
 #대분류 일정 스케줄링
+@sync_to_async
 def determine_schedule_template(current_time):
     hour = current_time.hour
 
@@ -174,6 +183,7 @@ def determine_schedule_template(current_time):
     return "기본", ["먹을거리", "볼거리", "카페", "볼거리"]
 
 #어떤 질문인지 파악
+@sync_to_async
 def classify_question_with_vector(user_query, threshold=0.7):
 
     function_results = function_vector_store.similarity_search_with_score(

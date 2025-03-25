@@ -3,7 +3,7 @@ import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import ChatHistory
-from .chat_logic import get_recommendation
+from .recommendation_service import get_recommendation
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
