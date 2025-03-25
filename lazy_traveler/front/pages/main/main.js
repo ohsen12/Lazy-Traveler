@@ -99,10 +99,10 @@ function initChatUI() {
     
     const messageInput = document.getElementById("user-message");
     
-    // keydown 대신 keyup 이벤트 사용
-    messageInput.addEventListener("keyup", function(event) {
+    // keydown 이벤트로 변경하고 Enter 키 처리 방식 수정
+    messageInput.addEventListener("keydown", function(event) {
         if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
+            event.preventDefault(); // 먼저 기본 동작을 방지
             
             // 이미 처리 중인 메시지가 없을 때만 실행
             if (!isProcessingMessage) {
@@ -231,8 +231,12 @@ function processAndSendMessage() {
     
     isProcessingMessage = true; // 처리 시작
     
-    // 입력창 초기화를 메시지 처리 전에 수행
+    // 입력창 초기화 및 커서 위치 리셋
     messageInput.value = "";
+    messageInput.style.height = "24px"; // 높이 초기화
+    messageInput.scrollTop = 0; // 스크롤 위치 초기화
+    messageInput.selectionStart = 0; // 커서 위치 처음으로
+    messageInput.selectionEnd = 0; // 선택 영역 초기화
     
     // 실제 메시지 전송
     if (!socket) {
