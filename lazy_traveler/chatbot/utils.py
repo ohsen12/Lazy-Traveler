@@ -90,30 +90,35 @@ def build_schedule_by_categories(sorted_places, schedule_categories, start_time)
     ]
 
     for i, category in enumerate(schedule_categories):
-        # 해당 category에 해당하는 후보 장소들을 추출 (이미 선택된 장소 제외)
-        candidate_places = [
-            place for place in sorted_places
-            if place.metadata.get('place_id') not in used_place_ids
-            and category in CATEGORY_MAPPING
-            and place.metadata.get('category') in CATEGORY_MAPPING[category]
-        ]
+        print(f"\n[DEBUG] 현재 요청된 대분류 카테고리: {category}")
+        
+        for place in sorted_places:
+            metadata = place.metadata
+            raw_category = metadata.get('category', '').strip()
+            print(f"[DEBUG] 장소: {metadata.get('name')} / category: {raw_category}")
 
-        # 랜덤으로 하나 선택
-        if candidate_places:
-            selected_place = random.choice(candidate_places)
-            metadata = selected_place.metadata
-            used_place_ids.add(metadata.get('place_id'))
+            if metadata.get('place_id') in used_place_ids:
+                continue
 
-            schedule.append({
-                "time": time_slots[i],
-                "desc": category,
-                "name": metadata.get('name'),
-                "category": metadata.get('category'),
-                "address": metadata.get('address'),
-                "distance_km": f"{metadata.get('distance', 0):.2f}km",
-                "rating": metadata.get('rating'),
-                "website": metadata.get('website')
-            })
+            if category in CATEGORY_MAPPING:
+                for tag in CATEGORY_MAPPING[category]:
+                    if tag in raw_category:
+                        print(f"[MATCH] {raw_category} ← {tag} (category: {category})")
+                        used_place_ids.add(metadata.get('place_id'))
+                        schedule.append({
+                            "time": time_slots[i],
+                            "desc": category,
+                            "name": metadata.get('name'),
+                            "category": metadata.get('category'),
+                            "address": metadata.get('address'),
+                            "distance_km": f"{metadata.get('distance', 0):.2f}km",
+                            "rating": metadata.get('rating'),
+                            "website": metadata.get('website')
+                        })
+                        break
+
+            else:
+                print(f"[NO MATCH] {raw_category}는 CATEGORY_MAPPING에 정의되지 않음")
 
     return schedule
 
@@ -188,6 +193,7 @@ def determine_schedule_template(current_time):
     # 기본값 (예외)
     return "기본", ["먹을거리", "볼거리", "카페", "볼거리"]
 
+
 #어떤 질문인지 파악
 @sync_to_async
 def classify_question_with_vector(user_query, threshold=0.7):
@@ -211,3 +217,87 @@ def classify_question_with_vector(user_query, threshold=0.7):
         return "function"
     else:
         return "place"
+    
+@sync_to_async
+def get_preferred_tags_by_schedule(user_tags, schedule_categories):
+
+    result = {}
+    for category in schedule_categories:
+        default_subcategories = CATEGORY_MAPPING.get(category, [])
+        preferred = [tag for tag in default_subcategories if tag in user_tags]
+
+        result[category] = preferred if preferred else default_subcategories
+
+    return result
+@sync_to_async
+def build_schedule_by_categories_with_preferences(sorted_places, schedule_categories, preferred_tag_mapping, start_time):
+    schedule = []
+    used_place_ids = set()
+
+    from collections import Counter
+    category_counter = Counter(schedule_categories)
+
+    time_slots = [
+        (start_time + timedelta(hours=i)).strftime("%H:%M") for i in range(len(schedule_categories))
+    ]
+
+    time_slot_index = 0
+
+    for category, count in category_counter.items():
+        subcategory_tags = preferred_tag_mapping.get(category, [])
+
+        print(f"\n[DEBUG] 현재 카테고리: {category}")
+        print(f"[DEBUG] 선호 태그: {subcategory_tags}")
+
+        preferred_matches = [
+            place for place in sorted_places
+            if place.metadata.get("place_id") not in used_place_ids and
+               any(tag in place.metadata.get("category", "") for tag in subcategory_tags)
+        ]
+
+        remaining_count = count - len(preferred_matches)
+        if remaining_count > 0:
+            default_matches = [
+                place for place in sorted_places
+                if place.metadata.get("place_id") not in used_place_ids and
+                   place.metadata.get("category", "") in preferred_tag_mapping.get(category, [])
+            ]
+            preferred_matches += default_matches[:remaining_count]
+
+        for place in preferred_matches[:count]:
+            metadata = place.metadata
+            schedule.append({
+                "time": time_slots[time_slot_index],
+                "desc": category,
+                "name": metadata.get("name"),
+                "category": metadata.get("category"),
+                "address": metadata.get("address"),
+                "distance_km": f"{metadata.get('distance', 0):.2f}km",
+                "rating": metadata.get("rating"),
+                "website": metadata.get("website"),
+            })
+            used_place_ids.add(metadata.get("place_id"))
+            time_slot_index += 1
+
+    return schedule
+
+@sync_to_async
+def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
+    from .openai_chroma_config import place_vector_store
+    all_docs = []
+    seen_place_ids = set()
+
+    for category, tags in preferred_tag_mapping.items():
+        for tag in tags:
+            results = place_vector_store.similarity_search(
+                query=f"{user_query} {tag}",
+                k=5,
+                filter={"type": "place"}
+            )
+            for doc in results:
+                place_id = doc.metadata.get("place_id")
+                if place_id not in seen_place_ids:
+                    all_docs.append(doc)
+                    seen_place_ids.add(place_id)
+
+    return all_docs
