@@ -551,7 +551,13 @@ function appendMessage(message, type) {
     // 새로운 메시지 컨테이너 생성
     const messageContainer = document.createElement("div");
     messageContainer.classList.add("message", type);
-    messageContainer.textContent = message;
+    
+    // HTML 태그가 포함된 메시지인지 확인하고 적절히 처리
+    if (typeof message === 'string' && message.trim().startsWith("<div")) {
+        messageContainer.innerHTML = message;
+    } else {
+        messageContainer.textContent = message;
+    }
     
     // 채팅박스에 새 메시지 추가
     chatBox.appendChild(messageContainer);
