@@ -11,14 +11,16 @@ from .utils import (
     get_preferred_tags_by_schedule,
     search_places_by_preferred_tags,
     classify_question_with_llm,
-    format_place_results_to_html
+    format_place_results_to_html,
+    filter_open_places_with_llm
     )
 from .openai_chroma_config import function_vector_store,place_vector_store, retriever, llm
 
 
+
 async def get_recommendation(user_query, session_id=None, username=None, latitude=None, longitude=None):
-    now = datetime.now()
-    # now = datetime(2025, 3, 27, 16, 30, 0)
+    #now = datetime.now()
+    now = datetime(2025, 3, 27, 9, 0, 0)
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     start_time = now
 
@@ -79,12 +81,16 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
 
     # 거리 정렬
     sorted_docs = await sort_places_by_distance(docs, latitude, longitude)
-    # print(sorted_docs)
+    print("sorted_docs:",sorted_docs)
+
+    #운영시간 Let's go
+    filtered_docs = await filter_open_places_with_llm(sorted_docs, now)
+    print("filtered_docs:", filtered_docs)
 
     schedule = await build_schedule_by_categories_with_preferences(
-        sorted_docs, schedule_categories, preferred_tag_mapping, start_time
+        filtered_docs, schedule_categories, preferred_tag_mapping, start_time
     )
-    print("schedule:", schedule )
+    print("schedule1:", schedule )
 
 
     # 5. 스케줄을 텍스트로 변환

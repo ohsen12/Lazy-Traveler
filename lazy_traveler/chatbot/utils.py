@@ -1,13 +1,14 @@
 import math
 import random
+import re
 from .models import ChatHistory
 from django.contrib.auth import get_user_model
-from datetime import timedelta
-from .openai_chroma_config import function_vector_store, place_vector_store
+from datetime import datetime, timedelta
+from .openai_chroma_config import function_vector_store, place_vector_store, llm
 from asgiref.sync import sync_to_async
 from langchain.chains import LLMChain
-from .prompt import query_prompt
-from .openai_chroma_config import llm
+from .prompt import query_prompt, opening_hours_prompt
+from langchain.schema import Document
 
 User = get_user_model()
 
@@ -52,7 +53,12 @@ def sort_places_by_distance(places, latitude, longitude):
         distance = calculate_distance(latitude, longitude, lat, lon)
         place.metadata['distance'] = distance
 
-    return sorted(places, key=lambda x: x.metadata.get('distance', float('inf')))
+    return sorted(
+        places,
+        key=lambda x: (
+            x.metadata.get('distance', float('inf')) if hasattr(x, "metadata") else x.get('distance', float('inf'))
+        )
+    )
 
 # 스케줄 LLM전 정제
 @sync_to_async
@@ -67,6 +73,7 @@ def schedule_to_text(schedule):
 - 장소: **{place['name']}**
 - 카테고리: {place['category']}
 - 주소: {place['address']}
+- 운영시간: {place['opening_hours']} 
 - 거리: {place['distance_km']}
 - 평점: {place['rating']}
 - 웹사이트: {place['website']}
@@ -77,7 +84,7 @@ def schedule_to_text(schedule):
 CATEGORY_MAPPING = {
     "볼거리": ["공원", "관광명소", "전시","서점"],
     "맛집": ["베이커리", "베트남 음식", "브런치", "비건", "양식", "일식", "중식", "태국 음식", "피자", "한식", "햄버거"],
-    "아침식사": ["한식", "비건", "브런치"],
+    "아침 식사": ["한식", "비건", "브런치"],
     "야식": ["주점", "피자", "햄버거", "중식"],
     "카페": ["카페", "브런치", "베이커리"]
 }
@@ -186,30 +193,6 @@ def determine_schedule_template(current_time):
     return "기본", ["맛집", "볼거리", "카페", "볼거리"]
 
 
-#어떤 질문인지 파악
-# @sync_to_async
-# def classify_question_with_vector(user_query, threshold=1.3):
-
-#     function_results = function_vector_store.similarity_search_with_score(
-#         query=user_query,
-#         k=1,
-#         filter={"type": "qa"}
-#     )
-
-#     place_results = place_vector_store.similarity_search_with_score(
-#         query=user_query,
-#         k=1,
-#         filter={"type": "place"}
-#     )
-
-#     function_score = function_results[0][1] if function_results else 0
-#     place_score = place_results[0][1] if place_results else 0
-
-#     if function_score < place_score:
-#         return "function"
-#     else:
-#         return "place"
-    
 @sync_to_async
 def get_preferred_tags_by_schedule(user_tags, schedule_categories):
 
@@ -263,6 +246,7 @@ def build_schedule_by_categories_with_preferences(sorted_places, schedule_catego
                 "desc": category,
                 "name": metadata.get("name"),
                 "category": metadata.get("category"),
+                "opening_hours": metadata.get("opening_hours"),
                 "address": metadata.get("address"),
                 "distance_km": f"{metadata.get('distance', 0):.2f}km",
                 "rating": metadata.get("rating"),
@@ -282,7 +266,7 @@ def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
         for tag in tags:
             results = place_vector_store.similarity_search(
                 query=f"{user_query} {tag}",
-                k=5,
+                k=2,
                 filter={"type": "place"}
             )
             for doc in results:
@@ -300,7 +284,7 @@ def classify_question_with_llm(user_query):
 
     category = result.get("text", "").strip().lower()
 
-    if category not in ["function", "place", "unknown"]:
+    if category not in ["function", "place", "schedule","unknown"]:
         return "error"
     
     return category
@@ -340,3 +324,116 @@ def format_place_results_to_html(place_results, top_k=3):
       {''.join(html_blocks)}
     </div>
     """
+
+# @sync_to_async
+# def filter_open_places(schedule: list, now: datetime) -> list:
+#     weekday_map = {
+#         "월요일": 0, "화요일": 1, "수요일": 2, "목요일": 3,
+#         "금요일": 4, "토요일": 5, "일요일": 6
+#     }
+
+#     current_weekday = now.weekday()
+#     today_korean = list(weekday_map.keys())[current_weekday]
+
+#     def parse_korean_time(tstr):
+#         tstr = tstr.strip()
+#         if "오전" in tstr:
+#             return datetime.strptime(tstr, "오전 %I:%M").time()
+#         elif "오후" in tstr:
+#             return datetime.strptime(tstr, "오후 %I:%M").time()
+#         return None
+
+#     filtered = []
+
+#     for place in schedule:
+#         if isinstance(place, Document):
+#             data = place.metadata
+#         elif isinstance(place, dict):
+#             data = place
+#         else:
+#             continue
+
+#         opening_hours = data.get("opening_hours") or data.get("metadata", {}).get("opening_hours")
+#         time_str = data.get("time")
+
+#         if not opening_hours or not time_str:
+#             continue
+
+#         try:
+#             schedule_time = datetime.strptime(time_str, "%H:%M").time()
+#         except Exception:
+#             continue
+
+#         if isinstance(opening_hours, str):
+#             opening_lines = [s.strip() for s in opening_hours.split(",")]
+#         elif isinstance(opening_hours, list):
+#             opening_lines = opening_hours
+#         else:
+#             continue
+
+#         is_open = False
+
+#         for line in opening_lines:
+#             if today_korean not in line:
+#                 continue
+#             if "휴무일" in line:
+#                 break
+#             if "24시간" in line:
+#                 is_open = True
+#                 break
+
+#             time_ranges = re.findall(r"(오[전후] \d{1,2}:\d{2})\s*~\s*(오[전후] \d{1,2}:\d{2})", line)
+
+#             for start, end in time_ranges:
+#                 open_time = parse_korean_time(start)
+#                 close_time = parse_korean_time(end)
+
+#                 if not open_time or not close_time:
+#                     continue
+
+#                 if open_time < close_time:
+#                     if open_time <= schedule_time <= close_time:
+#                         is_open = True
+#                         break
+#                 else:
+#                     if schedule_time >= open_time or schedule_time <= close_time:
+#                         is_open = True
+#                         break
+
+#             if is_open:
+#                 break
+
+#         if is_open:
+#             filtered.append(place)
+
+#     return filtered
+
+
+llm_chain = LLMChain(llm=llm, prompt=opening_hours_prompt)
+async def filter_open_places_with_llm(docs, now: datetime):
+
+    results = []
+    weekday_korean = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"][now.weekday()]
+    visit_time = now.strftime("%Y-%m-%d %H:%M")
+
+    for doc in docs:
+        metadata = doc.metadata
+        opening_hours = metadata.get("opening_hours")
+
+        if not opening_hours:
+            continue
+
+        try:
+            response = await llm_chain.ainvoke({
+                "opening_hours": opening_hours,
+                "visit_time": visit_time,
+                "weekday": weekday_korean
+            })
+            answer = response.get("text", "").strip()
+            if "열려 있음" in answer:
+                results.append(doc)
+        except Exception as e:
+            print(f"error: {e}")
+            continue
+
+    return results
