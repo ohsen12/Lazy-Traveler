@@ -40,7 +40,7 @@ subprocess.run([
     "lazy_traveler.asgi:application",
     "-k", "uvicorn.workers.UvicornWorker",
     "--bind", "0.0.0.0:8000",
-    "--workers", "3",
+    "--workers", "5",
     "--threads", "2",
 ], check=True)
 
