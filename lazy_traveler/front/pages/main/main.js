@@ -524,8 +524,7 @@ function loadSessionMessages(session_id) {
             defaultMessage.innerHTML = `
                 안녕하세요? ${username}님. Lazy Traveler예요.<br>
                 저는 종로에서 여행하는 일정을 스케줄링 해드립니다.<br>
-                ${tagList.length > 0 ? `고객님의 [${tagList.join(", ")}] 태그를 기반으로 코스를 제안해 드릴까요?` : 
-                "어느 장소에서 여행하는 루트를 추천해드릴까요?"}
+                고객님의 태그를 기반으로 코스를 제안해 드릴까요?
             `;
             chatBox.appendChild(defaultMessage);
 
