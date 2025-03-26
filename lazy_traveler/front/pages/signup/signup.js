@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // admin 포함 여부 체크 추가
         if (username.toLowerCase().includes('admin')) {
-            showMessage(idMessage, '* 사용할 수 없는 ID입니다', false);
+            showMessage(idMessage, '사용할 수 없는 ID입니다', false);
             isIdChecked = false;
             return;
         }
