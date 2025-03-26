@@ -79,7 +79,7 @@ place_prompt = ChatPromptTemplate.from_template("""
 💡 예시 HTML 응답:
 
 <div class="bot-response">
-  <p>지금 시간에 맞는 4시간짜리 일정을 제안드릴게요!</p>
+  <p>지금 시간에 맞는 4시간짜리 일정을 제안드릴게요!</p><br/>
 
   <div class="schedule-item">
     ⏰ <strong>{{시간 1}}</strong> - {{활동 1}}<br/>
@@ -89,7 +89,7 @@ place_prompt = ChatPromptTemplate.from_template("""
     📏 거리: {{거리 1}}<br/>
     ⭐ 평점: {{평점 1}}<br/>
     🔗 <a href="https://maps.google.com/?cid=..." target="_blank">웹사이트 바로가기</a>
-  </div>
+  </div><br/>
 
   <div class="schedule-item">
     ⏰ <strong>{{시간 2}}</strong> - {{활동 2}}<br/>
@@ -99,7 +99,7 @@ place_prompt = ChatPromptTemplate.from_template("""
     📏 거리: {{거리 2}}<br/>
     ⭐ 평점: {{평점 2}}<br/>
     🔗 <a href="https://maps.google.com/?cid=..." target="_blank">웹사이트 바로가기</a>
-  </div>
+  </div><br/>
   
   <div class="schedule-item">
     ⏰ <strong>{{시간 3}}</strong> - {{활동 3}}<br/>
@@ -109,7 +109,7 @@ place_prompt = ChatPromptTemplate.from_template("""
     📏 거리: {{거리 3}}<br/>
     ⭐ 평점: {{평점 3}}<br/>
     🔗 <a href="https://maps.google.com/?cid=..." target="_blank">웹사이트 바로가기</a>
-  </div>
+  </div><br/>
 
   <!-- 추가 일정 반복 -->
 </div>
