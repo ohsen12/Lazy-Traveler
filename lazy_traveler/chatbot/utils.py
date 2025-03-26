@@ -90,7 +90,6 @@ def build_schedule_by_categories(sorted_places, schedule_categories, start_time)
     ]
 
     for i, category in enumerate(schedule_categories):
-<<<<<<< HEAD
         print(f"\n[DEBUG] 현재 요청된 대분류 카테고리: {category}")
         
         for place in sorted_places:
@@ -120,32 +119,6 @@ def build_schedule_by_categories(sorted_places, schedule_categories, start_time)
 
             else:
                 print(f"[NO MATCH] {raw_category}는 CATEGORY_MAPPING에 정의되지 않음")
-=======
-        # 해당 category에 해당하는 후보 장소들을 추출 (이미 선택된 장소 제외)
-        candidate_places = [
-            place for place in sorted_places
-            if place.metadata.get('place_id') not in used_place_ids
-            and category in CATEGORY_MAPPING
-            and place.metadata.get('category') in CATEGORY_MAPPING[category]
-        ]
-
-        # 랜덤으로 하나 선택
-        if candidate_places:
-            selected_place = random.choice(candidate_places)
-            metadata = selected_place.metadata
-            used_place_ids.add(metadata.get('place_id'))
-
-            schedule.append({
-                "time": time_slots[i],
-                "desc": category,
-                "name": metadata.get('name'),
-                "category": metadata.get('category'),
-                "address": metadata.get('address'),
-                "distance_km": f"{metadata.get('distance', 0):.2f}km",
-                "rating": metadata.get('rating'),
-                "website": metadata.get('website')
-            })
->>>>>>> dev
 
     return schedule
 
@@ -245,7 +218,7 @@ def classify_question_with_vector(user_query, threshold=0.7):
     else:
         return "place"
     
-
+@sync_to_async
 def get_preferred_tags_by_schedule(user_tags, schedule_categories):
 
     result = {}
@@ -256,7 +229,7 @@ def get_preferred_tags_by_schedule(user_tags, schedule_categories):
         result[category] = preferred if preferred else default_subcategories
 
     return result
-
+@sync_to_async
 def build_schedule_by_categories_with_preferences(sorted_places, schedule_categories, preferred_tag_mapping, start_time):
     schedule = []
     used_place_ids = set()
@@ -308,6 +281,7 @@ def build_schedule_by_categories_with_preferences(sorted_places, schedule_catego
 
     return schedule
 
+@sync_to_async
 def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
     from .openai_chroma_config import place_vector_store
     all_docs = []

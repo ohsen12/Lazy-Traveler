@@ -15,9 +15,9 @@ from .utils import (
 from .openai_chroma_config import function_vector_store, retriever, llm
 
 
-def get_recommendation(user_query, session_id=None, username=None, latitude=None, longitude=None):
-    # now = datetime.now()
-    now = datetime(2025, 3, 27, 16, 30, 0)
+async def get_recommendation(user_query, session_id=None, username=None, latitude=None, longitude=None):
+    now = datetime.now()
+    # now = datetime(2025, 3, 27, 16, 30, 0)
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     start_time = now
 
@@ -50,29 +50,33 @@ def get_recommendation(user_query, session_id=None, username=None, latitude=None
         return result.content.strip() if result.content else "기능 관련 답변을 제공할 수 없습니다."
 
     #스케줄링 시간대
-    schedule_type, schedule_categories = determine_schedule_template(now)
+    schedule_type, schedule_categories = await determine_schedule_template(now)
     print("schedule_categories:", schedule_categories)
     if schedule_type == "불가시간":
         return "스케줄링 불가시간입니다."
     
     # 태그 가져오기
-    user_tags = get_user_tags(username)
-    preferred_tag_mapping = get_preferred_tags_by_schedule(user_tags, schedule_categories)
+    user_tags = await get_user_tags(username)
+    preferred_tag_mapping = await get_preferred_tags_by_schedule(user_tags, schedule_categories)
 
     query_transform_chain = LLMChain(llm=llm, prompt=query_prompt)
-    transformed_query = query_transform_chain.invoke({"query": user_query})['text']
+    # 1. 비동기 실행 후 결과 저장
+    transformed_query_result = await query_transform_chain.ainvoke({"query": user_query})
+
+    # 2. 변환된 쿼리 추출
+    transformed_query = transformed_query_result['text']
     print(f"[DEBUG] 변환된 쿼리: {transformed_query}")
 
     # 문서 검색
     search_query = f"{user_query} (위치: {latitude}, {longitude}) 관련 태그: {user_tags}"
 
-    docs = search_places_by_preferred_tags(transformed_query, preferred_tag_mapping)
+    docs = await search_places_by_preferred_tags(transformed_query, preferred_tag_mapping)
 
     # 거리 정렬
     sorted_docs = await sort_places_by_distance(docs, latitude, longitude)
     # print(sorted_docs)
 
-    schedule = build_schedule_by_categories_with_preferences(
+    schedule = await build_schedule_by_categories_with_preferences(
         sorted_docs, schedule_categories, preferred_tag_mapping, start_time
     )
     print("schedule:", schedule )
