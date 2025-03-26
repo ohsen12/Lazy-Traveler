@@ -63,7 +63,7 @@ place_prompt = ChatPromptTemplate.from_template("""
 3. 각 일정은 `<div class="schedule-item">...</div>`으로 출력하며 아래 항목을 포함하세요:
    - 시간 (`⏰ <strong>시간</strong> - 활동`)
    - 장소명 (굵게)
-   - 카테고리, 주소, 거리, 평점, 웹사이트 링크
+   - 카테고리, 주소, 운영시간, 거리, 평점, 웹사이트 링크
 4. 줄바꿈에는 `<br/>`을 사용하고, 웹사이트는 `<a target="_blank">`로 감쌉니다.
 5. 프론트는 해당 응답을 `innerHTML`로 삽입하므로, HTML 문법이 정확해야 합니다.
 
@@ -86,6 +86,7 @@ place_prompt = ChatPromptTemplate.from_template("""
     📍 <strong>{{장소 1}}</strong><br/>
     🏷️ 카테고리: {{카테고리 1}}<br/>
     📫 주소: {{주소 1}}<br/>
+    🕒 운영시간: {{운영시간 1}}<br/>
     📏 거리: {{거리 1}}<br/>
     ⭐ 평점: {{평점 1}}<br/>
     🔗 <a href="https://maps.google.com/?cid=..." target="_blank">웹사이트 바로가기</a>
@@ -96,6 +97,7 @@ place_prompt = ChatPromptTemplate.from_template("""
     📍 <strong>{{장소 2}}</strong><br/>
     🏷️ 카테고리: {{카테고리 2}}<br/>
     📫 주소: {{주소 2}}<br/>
+    🕒 운영시간: {{운영시간 2}}<br/>
     📏 거리: {{거리 2}}<br/>
     ⭐ 평점: {{평점 2}}<br/>
     🔗 <a href="https://maps.google.com/?cid=..." target="_blank">웹사이트 바로가기</a>
@@ -106,6 +108,7 @@ place_prompt = ChatPromptTemplate.from_template("""
     📍 <strong>{{장소 3}}</strong><br/>
     🏷️ 카테고리: {{카테고리 3}}<br/>
     📫 주소: {{주소 3}}<br/>
+    🕒 운영시간: {{운영시간 3}}<br/>
     📏 거리: {{거리 3}}<br/>
     ⭐ 평점: {{평점 3}}<br/>
     🔗 <a href="https://maps.google.com/?cid=..." target="_blank">웹사이트 바로가기</a>
@@ -125,4 +128,18 @@ query_prompt = ChatPromptTemplate.from_template("""
 
 질문: {question}
 카테고리 (function/schedule/place/unknown) 만 출력해줘:
+""")
+
+opening_hours_prompt = ChatPromptTemplate.from_template("""
+장소의 영업시간 정보는 다음과 같습니다:
+{opening_hours}
+
+사용자가 방문하려는 시간은 {visit_time}이고, 방문 요일은 {weekday}입니다.
+
+{weekday}에 해당하는 영업시간을 기준으로, 해당 시간에 장소가 열려 있는지 판단해주세요.
+반드시 "{weekday}" 요일에 해당하는 시간대만 참고하세요.
+
+결과는 반드시 아래 중 하나로만 응답해주세요:
+- 열려 있음
+- 닫혀 있음
 """)
