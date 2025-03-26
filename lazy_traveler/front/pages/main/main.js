@@ -16,7 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initKakaoMap() {
-    console.log("✅ Kakao Maps 로드 완료");
 
     const container = document.getElementById('map');
     const options = {
@@ -43,7 +42,6 @@ function initKakaoMap() {
         getAddressFromCoords(position);
     });
 
-    console.log("✅ Kakao 지도 초기화 완료");
 }
 
 // 현재 위치 가져오기
@@ -179,7 +177,6 @@ document.addEventListener("DOMContentLoaded", async function() {
 //웹 소켓
 function connectWebSocket() {
     if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log("✅ WebSocket 이미 연결됨");
         return;
     }
 
@@ -192,7 +189,7 @@ function connectWebSocket() {
     socket = new WebSocket(url);
 
     socket.onopen = function () {
-        console.log("✅ WebSocket 연결 성공!");
+        // WebSocket 연결 성공
     };
 
     socket.onmessage = function (event) {
@@ -219,12 +216,11 @@ function connectWebSocket() {
     };
 
     socket.onerror = function (event) {
-        console.log("❌ WebSocket 연결 오류");
+        // WebSocket 연결 오류
     };
 
     socket.onclose = function () {
-        console.log("🔄 WebSocket 종료됨. 3초 후 재연결 시도...");
-        setTimeout(connectWebSocket, 10000);  // 3초 후 재연결
+        setTimeout(connectWebSocket, 10000);  // 10초 후 재연결
     };
 }
 
@@ -278,7 +274,6 @@ function processAndSendMessage() {
     
     // 실제 메시지 전송
     if (!socket) {
-        console.warn("🚨 WebSocket이 초기화되지 않았습니다. 연결을 시도합니다...");
         isProcessingMessage = false;
         // 입력창과 전송 버튼 다시 활성화
         messageInput.disabled = false;
@@ -313,7 +308,6 @@ function processAndSendMessage() {
 
         socket.send(JSON.stringify(requestData));
     } else {
-        console.warn("🚨 WebSocket이 닫혀 있어 메시지를 보낼 수 없습니다.");
         isProcessingMessage = false;
         // 입력창과 전송 버튼 다시 활성화
         messageInput.disabled = false;
@@ -337,7 +331,6 @@ function refreshChat() {
     currentSessionId = null;  // ✅ 메모리에서도 초기
     hasStartedChat = false;  // 대화 시작 상태 초기화
     window.location.reload(); // 페이지 새로고침화
-    console.log("챗봇 화면이 새로고침되었습니다.");
 }
 
 
@@ -384,8 +377,7 @@ function loadChatHistory() {
             });
             resolve();
         })
-        .catch(error => {
-            console.error("대화 기록을 불러올 수 없습니다.");
+        .catch(() => {
             resolve();
         });
     });
@@ -645,7 +637,6 @@ window.onload = async function() {
     // 모든 초기화가 완료된 후 스크롤을 최상단으로 이동
     setTimeout(() => {
         scrollChatToTop();
-        console.log("스크롤을 최상단으로 이동");
     }, 200);
 };
 
@@ -707,8 +698,8 @@ function reloadChatHistory() {
             toggleAccordion(dateItem, sessionList);
         });
     })
-    .catch(error => {
-        console.error("채팅 히스토리를 업데이트할 수 없습니다.");
+    .catch(() => {
+        // 에러 처리
     });
 }
 
@@ -745,7 +736,6 @@ function scrollChatToTop() {
     const chatBox = document.getElementById("chat-box");
     if (chatBox) {
         chatBox.scrollTop = 0;
-        console.log("채팅창 스크롤 위치:", chatBox.scrollTop);
     }
 }
 
