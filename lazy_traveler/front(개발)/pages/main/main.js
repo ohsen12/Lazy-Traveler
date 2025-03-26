@@ -492,9 +492,13 @@ function updateBotResponse(responseMessage) {
     if (lastBotResponse && lastBotResponse.classList.contains("bot-response")) {
         const loadingMessage = lastBotResponse.querySelector("#bot-loading-message");
 
-        // 로딩 메시지 있는 경우, 해당 span의 텍스트를 응답 메시지로 변경
         if (loadingMessage) {
-            loadingMessage.textContent = responseMessage;  // 로딩 메시지를 응답 메시지로 교체
+            // HTML인지 판단해서 적절히 처리
+            if (responseMessage.trim().startsWith("<div")) {
+                loadingMessage.outerHTML = responseMessage;
+            } else {
+                loadingMessage.textContent = responseMessage;
+            }
         }
     }
     // 응답이 추가된 후, 스크롤을 최신 메시지로 이동
