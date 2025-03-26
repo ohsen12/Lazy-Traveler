@@ -188,12 +188,6 @@ USE_TZ = False # ✅ 서버 시간대
 
 STATIC_URL = 'static/'
 
-# 📷 static 파일을 추가로 검색할 디렉토리를 지정 (베이스 디렉토리의 static)
-STATICFILES_DIRS = [BASE_DIR / "static"]
-
-# 📷 배포 관련
-STATIC_ROOT = BASE_DIR / "staticfiles"  
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
