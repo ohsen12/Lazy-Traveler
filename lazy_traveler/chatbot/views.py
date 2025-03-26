@@ -2,7 +2,7 @@ import uuid
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import ChatHistory
 from .serializers import ChatHistorySerializer
 from .recommendation_service import get_recommendation
@@ -12,6 +12,9 @@ from collections import defaultdict
 
 
 class ChatBotView(APIView):
+    
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         """
         로그인한 사용자만 session_id를 부여받고, 대화 내역을 DB에 저장합니다.
@@ -20,7 +23,7 @@ class ChatBotView(APIView):
         user = request.user if request.user.is_authenticated else None
         username = user.username if user else "Guest"  # 로그인하지 않은 경우에는 'Guest'로 설정
         user_query = request.data.get("message", "").strip()
-        new_session = request.data.get("new_session", False)  # 새로운 대화 시작 여부
+        new_session = request.data.get("new_session", False)  # ✅ 새로운 대화 시작 여부 (추후 프론트에서 수정)
 
         # 세션에서 위도, 경도 가져오기
         latitude = request.data.get('latitude')
@@ -72,7 +75,7 @@ class ChatHistoryView(APIView):
         # GET 요청이므로 query_params 사용
         session_id = request.query_params.get("session_id", None)
         
-        # 특정 세션 ID에 대한 대화 조회
+        # 특정 세션 ID에 대한 대화 조회 (대화창에 표시됨)
         if session_id:
             session_history = ChatHistory.objects.filter(user=user, session_id=session_id).order_by("created_at")
             if not session_history.exists():
@@ -87,7 +90,8 @@ class ChatHistoryView(APIView):
             serializer = ChatHistorySerializer(instance=session_history, many=True) 
             
             return Response(serializer.data, status=status.HTTP_200_OK)
-
+        
+        # 날짜 별 세션 (사이드바에 표시됨)
         else:
             # .values: session_id 필드만 포함하는 딕셔너리 리스트(QuerySet) 형태로 반환됨
             # .annotate(group by): 각 세션에 대해 created_at 필드의 최솟값을 계산하여 first_message라는 새로운 필드로 추가하는 역할

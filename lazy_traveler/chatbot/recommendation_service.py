@@ -24,11 +24,11 @@ def get_recommendation(user_query, session_id=None, username=None, latitude=None
     if latitude is None or longitude is None:
         latitude, longitude = 37.5704, 126.9831
 
-    question_type = classify_question_with_vector(user_query)
+    question_type = await classify_question_with_vector(user_query)
 
     if question_type == "function":
         # 기능 벡터DB에서 검색된 문서 가져오기
-        function_docs = function_vector_store.similarity_search(user_query, k=3)
+        function_docs =  function_vector_store.similarity_search(user_query, k=3)
 
         # 벡터 검색 결과가 없을 경우 예외처리
         if not function_docs:
@@ -42,7 +42,7 @@ def get_recommendation(user_query, session_id=None, username=None, latitude=None
         # 기능용 프롬프트 + LLM 체인 호출
         chain = function_prompt | llm
 
-        result = chain.invoke({
+        result = await chain.ainvoke({
             "context": function_context,
             "question": user_query
         })
@@ -69,8 +69,8 @@ def get_recommendation(user_query, session_id=None, username=None, latitude=None
     docs = search_places_by_preferred_tags(transformed_query, preferred_tag_mapping)
 
     # 거리 정렬
-    sorted_docs = sort_places_by_distance(docs, latitude, longitude)
-    print(sorted_docs)
+    sorted_docs = await sort_places_by_distance(docs, latitude, longitude)
+    # print(sorted_docs)
 
     schedule = build_schedule_by_categories_with_preferences(
         sorted_docs, schedule_categories, preferred_tag_mapping, start_time
@@ -79,23 +79,23 @@ def get_recommendation(user_query, session_id=None, username=None, latitude=None
 
 
     # 5. 스케줄을 텍스트로 변환
-    schedule_text = schedule_to_text(schedule)
-    print("schedule_text:", schedule_text )
+    schedule_text = await schedule_to_text(schedule)
+    # print("schedule_text:", schedule_text )
 
     # 기존 컨텍스트에 추가
-    context = get_context(session_id)
+    context = await get_context(session_id)
     context += f"\n{schedule_text}"
 
     # ✅ LLM 모델 설정
     chain = place_prompt | llm
 
     # LLM 호출
-    result = chain.invoke({
+    result = await chain.ainvoke({
         "context": context,
         "location_context": f"현재 사용자의 위치는 위도 {latitude}, 경도 {longitude}입니다.",
         "time_context": f"현재 시간은 {current_time}입니다.",
         "question": user_query
     })
-    print("result:", result)
+    # print("result:", result)
 
     return result.content.strip() if result.content else "추천을 제공할 수 없습니다."

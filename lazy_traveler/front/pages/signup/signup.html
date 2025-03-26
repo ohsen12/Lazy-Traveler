@@ -3,48 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회원가입</title>
+    <title>Lazy Traveler</title>
     <link rel="stylesheet" href="signup.css">
 </head>
 <body>
-    <h1>회원가입</h1>
-
-    <form id="signup-form" action="">
-        <label for="username"></label>
-        <input type="text" id="username" placeholder="아이디" required>
-
-        <label for="password"></label>
-        <input type="password" id="password" placeholder="비밀번호" required>
-
-        <label for="password2"></label>
-        <input type="password" id="password2" placeholder="비밀번호 확인" required>
-
-        <!-- ✅ 태그 선택 버튼 -->
-        <p>관심 태그를 선택하세요 (복수 선택 가능)</p>
-        <div id="tag-container">
-            <button class="tag-button" data-tag="공원">공원</button>
-            <button class="tag-button" data-tag="관광명소">관광명소</button>
-            <button class="tag-button" data-tag="베이커리">베이커리</button>
-            <button class="tag-button" data-tag="베트남 음식">베트남 음식</button>
-            <button class="tag-button" data-tag="브런치">브런치</button>
-            <button class="tag-button" data-tag="비건">비건</button>
-            <button class="tag-button" data-tag="서점">서점</button>
-            <button class="tag-button" data-tag="양식">양식</button>
-            <button class="tag-button" data-tag="일식">일식</button>
-            <button class="tag-button" data-tag="전시">전시</button>
-            <button class="tag-button" data-tag="주점">주점</button>
-            <button class="tag-button" data-tag="중식">중식</button>
-            <button class="tag-button" data-tag="카페">카페</button>
-            <button class="tag-button" data-tag="태국 음식">태국 음식</button>
-            <button class="tag-button" data-tag="피자">피자</button>
-            <button class="tag-button" data-tag="한식">한식</button>
-            <button class="tag-button" data-tag="햄버거">햄버거</button>
+    <div class="background">
+        <img src="/images/purple.svg" alt="purple background" class="purple-bg">
+        <img src="/images/star.svg" alt="star background" class="star-bg">
+    </div>
+    <div class="container">
+        <img src="/images/logo.svg" alt="Lazy Traveler" class="logo">
+        <div class="input-group">
+            <div class="id-group">
+                <input type="text" placeholder="ID를 입력해주세요">
+                <button class="duplicate-check">중복 확인</button>
+            </div>
+            <div class="message id-message"></div>
+            <input type="password" placeholder="비밀번호를 입력해주세요">
+            <input type="password" placeholder="비밀번호를 다시 입력해주세요">
+            <div class="message password-message"></div>
         </div>
-        
-        <button type="submit">회원가입</button>
-        <div id="signup-message"></div>  <!-- 회원가입 결과 메시지 표시 -->
-    </form>
-
+        <div class="tags">
+            <div class="tags-header">
+                <p>관심 태그를 설정해주세요 (중복 선택 가능)</p>
+                <div class="message tag-message"></div>
+            </div>
+            <div class="tag-grid">
+                <button>관광명소</button>
+                <button>전시</button>
+                <button>공원</button>
+                <button>서점</button>
+                <button>카페</button>
+                <button>베이커리</button>
+                <button>한식</button>
+                <button>중식</button>
+                <button>일식</button>
+                <button>양식</button>
+                <button>브런치</button>
+                <button>피자</button>
+                <button>햄버거</button>
+                <button>베트남 음식</button>
+                <button>태국 음식</button>
+                <button>비건</button>
+                <button>주점</button>
+            </div>
+        </div>
+        <button class="signup-btn">Signup</button>
+        <div class="footer">
+            <span>이미 회원이세요?</span>
+            <a href="https://lazy-traveler.store/pages/login/login.html">로그인 하러가기</a>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="signup.js"></script>
 </body>

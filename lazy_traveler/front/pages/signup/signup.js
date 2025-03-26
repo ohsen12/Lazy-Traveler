@@ -1,82 +1,168 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const signupForm = document.getElementById('signup-form');
-    const messageDiv = document.getElementById('signup-message');
-    const tagButtons = document.querySelectorAll('.tag-button');
-    const selectedTags = new Set();
+    // 필요한 DOM 요소들 선택
+    const idInput = document.querySelector('input[placeholder="ID를 입력해주세요"]');
+    const passwordInput = document.querySelector('input[placeholder="비밀번호를 입력해주세요"]');
+    const password2Input = document.querySelector('input[placeholder="비밀번호를 다시 입력해주세요"]');
+    const duplicateCheckBtn = document.querySelector('.duplicate-check');
+    const signupBtn = document.querySelector('.signup-btn');
+    const tagButtons = document.querySelectorAll('.tag-grid button');
+    const idMessage = document.querySelector('.id-message');
+    const passwordMessage = document.querySelector('.password-message');
+    const tagMessage = document.querySelector('.tag-message');
+    
+    let isIdChecked = false; // ID 중복 확인 여부
+    const selectedTags = new Set(); // 선택된 태그들을 저장할 Set
 
-    tagButtons.forEach(button => {
-        button.addEventListener('click', (event) => {
-            event.preventDefault(); // 기본 동작 방지 (폼 제출 방지)
-            const tag = button.dataset.tag;
-            if (selectedTags.has(tag)) {
-                selectedTags.delete(tag);
-                button.classList.remove('selected');
-            } else {
-                selectedTags.add(tag);
-                button.classList.add('selected');
+    // 메시지 표시 함수
+    function showMessage(element, message, isSuccess) {
+        element.textContent = message;
+        element.className = 'message ' + (isSuccess ? 'success' : 'error');
+    }
+
+    // 메시지 초기화 함수
+    function clearMessage(element) {
+        element.textContent = '';
+        element.className = 'message';
+    }
+
+    // ID 중복 확인
+    duplicateCheckBtn.addEventListener('click', async () => {
+        const username = idInput.value.trim();
+        
+        if (!username) {
+            showMessage(idMessage, '사용할 수 없는 ID입니다', false);
+            return;
+        }
+
+        try {
+            const response = await axios.post('https://api.lazy-traveler.store/accounts/check_username/', {
+                username: username
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                withCredentials: true  // 이 부분 추가해보기
+            })
+
+            if (response.status === 200) {
+                showMessage(idMessage, '사용 가능한 ID입니다', true);
+                isIdChecked = true;
             }
-            console.log('현재 선택된 태그:', Array.from(selectedTags)); // 선택된 태그 디버깅
+        } catch (error) {
+            if (error.response?.status === 409) {
+                showMessage(idMessage, '사용할 수 없는 ID입니다', false);
+            } else {
+                showMessage(idMessage, 'ID 중복 확인 중 오류가 발생했습니다', false);
+            }
+            isIdChecked = false;
+        }
+    });
+
+    // 비밀번호 확인 함수
+    function validatePasswords() {
+        const password = passwordInput.value;
+        const password2 = password2Input.value;
+
+        if (password2 && password !== password2) {
+            showMessage(passwordMessage, '입력하신 비밀번호가 일치하지 않습니다', false);
+            return false;
+        } else if (password2) {
+            clearMessage(passwordMessage);
+            return true;
+        }
+        return false;
+    }
+
+    // 비밀번호 입력 필드 이벤트
+    password2Input.addEventListener('input', validatePasswords);
+
+    // 태그 선택 이벤트
+    tagButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tagName = button.textContent;
+            
+            if (selectedTags.has(tagName)) {
+                selectedTags.delete(tagName);
+                button.style.backgroundColor = 'transparent';
+                button.style.color = '#333';
+                button.style.borderColor = '#333';
+            } else {
+                selectedTags.add(tagName);
+                button.style.backgroundColor = '#4E5052';
+                button.style.color = 'white';
+                button.style.borderColor = '#4E5052';
+            }
+            
+            // 태그가 선택되면 에러 메시지 제거
+            if (selectedTags.size > 0) {
+                clearMessage(tagMessage);
+            }
         });
     });
-    
 
-    // 폼 제출 시 동작하는 이벤트
-    if (signupForm) {
-        signupForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // 기본 폼 제출 동작 방지
-            console.log('회원가입 폼 제출 시작'); // 디버깅용 로그
+    // 회원가입 처리
+    signupBtn.addEventListener('click', async () => {
+        const username = idInput.value.trim();
+        const password = passwordInput.value;
+        const password2 = password2Input.value;
 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const password2 = document.getElementById('password2').value;
+        // 입력값 검증
+        if (!username || !password || !password2) {
+            alert('모든 필수 항목을 입력해주세요.');
+            return;
+        }
 
-            // 비밀번호 확인
-            if (password !== password2) {
-                messageDiv.textContent = '비밀번호가 일치하지 않습니다.';
-                messageDiv.style.color = 'red';
-                return;
-            }
+        if (!isIdChecked) {
+            showMessage(idMessage, 'ID 중복 확인을 해주세요', false);
+            return;
+        }
 
-            // 선택된 태그 출력 (디버깅용)
-            console.log('선택된 태그:', Array.from(selectedTags));
+        if (!validatePasswords()) {
+            return;
+        }
 
+        // 태그 선택 여부 확인
+        if (selectedTags.size === 0) {
+            showMessage(tagMessage, '최소 한 개 이상의 태그를 선택해주세요', false);
+            return;
+        }
 
-
-            try {
-                const response = await axios.post('http://localhost:8000/accounts/signup/', {
-                    username,
-                    password,
-                    password2,
-                    tags: Array.from(selectedTags).join(',')  // 태그를 쉼표로 구분된 문자열로 변환
-                }, { 
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                // 응답 처리
-                console.log('회원가입 응답:', response.status);
-
-                if (response.status >= 200 && response.status < 300) {
-                    messageDiv.textContent = '회원가입 성공!';
-                    messageDiv.style.color = 'green';
-
-                    signupForm.reset(); // 폼 리셋 (페이지 이동 전에 실행)
-                    console.log("회원가입 성공, 리다이렉트 준비 중");
-                
-
-                    console.log("리다이렉트 시도 중...");
-                    window.location.href = 'http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html';
+        try {
+            const response = await axios.post('https://api.lazy-traveler.store/accounts/signup/', {
+                username: username,
+                password: password,
+                password2: password2,
+                tags: Array.from(selectedTags).join(',')
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-            } catch (error) {
-                console.error("에러 발생:", error);
-                if (error.response) {
-                    messageDiv.textContent = error.response.data.detail || '회원가입 실패';
-                } else {
-                    messageDiv.textContent = '서버와 연결할 수 없습니다.';
-                }
-                messageDiv.style.color = 'red';
+            });
+
+            if (response.status === 201 || response.status === 200) {
+                alert('회원가입이 완료되었습니다.');
+                // 로그인 페이지로 이동
+                window.location.href = 'https://lazy-traveler.store/pages/login/login.html';
             }
-        });
-    }
+        } catch (error) {
+            console.error('회원가입 오류:', error);
+            if (error.response?.data?.detail) {
+                showMessage(passwordMessage, error.response.data.detail, false);
+            } else {
+                alert('회원가입 중 오류가 발생했습니다.');
+            }
+        }
+    });
+
+    // ID 입력 필드 변경 시 중복 확인 상태 초기화
+    idInput.addEventListener('input', () => {
+        isIdChecked = false;
+        clearMessage(idMessage);
+    });
+
+    // 로그인 페이지 이동 링크
+    document.querySelector('.footer a').addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'https://lazy-traveler.store/pages/login/login.html';
+    });
 });
