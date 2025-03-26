@@ -151,7 +151,9 @@ document.addEventListener("DOMContentLoaded", async function() {
             }
         });
 
-        const { username = "고객님", tags = "" } = response.data;
+        // username이 [User_ID]인 경우 '고객'으로 대체
+        let { username = "고객", tags = "" } = response.data;
+        username = username === "[User_ID]" ? "고객" : username;
         const tagList = tags ? tags.split(',') : [];
 
         // 시스템 메시지 동적으로 변경
@@ -168,7 +170,16 @@ document.addEventListener("DOMContentLoaded", async function() {
         setTimeout(scrollChatToTop, 100);
 
     } catch (error) {
-        console.error("오류 발생:", error);
+        // 오류 발생 시 기본 메시지 표시
+        const botMessage = document.querySelector(".message.bot-message");
+        if (botMessage) {
+            botMessage.innerHTML = `
+                안녕하세요? 고객님. Lazy Traveler예요.<br>
+                저는 종로에서 여행하는 일정을 스케줄링 해드립니다.<br>
+                어느 장소에서 여행하는 루트를 추천해드릴까요?
+            `;
+        }
+        setTimeout(scrollChatToTop, 100);
     }
 });
 
@@ -495,7 +506,9 @@ function loadSessionMessages(session_id) {
         }
     })
     .then(userResponse => {
-        const { username = "고객님", tags = "" } = userResponse.data;
+        // username이 [User_ID]인 경우 '고객'으로 대체
+        let { username = "고객", tags = "" } = userResponse.data;
+        username = username === "[User_ID]" ? "고객" : username;
         const tagList = tags ? tags.split(',') : [];
 
         // 채팅 내역을 불러옵니다.
