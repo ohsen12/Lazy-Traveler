@@ -602,14 +602,19 @@ function appendBotResponseWithLoading() {
 function updateBotResponse(responseMessage) {
     const chatBox = document.getElementById("chat-box");
     const lastBotResponse = chatBox.lastElementChild;
+    
 
     // 로딩 메시지를 포함한 마지막 응답 찾기
     if (lastBotResponse && lastBotResponse.classList.contains("bot-response")) {
         const loadingMessage = lastBotResponse.querySelector("#bot-loading-message");
 
-        // 로딩 메시지 있는 경우, 해당 span의 텍스트를 응답 메시지로 변경
         if (loadingMessage) {
-            loadingMessage.textContent = responseMessage;  // 로딩 메시지를 응답 메시지로 교체
+            // HTML인지 판단해서 적절히 처리
+            if (responseMessage.trim().startsWith("<div")) {
+                loadingMessage.outerHTML = responseMessage;
+            } else {
+                loadingMessage.textContent = responseMessage;
+            }
         }
     }
     scrollChatToBottom();
