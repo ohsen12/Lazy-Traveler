@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lazy Traveler - 404</title>
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <style>
+        @font-face {
+            font-family: 'cafe24font';
+            src: url('/fonts/Cafe24Nyangi-W-v1.0.otf') format('opentype'),
+                 url('/fonts/Cafe24Nyangi-W-v1.0.ttf') format('turetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        @font-face {
+            font-family: 'basicfont';
+            src: url('/fonts/온글잎.otf') format('opentype'),
+                 url('/fonts/온글잎.ttf') format('turetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        body {
+            font-family: 'basicfont', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .background {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .purple-bg {
+            position: absolute;
+            left: -15px;
+            bottom: 0;
+            width: 515px;
+            height: 500px;
+        }
+
+        .star-bg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 413px;
+            height: 381px;
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            padding: 0 20px;
+            position: relative;
+        }
+
+        .logo {
+            width: 320px;
+            height: auto;
+            margin-bottom: 30px;
+        }
+
+        .error-message {
+            font-family: 'basicfont', sans-serif;
+            font-size: 24px;
+            color: #333333;
+            margin: 30px 0;
+        }
+
+        .button {
+            font-family: 'cafe24font', sans-serif;
+            font-size: 24px;
+            background-color: #5F5DE3;
+            color: #ffffff;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #4a49b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <img src="/images/purple.svg" alt="purple background" class="purple-bg">
+        <img src="/images/star.svg" alt="star background" class="star-bg">
+    </div>
+    <div class="container">
+        <img src="/images/logo.svg" alt="Lazy Traveler" class="logo">
+        <div class="error-message">페이지를 찾을 수 없습니다!</div>
+        <button class="button" onclick="window.location.href='https://lazy-traveler.store/pages/main/main.html'">메인으로 돌아가기</button>
+    </div>
+</body>
+</html> 
