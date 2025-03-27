@@ -6,41 +6,40 @@ let isProcessingMessage = false; // 메시지 처리 중 상태를 추적하는 
 let messageCount = 0; // 메시지 전송 횟수를 추적하는 변수
 let lastMessageDate = new Date().toDateString(); // 마지막 메시지 전송 날짜
 
-function initializeKakaoMaps() {
-    const container = document.getElementById('map');
-    const options = {
-        center: new kakao.maps.LatLng(37.5704, 126.9831),
-        level: 3
-    };
-
-    map = new kakao.maps.Map(container, options);
-    geocoder = new kakao.maps.services.Geocoder();
-
-    marker = new kakao.maps.Marker({
-        position: new kakao.maps.LatLng(37.5704, 126.9831),
-        map: map
-    });
-
-    infowindow = new kakao.maps.InfoWindow({
-        content: `<div style="padding:5px;">📍 종각역</div>`
-    });
-    infowindow.open(map, marker);
-
-    kakao.maps.event.addListener(map, "click", (event) => {
-        const position = event.latLng;
-        marker.setPosition(position);
-        getAddressFromCoords(position);
-    });
-
-    // 지도 초기화 후 UI 초기화
-    initChatUI();
-    connectWebSocket();
-    showCoachmark();
-}
-
-// DOMContentLoaded 이벤트 리스너 제거 (Kakao Maps 관련)
+// DOMContentLoaded 이벤트에서 카카오맵 초기화
 document.addEventListener("DOMContentLoaded", () => {
-    connectWebSocket();
+    // 카카오맵 로드
+    kakao.maps.load(() => {
+        const container = document.getElementById('map');
+        const options = {
+            center: new kakao.maps.LatLng(37.5704, 126.9831),
+            level: 3
+        };
+
+        map = new kakao.maps.Map(container, options);
+        geocoder = new kakao.maps.services.Geocoder();
+
+        marker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(37.5704, 126.9831),
+            map: map
+        });
+
+        infowindow = new kakao.maps.InfoWindow({
+            content: `<div style="padding:5px;">📍 종각역</div>`
+        });
+        infowindow.open(map, marker);
+
+        kakao.maps.event.addListener(map, "click", (event) => {
+            const position = event.latLng;
+            marker.setPosition(position);
+            getAddressFromCoords(position);
+        });
+
+        // 지도 초기화 후 UI 초기화
+        initChatUI();
+        connectWebSocket();
+        showCoachmark();
+    });
 });
 
 // 현재 위치 가져오기
@@ -660,13 +659,6 @@ function updateBotResponse(responseMessage) {
     }
     scrollChatToBottom();
 }
-
-// ✅ DOM 로드 시 웹소켓 연결 및 이벤트 리스너 추가 부분 제거 (중복 방지)
-document.addEventListener("DOMContentLoaded", function () {
-    connectWebSocket(); // 웹소켓 연결
-});
-
-
 
 // ✅ 페이지가 새로 고쳐지기 전에 localStorage에서 session_id를 삭제
 window.addEventListener('beforeunload', function() {
