@@ -62,9 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             if (error.response?.status === 409) {
-                showMessage(idMessage, '* 사용할 수 없는 ID입니다', false);
+                showMessage(idMessage, '사용할 수 없는 ID입니다', false);
             } else {
-                showMessage(idMessage, '* 사용할 수 없는 ID입니다', false);
+                showMessage(idMessage, '사용할 수 없는 ID입니다', false);
             }
             isIdChecked = false;
         }
