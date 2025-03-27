@@ -265,7 +265,6 @@ function canSendMessage() {
     
     // 하루 5회 초과 시 false 반환
     if (count >= 5) {
-        alert('하루에 5번까지 채팅이 가능해요! 🥹');
         return false;
     }
     
@@ -282,6 +281,7 @@ function processAndSendMessage() {
     
     // 메시지 전송 가능 여부 확인
     if (!canSendMessage()) {
+        alert('하루에 5번까지 채팅이 가능해요! 🥹');
         return;
     }
     
