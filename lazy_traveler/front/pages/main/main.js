@@ -91,25 +91,32 @@ function getAddressFromCoords(coords) {
 function initChatUI() {
     connectWebSocket();
     
-    document.getElementById("send-btn").addEventListener("click", () => {
+    const sendButton = document.getElementById("send-btn");
+    const messageInput = document.getElementById("user-message");
+    
+    // 기존 이벤트 리스너 제거
+    sendButton.removeEventListener("click", processAndSendMessage);
+    messageInput.removeEventListener("keydown", handleEnterKey);
+    
+    // 새로운 이벤트 리스너 등록
+    sendButton.addEventListener("click", () => {
         if (!isProcessingMessage) {
             processAndSendMessage();
         }
     });
     
-    const messageInput = document.getElementById("user-message");
-    
-    // keydown 이벤트로 변경하고 Enter 키 처리 방식 수정
-    messageInput.addEventListener("keydown", function(event) {
-        if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault(); // 먼저 기본 동작을 방지
-            
-            // 이미 처리 중인 메시지가 없을 때만 실행
-            if (!isProcessingMessage) {
-                processAndSendMessage();
-            }
+    // Enter 키 이벤트를 별도 함수로 분리
+    messageInput.addEventListener("keydown", handleEnterKey);
+}
+
+// Enter 키 처리를 위한 별도 함수
+function handleEnterKey(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        if (!isProcessingMessage) {
+            processAndSendMessage();
         }
-    });
+    }
 }
 
 //첫시작 대화창 및 user-menu숨기기
