@@ -565,10 +565,18 @@ function appendMessage(message, type) {
     const messageContainer = document.createElement("div");
     messageContainer.classList.add("message", type);
     
-    // HTML 태그가 포함된 메시지인지 확인하고 적절히 처리
-    if (typeof message === 'string' && message.trim().startsWith("<div")) {
+    // HTML 여부 판단
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(message, "text/html");
+    const isHTML = Array.from(doc.body.childNodes).some(
+        node => node.nodeType === 1  // ELEMENT_NODE
+    );
+
+    if (isHTML) {
+        // 실제 DOM 요소로 대체
         messageContainer.innerHTML = message;
     } else {
+        // 일반 텍스트만 갱신
         messageContainer.textContent = message;
     }
     
@@ -614,16 +622,23 @@ function updateBotResponse(responseMessage) {
     const chatBox = document.getElementById("chat-box");
     const lastBotResponse = chatBox.lastElementChild;
     
-
     // 로딩 메시지를 포함한 마지막 응답 찾기
     if (lastBotResponse && lastBotResponse.classList.contains("bot-response")) {
         const loadingMessage = lastBotResponse.querySelector("#bot-loading-message");
 
         if (loadingMessage) {
-            // HTML인지 판단해서 적절히 처리
-            if (responseMessage.trim().startsWith("<div")) {
+            // HTML 여부 판단
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(responseMessage, "text/html");
+            const isHTML = Array.from(doc.body.childNodes).some(
+                node => node.nodeType === 1  // ELEMENT_NODE
+            );
+
+            if (isHTML) {
+                // 실제 DOM 요소로 대체
                 loadingMessage.outerHTML = responseMessage;
             } else {
+                // 일반 텍스트만 갱신
                 loadingMessage.textContent = responseMessage;
             }
         }
