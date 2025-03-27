@@ -579,19 +579,25 @@ function appendMessage(message, type) {
     const messageContainer = document.createElement("div");
     messageContainer.classList.add("message", type);
     
+    // ```html 태그 제거 및 메시지 정제
+    let cleanMessage = message;
+    if (typeof message === 'string') {
+        cleanMessage = message.replace(/```html\n?/g, '').replace(/```$/g, '');
+    }
+
     // HTML 여부 판단
     const parser = new DOMParser();
-    const doc = parser.parseFromString(message, "text/html");
+    const doc = parser.parseFromString(cleanMessage, "text/html");
     const isHTML = Array.from(doc.body.childNodes).some(
         node => node.nodeType === 1  // ELEMENT_NODE
     );
 
     if (isHTML) {
         // 실제 DOM 요소로 대체
-        messageContainer.innerHTML = message;
+        messageContainer.innerHTML = cleanMessage;
     } else {
         // 일반 텍스트만 갱신
-        messageContainer.textContent = message;
+        messageContainer.textContent = cleanMessage;
     }
     
     // 채팅박스에 새 메시지 추가
@@ -636,6 +642,12 @@ function updateBotResponse(responseMessage) {
     const chatBox = document.getElementById("chat-box");
     const lastBotResponse = chatBox.lastElementChild;
     
+    // ```html 태그 제거 및 메시지 정제
+    let cleanMessage = responseMessage;
+    if (typeof responseMessage === 'string') {
+        cleanMessage = responseMessage.replace(/```html\n?/g, '').replace(/```$/g, '');
+    }
+
     // 로딩 메시지를 포함한 마지막 응답 찾기
     if (lastBotResponse && lastBotResponse.classList.contains("bot-response")) {
         const loadingMessage = lastBotResponse.querySelector("#bot-loading-message");
@@ -643,17 +655,17 @@ function updateBotResponse(responseMessage) {
         if (loadingMessage) {
             // HTML 여부 판단
             const parser = new DOMParser();
-            const doc = parser.parseFromString(responseMessage, "text/html");
+            const doc = parser.parseFromString(cleanMessage, "text/html");
             const isHTML = Array.from(doc.body.childNodes).some(
                 node => node.nodeType === 1  // ELEMENT_NODE
             );
 
             if (isHTML) {
                 // 실제 DOM 요소로 대체
-                loadingMessage.outerHTML = responseMessage;
+                loadingMessage.outerHTML = cleanMessage;
             } else {
                 // 일반 텍스트만 갱신
-                loadingMessage.textContent = responseMessage;
+                loadingMessage.textContent = cleanMessage;
             }
         }
     }
