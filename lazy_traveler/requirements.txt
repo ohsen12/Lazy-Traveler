@@ -193,3 +193,4 @@ zipp==3.21.0
 zope.interface==7.2
 gunicorn==23.0.0
 uvicorn==0.23.2
+geopy==2.4.1

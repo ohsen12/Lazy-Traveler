@@ -46,6 +46,9 @@ function getUserLocation() {
                 marker.setPosition(newPosition);
                 map.setCenter(newPosition);
                 getAddressFromCoords(newPosition);
+                console.log("lat:", lat)
+                console.log("lng:", lng)
+                console.log("newPosition:", newPosition)
             },
             function(error) {
                 alert("위치 정보를 가져올 수 없습니다. 권한을 확인하세요.");

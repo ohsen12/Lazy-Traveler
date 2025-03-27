@@ -1,22 +1,143 @@
 import math
-import random
-import re
 from .models import ChatHistory
 from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta
-from .openai_chroma_config import function_vector_store, place_vector_store, llm
+from .openai_chroma_config import place_vector_store, llm
 from asgiref.sync import sync_to_async
 from langchain.chains import LLMChain
 from .prompt import query_prompt, opening_hours_prompt
-from langchain.schema import Document
+from geopy.distance import geodesic  # 거리 계산 라이브러리
 
 User = get_user_model()
 
-# 대화 내역을 가져오는 함수
+#카테고리 대분류
+CATEGORY_MAPPING = {
+    "볼거리": ["공원", "관광명소", "전시","서점"],
+    "맛집": ["베이커리", "베트남 음식", "브런치", "비건", "양식", "일식", "중식", "태국 음식", "피자", "한식", "햄버거"],
+    "아침 식사": ["한식", "비건", "브런치"],
+    "야식": ["주점", "피자", "햄버거", "중식"],
+    "카페": ["카페", "브런치", "베이커리"]
+}
+
+#유저 질문 기능 분류(llm)
 @sync_to_async
-def get_context(session_id, max_turns=5):
-    chat_history = ChatHistory.objects.filter(session_id=session_id).order_by("-created_at")[:max_turns]
-    return "\n\n".join([f"User: {chat.message}\nBot: {chat.response}" for chat in reversed(chat_history)])
+def classify_question_with_llm(user_query):
+    chain = LLMChain(llm=llm, prompt=query_prompt)
+    result = chain.invoke({"question": user_query})
+
+    category = result.get("text", "").strip().lower()
+
+    if category not in ["function", "place", "schedule","unknown"]:
+        return "error"
+    
+    return category
+
+#place 검색 및 거리 계산
+@sync_to_async
+def search_places(user_query, user_latitude, user_longitude):
+    # 1️⃣ 기본 벡터 검색 실행
+    place_results = place_vector_store.similarity_search_with_score(
+        query=user_query,
+        k=20,  # 검색 결과를 넉넉히 받아온 후 필터링
+        filter={"type": "place"}
+    )
+    
+    # 2️⃣ 거리 기반 필터링 및 정렬
+    place_results_with_distance = []
+    for doc, _ in place_results:
+        place_metadata = doc.metadata
+        place_lat = float(place_metadata.get("latitude"))
+        place_lon = float(place_metadata.get("longitude"))
+
+        if place_lat is not None and place_lon is not None:
+            # 유클리드 거리 대신 실제 지구 거리(위경도) 계산
+            place_distance = geodesic((user_latitude, user_longitude), (place_lat, place_lon)).km
+            place_metadata["distance"] = place_distance
+            place_results_with_distance.append((doc, place_distance))
+
+    # 3️⃣ 거리 기반으로 정렬 (가까운 순서)
+    sorted_places = sorted(place_results_with_distance, key=lambda x: x[1])  # 거리 기준 정렬
+    return sorted_places[:3]  # 최종 상위 3개 선택
+
+#place 결과 html로 변환 
+@sync_to_async
+def format_place_results_to_html(place_results, top_k=3):
+    
+    top_k = min(top_k, len(place_results))
+    
+    html_blocks = []
+
+    for doc, score in place_results[:top_k]:
+        metadata = doc.metadata
+        content = doc.page_content
+
+        html = f"""
+        <div class="schedule-item">
+          ⏰ 추천 장소<br/>
+          📍 <strong>{metadata.get('name', '장소명 없음')}</strong><br/>
+          🏷️ 카테고리: {metadata.get('category', '카테고리 없음')}<br/>
+          📫 주소: {metadata.get('address', '주소 없음')}<br/>
+          ☎️ 전화번호: {metadata.get('phone', '전화번호 없음')}<br/>
+          🕒 영업시간: {metadata.get('opening_hours', '영업시간 정보 없음')}<br/>
+          📏 거리: {metadata.get('distance', '거리 정보 없음'):.2f} km <br/>
+          ⭐ 평점: {metadata.get('rating', '없음')} ({metadata.get('review_count', 0)}명)<br/>
+          🔗 <a href="{metadata.get('website', '#')}" target="_blank">웹사이트 바로가기</a><br/>
+          <br/>
+          📝 설명: {content}
+        </div>
+        <hr/>
+        """
+        html_blocks.append(html)
+
+    return f"""
+    <div class="bot-response">
+      <br/><p>요청하신 장소에 대한 추천 결과입니다. 상세 정보를 확인해보세요! 😊</p>
+      {''.join(html_blocks)}
+    </div>
+    """
+
+#시간 기반 스케줄링표 지정
+@sync_to_async
+def determine_schedule_template(current_time):
+    hour = current_time.hour
+
+    # 오후 11시 ~ 오전 7시 59분까지는 스케줄링 불가
+    if hour >= 23 or hour < 8:
+        return "불가시간", ["지금은 스케줄링이 어려워요. 익일 오전 8:00 일정부터 스케줄링을 시작할까요?"]
+
+    # 오전 8시 ~ 오전 9시 59분
+    if 8 <= hour < 10:
+        return "아침", ["아침 식사", "볼거리", "볼거리", "맛집"]
+    # 오전 10시 ~ 오전 1시 59분
+    if 10 <= hour < 14:
+        return "점심", ["맛집", "볼거리", "카페", "볼거리"]
+    # 오후 2시 ~ 오후 2시 59분
+    if 14 <= hour < 15:
+        return "오후", ["볼거리", "카페", "볼거리", "볼거리"]
+    # 오후 3시 ~ 오후 3시 59분
+    if 15 <= hour < 16:
+        return "오후", ["볼거리", "카페", "볼거리", "맛집"]
+    # 오후 4시 ~ 오후 4시 59분
+    if 16 <= hour < 17:
+        return "오후 후반", ["볼거리", "카페", "맛집", "볼거리"]
+    # 오후 5시 ~ 오후 6시 59분
+    if 17 <= hour < 19:
+        return "저녁 전", ["맛집", "볼거리", "볼거리", "야식"]
+    # 오후 7시 ~ 오후 7시 59분
+    if 19 <= hour < 20:
+        return "저녁 후반", ["맛집", "볼거리", "야식", "야식"]
+    # 오후 8시 ~ 오후 8시 59분 (남은 시간이 3시간)
+    if 20 <= hour < 21:
+        return "야간 초반", ["볼거리", "야식", "야식"]
+    # 오후 9시 ~ 오후 9시 59분 (남은 시간이 2시간)
+    if 21 <= hour < 22:
+        return "야간 중반", ["야식", "야식"]
+    # 오후 10시 ~ 오후 10시 59분 (남은 시간이 1시간)
+    if 22 <= hour < 23:
+        return "야간 후반", ["야식"]
+
+    # 기본값 (예외)
+    return "기본", ["맛집", "볼거리", "카페", "볼거리"]
 
 # 유저 태그 가져오기
 @sync_to_async
@@ -28,6 +149,26 @@ def get_user_tags(username):
         return tags
     except User.DoesNotExist:
         return ""
+
+@sync_to_async
+def get_preferred_tags_by_schedule(user_tags, schedule_categories):
+
+    result = {}
+    for category in schedule_categories:
+        default_subcategories = CATEGORY_MAPPING.get(category, [])
+        preferred = [tag for tag in default_subcategories if tag in user_tags]
+
+        result[category] = preferred if preferred else default_subcategories
+
+    return result
+
+# 대화 내역을 가져오는 함수
+@sync_to_async
+def get_context(session_id, max_turns=5):
+    chat_history = ChatHistory.objects.filter(session_id=session_id).order_by("-created_at")[:max_turns]
+    return "\n\n".join([f"User: {chat.message}\nBot: {chat.response}" for chat in reversed(chat_history)])
+
+
    
 # 거리 계산 함수
 def calculate_distance(lat1, lon1, lat2, lon2):
@@ -80,14 +221,7 @@ def schedule_to_text(schedule):
         """)
     return "\n".join(lines)
 
-#카테고리 대분류
-CATEGORY_MAPPING = {
-    "볼거리": ["공원", "관광명소", "전시","서점"],
-    "맛집": ["베이커리", "베트남 음식", "브런치", "비건", "양식", "일식", "중식", "태국 음식", "피자", "한식", "햄버거"],
-    "아침 식사": ["한식", "비건", "브런치"],
-    "야식": ["주점", "피자", "햄버거", "중식"],
-    "카페": ["카페", "브런치", "베이커리"]
-}
+
 
 # 카테고리별 스케줄
 @sync_to_async
@@ -132,7 +266,6 @@ def build_schedule_by_categories(sorted_places, schedule_categories, start_time)
 
     return schedule
 
-
 #태그데이터 대분류로 변경
 @sync_to_async
 def map_tags_to_categories(user_tags):
@@ -149,61 +282,9 @@ def map_tags_to_categories(user_tags):
 
     return list(mapped_categories)
 
-#대분류 일정 스케줄링
-@sync_to_async
-def determine_schedule_template(current_time):
-    hour = current_time.hour
-
-    # 오후 11시 ~ 오전 7시 59분까지는 스케줄링 불가
-    if hour >= 23 or hour < 8:
-        return "불가시간", ["지금은 스케줄링이 어려워요. 익일 오전 8:00 일정부터 스케줄링을 시작할까요?"]
-
-    # 오전 8시 ~ 오전 9시 59분
-    if 8 <= hour < 10:
-        return "아침", ["아침 식사", "볼거리", "볼거리", "맛집"]
-    # 오전 10시 ~ 오전 1시 59분
-    if 10 <= hour < 14:
-        return "점심", ["맛집", "볼거리", "카페", "볼거리"]
-    # 오후 2시 ~ 오후 2시 59분
-    if 14 <= hour < 15:
-        return "오후", ["볼거리", "카페", "볼거리", "볼거리"]
-    # 오후 3시 ~ 오후 3시 59분
-    if 15 <= hour < 16:
-        return "오후", ["볼거리", "카페", "볼거리", "맛집"]
-    # 오후 4시 ~ 오후 4시 59분
-    if 16 <= hour < 17:
-        return "오후 후반", ["볼거리", "카페", "맛집", "볼거리"]
-    # 오후 5시 ~ 오후 6시 59분
-    if 17 <= hour < 19:
-        return "저녁 전", ["맛집", "볼거리", "볼거리", "야식"]
-    # 오후 7시 ~ 오후 7시 59분
-    if 19 <= hour < 20:
-        return "저녁 후반", ["맛집", "볼거리", "야식", "야식"]
-    # 오후 8시 ~ 오후 8시 59분 (남은 시간이 3시간)
-    if 20 <= hour < 21:
-        return "야간 초반", ["볼거리", "야식", "야식"]
-    # 오후 9시 ~ 오후 9시 59분 (남은 시간이 2시간)
-    if 21 <= hour < 22:
-        return "야간 중반", ["야식", "야식"]
-    # 오후 10시 ~ 오후 10시 59분 (남은 시간이 1시간)
-    if 22 <= hour < 23:
-        return "야간 후반", ["야식"]
-
-    # 기본값 (예외)
-    return "기본", ["맛집", "볼거리", "카페", "볼거리"]
 
 
-@sync_to_async
-def get_preferred_tags_by_schedule(user_tags, schedule_categories):
 
-    result = {}
-    for category in schedule_categories:
-        default_subcategories = CATEGORY_MAPPING.get(category, [])
-        preferred = [tag for tag in default_subcategories if tag in user_tags]
-
-        result[category] = preferred if preferred else default_subcategories
-
-    return result
 
 @sync_to_async
 def build_schedule_by_categories_with_preferences(sorted_places, schedule_categories, preferred_tag_mapping, start_time):
@@ -277,139 +358,9 @@ def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
 
     return all_docs
 
-@sync_to_async
-def classify_question_with_llm(user_query):
-    chain = LLMChain(llm=llm, prompt=query_prompt)
-    result = chain.invoke({"question": user_query})
-
-    category = result.get("text", "").strip().lower()
-
-    if category not in ["function", "place", "schedule","unknown"]:
-        return "error"
-    
-    return category
-
-#html로 변환 
-@sync_to_async
-def format_place_results_to_html(place_results, top_k=3):
-    
-    top_k = min(top_k, len(place_results))
-    
-    html_blocks = []
-
-    for doc, score in place_results[:top_k]:
-        metadata = doc.metadata
-        content = doc.page_content
-
-        html = f"""
-        <div class="schedule-item">
-          ⏰ 추천 장소<br/>
-          📍 <strong>{metadata.get('name', '장소명 없음')}</strong><br/>
-          🏷️ 카테고리: {metadata.get('category', '카테고리 없음')}<br/>
-          📫 주소: {metadata.get('address', '주소 없음')}<br/>
-          ☎️ 전화번호: {metadata.get('phone', '전화번호 없음')}<br/>
-          🕒 영업시간: {metadata.get('opening_hours', '영업시간 정보 없음')}<br/>
-          📏 위도/경도: {metadata.get('latitude', '-')}, {metadata.get('longitude', '-')}<br/>
-          ⭐ 평점: {metadata.get('rating', '없음')} ({metadata.get('review_count', 0)}명)<br/>
-          🔗 <a href="{metadata.get('website', '#')}" target="_blank">웹사이트 바로가기</a><br/>
-          <br/>
-          📝 설명: {content}
-        </div><br/>
-        """
-        html_blocks.append(html)
-
-    return f"""
-    <div class="bot-response">
-      <br/><p>요청하신 장소에 대한 추천 결과입니다. 상세 정보를 확인해보세요! 😊</p>
-      {''.join(html_blocks)}
-    </div>
-    """
-
-# @sync_to_async
-# def filter_open_places(schedule: list, now: datetime) -> list:
-#     weekday_map = {
-#         "월요일": 0, "화요일": 1, "수요일": 2, "목요일": 3,
-#         "금요일": 4, "토요일": 5, "일요일": 6
-#     }
-
-#     current_weekday = now.weekday()
-#     today_korean = list(weekday_map.keys())[current_weekday]
-
-#     def parse_korean_time(tstr):
-#         tstr = tstr.strip()
-#         if "오전" in tstr:
-#             return datetime.strptime(tstr, "오전 %I:%M").time()
-#         elif "오후" in tstr:
-#             return datetime.strptime(tstr, "오후 %I:%M").time()
-#         return None
-
-#     filtered = []
-
-#     for place in schedule:
-#         if isinstance(place, Document):
-#             data = place.metadata
-#         elif isinstance(place, dict):
-#             data = place
-#         else:
-#             continue
-
-#         opening_hours = data.get("opening_hours") or data.get("metadata", {}).get("opening_hours")
-#         time_str = data.get("time")
-
-#         if not opening_hours or not time_str:
-#             continue
-
-#         try:
-#             schedule_time = datetime.strptime(time_str, "%H:%M").time()
-#         except Exception:
-#             continue
-
-#         if isinstance(opening_hours, str):
-#             opening_lines = [s.strip() for s in opening_hours.split(",")]
-#         elif isinstance(opening_hours, list):
-#             opening_lines = opening_hours
-#         else:
-#             continue
-
-#         is_open = False
-
-#         for line in opening_lines:
-#             if today_korean not in line:
-#                 continue
-#             if "휴무일" in line:
-#                 break
-#             if "24시간" in line:
-#                 is_open = True
-#                 break
-
-#             time_ranges = re.findall(r"(오[전후] \d{1,2}:\d{2})\s*~\s*(오[전후] \d{1,2}:\d{2})", line)
-
-#             for start, end in time_ranges:
-#                 open_time = parse_korean_time(start)
-#                 close_time = parse_korean_time(end)
-
-#                 if not open_time or not close_time:
-#                     continue
-
-#                 if open_time < close_time:
-#                     if open_time <= schedule_time <= close_time:
-#                         is_open = True
-#                         break
-#                 else:
-#                     if schedule_time >= open_time or schedule_time <= close_time:
-#                         is_open = True
-#                         break
-
-#             if is_open:
-#                 break
-
-#         if is_open:
-#             filtered.append(place)
-
-#     return filtered
-
 
 llm_chain = LLMChain(llm=llm, prompt=opening_hours_prompt)
+#운영시간 확인
 async def filter_open_places_with_llm(docs, now: datetime):
 
     results = []
@@ -437,3 +388,4 @@ async def filter_open_places_with_llm(docs, now: datetime):
             continue
 
     return results
+

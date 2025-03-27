@@ -79,7 +79,7 @@ place_prompt = ChatPromptTemplate.from_template("""
 💡 예시 HTML 응답:
 
 <div class="bot-response">
-  <p>지금 시간에 맞는 4시간짜리 일정을 제안드릴게요!</p><br/>
+  <p>지금 시간에 맞는 4시간짜리 일정을 제안드릴게요!</p>
 
   <div class="schedule-item">
     ⏰ <strong>{{시간 1}}</strong> - {{활동 1}}<br/>
@@ -90,7 +90,8 @@ place_prompt = ChatPromptTemplate.from_template("""
     📏 거리: {{거리 1}}<br/>
     ⭐ 평점: {{평점 1}}<br/>
     🔗 <a href="https://maps.google.com/?cid=..." target="_blank">웹사이트 바로가기</a>
-  </div><br/>
+  </div>  
+  <hr/>
 
   <div class="schedule-item">
     ⏰ <strong>{{시간 2}}</strong> - {{활동 2}}<br/>
@@ -101,7 +102,8 @@ place_prompt = ChatPromptTemplate.from_template("""
     📏 거리: {{거리 2}}<br/>
     ⭐ 평점: {{평점 2}}<br/>
     🔗 <a href="https://maps.google.com/?cid=..." target="_blank">웹사이트 바로가기</a>
-  </div><br/>
+  </div>
+  <hr/>
   
   <div class="schedule-item">
     ⏰ <strong>{{시간 3}}</strong> - {{활동 3}}<br/>
@@ -112,23 +114,33 @@ place_prompt = ChatPromptTemplate.from_template("""
     📏 거리: {{거리 3}}<br/>
     ⭐ 평점: {{평점 3}}<br/>
     🔗 <a href="https://maps.google.com/?cid=..." target="_blank">웹사이트 바로가기</a>
-  </div><br/>
+  </div>
 
   <!-- 추가 일정 반복 -->
 </div>
 """)
 
 query_prompt = ChatPromptTemplate.from_template("""
-너는 사용자 질문을 분석해서 다음 중 하나의 카테고리로 분류해야 해:
+너는 사용자 질문을 분석해서 다음 중 하나의 카테고리로 분류해야 해. 각 카테고리는 다음과 같다:
 
-- function: 서비스 기능(회원가입, 로그인, 태그 등)에 대한 질문
-- schedule: 일정, 스케줄링, 태그 추천 등에 대한 질문
-- place: 맛집, 카페, 관광, 체험 등 장소 관련 질문
-- unknown: 위 세 범주 중 어디에도 속하지 않는 질문
+- **function**: 서비스 기능과 관련된 질문 (예: 회원가입 방법, 로그인 오류, 태그 사용법 등)
+- **schedule**: 일정 및 스케줄링과 관련된 질문 (예: "일정 짜줘", "다른 일정으로 바꿔줘", "태그로 일정짜줘" 등)
+- **place**: 장소(맛집, 양식, 카페, 관광지, 체험 등)와 관련된 질문 (예: "종로에서 갈만한 카페 추천해줘", "종로 맛집 알려줘" 등)
+- **unknown**: 위 세 개의 범주에 해당하지 않는 질문 (예: 일반적인 대화나 의미를 알 수 없는 질문)
+
+📌 **추가 조건**:
+- 문맥을 고려해서 질문이 어느 카테고리에 속하는지 판단해줘.
+
+📍 예제:
+1️⃣ "회원가입 어떻게 해?" → function
+3️⃣ "일정 다 시 짜 줘" → schedule
+4️⃣ "맛집 주로" → place
 
 질문: {question}
-카테고리 (function/schedule/place/unknown) 만 출력해줘:
+
+👉 답변: 네 개 중 하나만 출력 (function, schedule, place, unknown)
 """)
+
 
 opening_hours_prompt = ChatPromptTemplate.from_template("""
 장소의 영업시간 정보는 다음과 같습니다:
