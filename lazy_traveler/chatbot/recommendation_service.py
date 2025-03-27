@@ -35,7 +35,7 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
         function_results = function_vector_store.similarity_search_with_score(
             query=user_query,
             k=1,
-            filter={"type": "qa"}
+            filter={"type":"qa" }
         )
         # print("function_results[0][1]:",function_results[0][1])
         if not function_results or function_results[0][1] > 1.1:
