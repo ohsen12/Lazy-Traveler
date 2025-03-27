@@ -238,24 +238,28 @@ function connectWebSocket() {
 // 메시지 전송 횟수 초기화 함수
 function resetMessageCount() {
     const currentDate = new Date().toDateString();
-    if (currentDate !== lastMessageDate) {
-        messageCount = 0;
-        lastMessageDate = currentDate;
+    const lastDate = localStorage.getItem('lastMessageDate');
+    
+    if (currentDate !== lastDate) {
+        localStorage.setItem('messageCount', '0');
+        localStorage.setItem('lastMessageDate', currentDate);
     }
 }
 
 // 메시지 전송 가능 여부 확인 함수
 function canSendMessage() {
     const currentDate = new Date().toDateString();
+    const lastDate = localStorage.getItem('lastMessageDate');
+    const count = parseInt(localStorage.getItem('messageCount') || '0');
     
     // 날짜가 변경되었다면 카운트 초기화
-    if (currentDate !== lastMessageDate) {
+    if (currentDate !== lastDate) {
         resetMessageCount();
         return true;
     }
     
     // 하루 5회 초과 시 false 반환
-    if (messageCount >= 5) {
+    if (count >= 5) {
         alert('하루에 5번까지 채팅이 가능해요! 🥹');
         return false;
     }
@@ -277,7 +281,10 @@ function processAndSendMessage() {
     }
     
     isProcessingMessage = true;
-    messageCount++; // 메시지 전송 횟수 증가
+    
+    // localStorage에 메시지 카운트 증가
+    const currentCount = parseInt(localStorage.getItem('messageCount') || '0');
+    localStorage.setItem('messageCount', (currentCount + 1).toString());
     
     // 입력창과 전송 버튼 비활성화
     messageInput.disabled = true;
