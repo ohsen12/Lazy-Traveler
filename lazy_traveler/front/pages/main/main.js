@@ -6,8 +6,17 @@ let isProcessingMessage = false; // 메시지 처리 중 상태를 추적하는 
 let messageCount = 0; // 메시지 전송 횟수를 추적하는 변수
 let lastMessageDate = new Date().toDateString(); // 마지막 메시지 전송 날짜
 
-// 지도 초기화를 위한 새로운 함수
-function initializeMap() {
+document.addEventListener("DOMContentLoaded", () => {
+    kakao.maps.load(() => {
+        initKakaoMap();  
+        initChatUI();
+        connectWebSocket();
+        showCoachmark();
+    });
+});
+
+function initKakaoMap() {
+
     const container = document.getElementById('map');
     const options = {
         center: new kakao.maps.LatLng(37.5704, 126.9831),
@@ -33,18 +42,7 @@ function initializeMap() {
         getAddressFromCoords(position);
     });
 
-    // 나머지 UI 초기화
-    initChatUI();
-    connectWebSocket();
-    showCoachmark();
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    // Kakao Maps SDK가 이미 로드된 경우
-    if (window.kakao && window.kakao.maps) {
-        initializeMap();
-    }
-});
 
 // 현재 위치 가져오기
 function getUserLocation() {
