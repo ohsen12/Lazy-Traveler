@@ -4,45 +4,43 @@ let currentSessionId = null;
 let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
 let isProcessingMessage = false; // 메시지 처리 중 상태를 추적하는 변수 추가
 let messageCount = 0; // 메시지 전송 횟수를 추적하는 변수
-let lastMessageTime = Date.now(); // 마지막 메시지 전송 시간
+let lastMessageDate = new Date().toDateString(); // 마지막 메시지 전송 날짜
 
+// DOMContentLoaded 이벤트에서 카카오맵 초기화
 document.addEventListener("DOMContentLoaded", () => {
+    // 카카오맵 로드
     kakao.maps.load(() => {
-        initKakaoMap();  
+        const container = document.getElementById('map');
+        const options = {
+            center: new kakao.maps.LatLng(37.5704, 126.9831),
+            level: 3
+        };
+
+        map = new kakao.maps.Map(container, options);
+        geocoder = new kakao.maps.services.Geocoder();
+
+        marker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(37.5704, 126.9831),
+            map: map
+        });
+
+        infowindow = new kakao.maps.InfoWindow({
+            content: `<div style="padding:5px;">📍 종각역</div>`
+        });
+        infowindow.open(map, marker);
+
+        kakao.maps.event.addListener(map, "click", (event) => {
+            const position = event.latLng;
+            marker.setPosition(position);
+            getAddressFromCoords(position);
+        });
+
+        // 지도 초기화 후 UI 초기화
         initChatUI();
         connectWebSocket();
         showCoachmark();
     });
 });
-
-function initKakaoMap() {
-
-    const container = document.getElementById('map');
-    const options = {
-        center: new kakao.maps.LatLng(37.5704, 126.9831),
-        level: 3
-    };
-
-    map = new kakao.maps.Map(container, options);
-    geocoder = new kakao.maps.services.Geocoder();
-
-    marker = new kakao.maps.Marker({
-        position: new kakao.maps.LatLng(37.5704, 126.9831),
-        map: map
-    });
-
-    infowindow = new kakao.maps.InfoWindow({
-        content: `<div style="padding:5px;">📍 종각역</div>`
-    });
-    infowindow.open(map, marker);
-
-    kakao.maps.event.addListener(map, "click", (event) => {
-        const position = event.latLng;
-        marker.setPosition(position);
-        getAddressFromCoords(position);
-    });
-
-}
 
 // 현재 위치 가져오기
 function getUserLocation() {
@@ -91,25 +89,32 @@ function getAddressFromCoords(coords) {
 function initChatUI() {
     connectWebSocket();
     
-    document.getElementById("send-btn").addEventListener("click", () => {
+    const sendButton = document.getElementById("send-btn");
+    const messageInput = document.getElementById("user-message");
+    
+    // 기존 이벤트 리스너 제거
+    sendButton.removeEventListener("click", processAndSendMessage);
+    messageInput.removeEventListener("keydown", handleEnterKey);
+    
+    // 새로운 이벤트 리스너 등록
+    sendButton.addEventListener("click", () => {
         if (!isProcessingMessage) {
             processAndSendMessage();
         }
     });
     
-    const messageInput = document.getElementById("user-message");
-    
-    // keydown 이벤트로 변경하고 Enter 키 처리 방식 수정
-    messageInput.addEventListener("keydown", function(event) {
-        if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault(); // 먼저 기본 동작을 방지
-            
-            // 이미 처리 중인 메시지가 없을 때만 실행
-            if (!isProcessingMessage) {
-                processAndSendMessage();
-            }
+    // Enter 키 이벤트를 별도 함수로 분리
+    messageInput.addEventListener("keydown", handleEnterKey);
+}
+
+// Enter 키 처리를 위한 별도 함수
+function handleEnterKey(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        if (!isProcessingMessage) {
+            processAndSendMessage();
         }
-    });
+    }
 }
 
 //첫시작 대화창 및 user-menu숨기기
@@ -237,24 +242,29 @@ function connectWebSocket() {
 
 // 메시지 전송 횟수 초기화 함수
 function resetMessageCount() {
-    messageCount = 0;
-    lastMessageTime = Date.now();
+    const currentDate = new Date().toDateString();
+    const lastDate = localStorage.getItem('lastMessageDate');
+    
+    if (currentDate !== lastDate) {
+        localStorage.setItem('messageCount', '0');
+        localStorage.setItem('lastMessageDate', currentDate);
+    }
 }
 
 // 메시지 전송 가능 여부 확인 함수
 function canSendMessage() {
-    const currentTime = Date.now();
-    const oneMinute = 60 * 1000; // 1분을 밀리초로 변환
+    const currentDate = new Date().toDateString();
+    const lastDate = localStorage.getItem('lastMessageDate');
+    const count = parseInt(localStorage.getItem('messageCount') || '0');
     
-    // 마지막 메시지로부터 1분이 지났다면 카운트 초기화
-    if (currentTime - lastMessageTime >= oneMinute) {
+    // 날짜가 변경되었다면 카운트 초기화
+    if (currentDate !== lastDate) {
         resetMessageCount();
         return true;
     }
     
-    // 1분 이내 5회 초과 시 false 반환
-    if (messageCount >= 5) {
-        alert('잠깐만요! 너무 빠르게 질문하고 있어요. 1분에 최대 5번 질문할 수 있어요! 😊');
+    // 하루 5회 초과 시 false 반환
+    if (count >= 5) {
         return false;
     }
     
@@ -271,11 +281,15 @@ function processAndSendMessage() {
     
     // 메시지 전송 가능 여부 확인
     if (!canSendMessage()) {
+        alert('하루에 5번까지 채팅이 가능해요! 🥹');
         return;
     }
     
     isProcessingMessage = true;
-    messageCount++; // 메시지 전송 횟수 증가
+    
+    // localStorage에 메시지 카운트 증가
+    const currentCount = parseInt(localStorage.getItem('messageCount') || '0');
+    localStorage.setItem('messageCount', (currentCount + 1).toString());
     
     // 입력창과 전송 버튼 비활성화
     messageInput.disabled = true;
@@ -565,11 +579,25 @@ function appendMessage(message, type) {
     const messageContainer = document.createElement("div");
     messageContainer.classList.add("message", type);
     
-    // HTML 태그가 포함된 메시지인지 확인하고 적절히 처리
-    if (typeof message === 'string' && message.trim().startsWith("<div")) {
-        messageContainer.innerHTML = message;
+    // ```html 태그 제거 및 메시지 정제
+    let cleanMessage = message;
+    if (typeof message === 'string') {
+        cleanMessage = message.replace(/```html\n?/g, '').replace(/```$/g, '');
+    }
+
+    // HTML 여부 판단
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(cleanMessage, "text/html");
+    const isHTML = Array.from(doc.body.childNodes).some(
+        node => node.nodeType === 1  // ELEMENT_NODE
+    );
+
+    if (isHTML) {
+        // 실제 DOM 요소로 대체
+        messageContainer.innerHTML = cleanMessage;
     } else {
-        messageContainer.textContent = message;
+        // 일반 텍스트만 갱신
+        messageContainer.textContent = cleanMessage;
     }
     
     // 채팅박스에 새 메시지 추가
@@ -614,29 +642,35 @@ function updateBotResponse(responseMessage) {
     const chatBox = document.getElementById("chat-box");
     const lastBotResponse = chatBox.lastElementChild;
     
+    // ```html 태그 제거 및 메시지 정제
+    let cleanMessage = responseMessage;
+    if (typeof responseMessage === 'string') {
+        cleanMessage = responseMessage.replace(/```html\n?/g, '').replace(/```$/g, '');
+    }
 
     // 로딩 메시지를 포함한 마지막 응답 찾기
     if (lastBotResponse && lastBotResponse.classList.contains("bot-response")) {
         const loadingMessage = lastBotResponse.querySelector("#bot-loading-message");
 
         if (loadingMessage) {
-            // HTML인지 판단해서 적절히 처리
-            if (responseMessage.trim().startsWith("<div")) {
-                loadingMessage.outerHTML = responseMessage;
+            // HTML 여부 판단
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(cleanMessage, "text/html");
+            const isHTML = Array.from(doc.body.childNodes).some(
+                node => node.nodeType === 1  // ELEMENT_NODE
+            );
+
+            if (isHTML) {
+                // 실제 DOM 요소로 대체
+                loadingMessage.outerHTML = cleanMessage;
             } else {
-                loadingMessage.textContent = responseMessage;
+                // 일반 텍스트만 갱신
+                loadingMessage.textContent = cleanMessage;
             }
         }
     }
     scrollChatToBottom();
 }
-
-// ✅ DOM 로드 시 웹소켓 연결 및 이벤트 리스너 추가 부분 제거 (중복 방지)
-document.addEventListener("DOMContentLoaded", function () {
-    connectWebSocket(); // 웹소켓 연결
-});
-
-
 
 // ✅ 페이지가 새로 고쳐지기 전에 localStorage에서 session_id를 삭제
 window.addEventListener('beforeunload', function() {
