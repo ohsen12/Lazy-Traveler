@@ -1,6 +1,5 @@
 from datetime import datetime
-from langchain.chains import LLMChain
-from .prompt import function_prompt, place_prompt, query_prompt
+from .prompt import place_prompt 
 from .utils import (
     get_context,
     get_user_tags,
@@ -54,8 +53,6 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
         place_results_html = await format_place_results_to_html(place_results) #place 결과 html로 변환 
         return place_results_html
 
-        
-
     if question_type == "unknown":
         error_message = "죄송합니다.😢 기능, 장소, 일정 스케줄링에 대해 문의해 주세요. 😊예) 회원가입 하는 법‘, ‘스케줄링 해줘‘, ‘맛집 추천해줘’"
         return error_message
@@ -68,36 +65,26 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
     
     # 태그 가져오기
     user_tags = await get_user_tags(username) # 유저 태그 가져오기
-    preferred_tag_mapping = await get_preferred_tags_by_schedule(user_tags, schedule_categories)
+    preferred_tag_mapping = await get_preferred_tags_by_schedule(user_tags, schedule_categories) #대분류 중 사용자가 태그만 선택
 
-    # query_transform_chain = LLMChain(llm=llm, prompt=query_prompt)
-    # # 1. 비동기 실행 후 결과 저장
-    # transformed_query_result = await query_transform_chain.ainvoke({"query": user_query})
-
-    # # 2. 변환된 쿼리 추출
-    # transformed_query = transformed_query_result['text']
-    # print(f"[DEBUG] 변환된 쿼리: {transformed_query}")
-
-    # 문서 검색
-    # search_query = f"{user_query} (위치: {latitude}, {longitude}) 관련 태그: {user_tags}"
-
+    #태그 기반으로 장소 검색
     docs = await search_places_by_preferred_tags(user_query, preferred_tag_mapping)
 
     # 거리 정렬
     sorted_docs = await sort_places_by_distance(docs, latitude, longitude)
     # print("sorted_docs:",sorted_docs)
 
-    #운영시간 Let's go
+    #운영시간 확인
     filtered_docs = await filter_open_places_with_llm(sorted_docs, now)
     # print("filtered_docs:", filtered_docs)
 
+    #선호 태그와 일정 카테고리 기반 스케줄 생성
     schedule = await build_schedule_by_categories_with_preferences(
         filtered_docs, schedule_categories, preferred_tag_mapping, start_time
     )
     # print("schedule1:", schedule )
 
-
-    # 5. 스케줄을 텍스트로 변환
+    #스케줄을 텍스트로 변환
     schedule_text = await schedule_to_text(schedule)
     # print("schedule_text:", schedule_text )
 
