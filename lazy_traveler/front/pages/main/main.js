@@ -4,7 +4,7 @@ let currentSessionId = null;
 let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
 let isProcessingMessage = false; // 메시지 처리 중 상태를 추적하는 변수 추가
 let messageCount = 0; // 메시지 전송 횟수를 추적하는 변수
-let lastMessageTime = Date.now(); // 마지막 메시지 전송 시간
+let lastMessageDate = new Date().toDateString(); // 마지막 메시지 전송 날짜
 
 document.addEventListener("DOMContentLoaded", () => {
     kakao.maps.load(() => {
@@ -237,24 +237,26 @@ function connectWebSocket() {
 
 // 메시지 전송 횟수 초기화 함수
 function resetMessageCount() {
-    messageCount = 0;
-    lastMessageTime = Date.now();
+    const currentDate = new Date().toDateString();
+    if (currentDate !== lastMessageDate) {
+        messageCount = 0;
+        lastMessageDate = currentDate;
+    }
 }
 
 // 메시지 전송 가능 여부 확인 함수
 function canSendMessage() {
-    const currentTime = Date.now();
-    const oneMinute = 60 * 1000; // 1분을 밀리초로 변환
+    const currentDate = new Date().toDateString();
     
-    // 마지막 메시지로부터 1분이 지났다면 카운트 초기화
-    if (currentTime - lastMessageTime >= oneMinute) {
+    // 날짜가 변경되었다면 카운트 초기화
+    if (currentDate !== lastMessageDate) {
         resetMessageCount();
         return true;
     }
     
-    // 1분 이내 5회 초과 시 false 반환
+    // 하루 5회 초과 시 false 반환
     if (messageCount >= 5) {
-        alert('잠깐만요! 너무 빠르게 질문하고 있어요. 1분에 최대 5번 질문할 수 있어요! 😊');
+        alert('하루에 5번까지 채팅이 가능해요! 🥹');
         return false;
     }
     
