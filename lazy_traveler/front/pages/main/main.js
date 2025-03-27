@@ -263,95 +263,47 @@ function canSendMessage() {
         return true;
     }
     
-    // 하루 5회 초과 시 false 반환
-    if (count >= 5) {
+    // 하루 100회 초과 시 false 반환
+    if (count >= 100) {
+        alert('하루에 100번까지 채팅이 가능해요! 🥹');
         return false;
     }
     
     return true;
 }
 
-// 메시지 처리 및 전송을 담당하는 새로운 함수
-function processAndSendMessage() {
-    const messageInput = document.getElementById("user-message");
-    const message = messageInput.value.trim();
-    const sendButton = document.getElementById("send-btn");
+// 리프레시 버튼 클릭 횟수 확인 함수
+function canRefresh() {
+    const currentDate = new Date().toDateString();
+    const lastDate = localStorage.getItem('lastRefreshDate');
+    const refreshCount = parseInt(localStorage.getItem('refreshCount') || '0');
     
-    if (!message || isProcessingMessage) return;
-    
-    // 메시지 전송 가능 여부 확인
-    if (!canSendMessage()) {
-        alert('하루에 5번까지 채팅이 가능해요! 🥹');
-        return;
+    // 날짜가 변경되었다면 카운트 초기화
+    if (currentDate !== lastDate) {
+        localStorage.setItem('refreshCount', '0');
+        localStorage.setItem('lastRefreshDate', currentDate);
+        return true;
     }
     
-    isProcessingMessage = true;
-    
-    // localStorage에 메시지 카운트 증가
-    const currentCount = parseInt(localStorage.getItem('messageCount') || '0');
-    localStorage.setItem('messageCount', (currentCount + 1).toString());
-    
-    // 입력창과 전송 버튼 비활성화
-    messageInput.disabled = true;
-    messageInput.style.backgroundColor = "#f0f0f0";
-    sendButton.disabled = true;
-    sendButton.style.opacity = "0.5";
-    
-    // 실제 메시지 전송
-    if (!socket) {
-        isProcessingMessage = false;
-        // 입력창과 전송 버튼 다시 활성화
-        messageInput.disabled = false;
-        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
-        sendButton.disabled = false;
-        sendButton.style.opacity = "1";
-        return;
+    // 하루 5회 초과 시 false 반환
+    if (refreshCount >= 5) {
+        alert('현재 리프레시 버튼은 하루 5번만 클릭 가능해요! 🥹');
+        return false;
     }
-
-    if (socket.readyState === WebSocket.OPEN) {
-        hasStartedChat = true;
-        appendMessage(message, "user-message");
-        appendBotResponseWithLoading();
-
-        const position = marker.getPosition();
-        const requestData = {
-            message: message,
-            latitude: position.getLat().toFixed(6),
-            longitude: position.getLng().toFixed(6),
-            session_id: localStorage.getItem("session_id") || "",
-            new_session: !localStorage.getItem("session_id")
-        };
-
-        // 메시지를 전송한 후에 입력창 초기화
-        requestAnimationFrame(() => {
-            messageInput.value = "";
-            messageInput.style.height = "24px"; // 높이 초기화
-            messageInput.scrollTop = 0; // 스크롤 위치 초기화
-            messageInput.selectionStart = 0; // 커서 위치 처음으로
-            messageInput.selectionEnd = 0; // 선택 영역 초기화
-        });
-
-        socket.send(JSON.stringify(requestData));
-    } else {
-        isProcessingMessage = false;
-        // 입력창과 전송 버튼 다시 활성화
-        messageInput.disabled = false;
-        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
-        sendButton.disabled = false;
-        sendButton.style.opacity = "1";
-    }
+    
+    return true;
 }
-
-// sendMessage 함수를 processAndSendMessage로 대체
-function sendMessage() {
-    if (!isProcessingMessage) {
-        processAndSendMessage();
-    }
-}
-
 
 // 리프레시
 function refreshChat() {
+    if (!canRefresh()) {
+        return;
+    }
+    
+    // 리프레시 카운트 증가
+    const currentCount = parseInt(localStorage.getItem('refreshCount') || '0');
+    localStorage.setItem('refreshCount', (currentCount + 1).toString());
+    
     localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
     currentSessionId = null;  // ✅ 메모리에서도 초기
     hasStartedChat = false;  // 대화 시작 상태 초기화
@@ -797,5 +749,82 @@ function scrollChatToBottom() {
     const chatBox = document.getElementById("chat-box");
     if (chatBox && hasStartedChat) {
         chatBox.scrollTop = chatBox.scrollHeight;
+    }
+}
+
+// 메시지 처리 및 전송을 담당하는 새로운 함수
+function processAndSendMessage() {
+    const messageInput = document.getElementById("user-message");
+    const message = messageInput.value.trim();
+    const sendButton = document.getElementById("send-btn");
+    
+    if (!message || isProcessingMessage) return;
+    
+    // 메시지 전송 가능 여부 확인
+    if (!canSendMessage()) {
+        return;
+    }
+    
+    isProcessingMessage = true;
+    
+    // localStorage에 메시지 카운트 증가
+    const currentCount = parseInt(localStorage.getItem('messageCount') || '0');
+    localStorage.setItem('messageCount', (currentCount + 1).toString());
+    
+    // 입력창과 전송 버튼 비활성화
+    messageInput.disabled = true;
+    messageInput.style.backgroundColor = "#f0f0f0";
+    sendButton.disabled = true;
+    sendButton.style.opacity = "0.5";
+    
+    // 실제 메시지 전송
+    if (!socket) {
+        isProcessingMessage = false;
+        // 입력창과 전송 버튼 다시 활성화
+        messageInput.disabled = false;
+        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
+        sendButton.disabled = false;
+        sendButton.style.opacity = "1";
+        return;
+    }
+
+    if (socket.readyState === WebSocket.OPEN) {
+        hasStartedChat = true;
+        appendMessage(message, "user-message");
+        appendBotResponseWithLoading();
+
+        const position = marker.getPosition();
+        const requestData = {
+            message: message,
+            latitude: position.getLat().toFixed(6),
+            longitude: position.getLng().toFixed(6),
+            session_id: localStorage.getItem("session_id") || "",
+            new_session: !localStorage.getItem("session_id")
+        };
+
+        // 메시지를 전송한 후에 입력창 초기화
+        requestAnimationFrame(() => {
+            messageInput.value = "";
+            messageInput.style.height = "24px"; // 높이 초기화
+            messageInput.scrollTop = 0; // 스크롤 위치 초기화
+            messageInput.selectionStart = 0; // 커서 위치 처음으로
+            messageInput.selectionEnd = 0; // 선택 영역 초기화
+        });
+
+        socket.send(JSON.stringify(requestData));
+    } else {
+        isProcessingMessage = false;
+        // 입력창과 전송 버튼 다시 활성화
+        messageInput.disabled = false;
+        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
+        sendButton.disabled = false;
+        sendButton.style.opacity = "1";
+    }
+}
+
+// sendMessage 함수를 processAndSendMessage로 대체
+function sendMessage() {
+    if (!isProcessingMessage) {
+        processAndSendMessage();
     }
 }
