@@ -171,4 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         window.location.href = 'https://lazy-traveler.store/pages/login/login.html';
     });
+
+    function goToMain() {
+        window.location.href = 'https://lazy-traveler.store/pages/main/main.html';
+    }
 });
