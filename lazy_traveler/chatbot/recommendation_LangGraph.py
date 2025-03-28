@@ -27,7 +27,7 @@ class MyState(TypedDict):
     latitude: float
     longitude: float
     question_type: str  # 추가된 question_type 필드
-    timestamp: datetime  # datetime 필드 추가
+    timestamp: datetime
 
 
 # ✅ 1. 질문 분류 노드
@@ -73,9 +73,9 @@ async def handle_place_query(state: MyState) -> MyState:
 
 
 # ✅ 4. 일정 스케줄링 처리
-async def handle_schedule_query(state: MyState, datetime_input: datetime | None = None) -> MyState:
-     # datetime_input이 주어지지 않으면 현재 시간(now) 사용
-    now = state["timestamp"] ##### 수정
+async def handle_schedule_query(state: MyState) -> MyState:
+    # datetime_input이 주어지지 않으면 현재 시간(now) 사용
+    now = state["timestamp"] 
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     start_time = now
 
@@ -131,7 +131,15 @@ async def handle_unknown_query(state: MyState) -> MyState:
 def route_condition(state: dict) -> str:
     return state["__condition__"]
 
-async def get_recommendation(user_query: str, session_id: str | None = None, username: str | None = None, latitude: float = 37.5704, longitude: float = 126.9831,, datetime_input: datetime | None = None) -> str:
+async def get_recommendation(
+    user_query: str,
+    session_id: str | None = None,
+    username: str | None = None,
+    latitude: float = 37.5704,
+    longitude: float = 126.9831,
+    timestamp: datetime | None = None) -> str: #####
+
+
     state: MyState = {
         "user_query": user_query,
         "response": "",
@@ -140,7 +148,7 @@ async def get_recommendation(user_query: str, session_id: str | None = None, use
         "latitude": latitude if latitude is not None else 37.5704,
         "longitude": longitude if longitude is not None else 126.9831,
         "question_type": "",
-        "timestamp": datetime_input or datetime.now() ##### 수정
+        "timestamp": timestamp or datetime.now() ##### 수정
     }
 
     # ✅ LangGraph 생성
