@@ -104,4 +104,9 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
     })
     # print("result:", result)
 
-    return result.content.strip() if result.content else "추천을 제공할 수 없습니다."
+    if isinstance(result, str):
+        return result.strip()
+    elif hasattr(result, "content"):
+        return result.content.strip()
+    else:
+        return "추천을 제공할 수 없습니다."
