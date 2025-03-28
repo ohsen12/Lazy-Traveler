@@ -107,18 +107,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             # 추천 알고리즘으로 장소 가져오기 (최대 5개)
             recommendations = get_chat_based_recommendations(user_id, top_n=5)
             
-            if not recommendations.exists():
+            if not recommendations:
                 return []
                 
-            # 장소 정보를 딕셔너리 리스트로 변환
+            # 이제 recommendations는 문자열 리스트이므로 그에 맞게 처리
             place_list = []
-            for place in recommendations:
+            for place_name in recommendations:
                 place_list.append({
-                    "id": place.id,
-                    "name": place.name,
-                    "tags": place.tags,
-                    "address": place.address,
-                    "rating": float(place.rating) if place.rating else 0.0
+                    "id": None,  # 문자열만 있으므로 ID는 None으로 설정
+                    "name": place_name,
+                    "tags": [],  # 태그 정보 없음
+                    "address": "",  # 주소 정보 없음
+                    "rating": 0.0  # 평점 정보 없음
                 })
                 
             return place_list
