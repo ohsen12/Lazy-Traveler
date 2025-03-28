@@ -113,7 +113,7 @@ def get_similar_users(
 def extract_places_from_chathistory(
     user_id: int, 
     min_frequency: int = 1
-) -> List[Tuple[str, int]]:
+) -> List[Dict[str, object]]:
     """
     채팅 히스토리에서 장소 언급 빈도를 추출하는 함수.
     (추후 자연어 처리(NLP)를 적용하여 더 정교한 추출이 가능하도록 개선할 수 있음.)
@@ -144,28 +144,30 @@ def extract_places_from_chathistory(
             all_places.extend(extracted_places)
         
         # 장소명과 출현 빈도를 저장할 딕셔너리
-        place_counter: Dict[str, int] = {}
+        place_counter: Dict[str, Dict] = {}
         
         # 추출된 장소들의 출현 빈도 계산
         for place_info in all_places:
-            place_name = place_info.get('name')
-            if place_name:
-                place_counter[place_name] = place_counter.get(place_name, 0) + 1
+            name = place_info.get('name')
+            website = place_info.get('website')
         
-        # 추가적으로 메시지 내용에서 직접 텍스트 매칭 (향후 NLP 기술 적용 가능)
-        for chat in user_chats:
-            text = f"{chat.message} {chat.response}".lower()
-            
-            # 이미 카운터에 있는 장소명들에 대해 추가 검색
-            for place_name in place_counter.keys():
-                if place_name.lower() in text:
-                    place_counter[place_name] = place_counter.get(place_name, 0) + 1
+            if name not in place_counter:
+                place_counter[name] = {"count": 1, "website": website}
+            else:
+                place_counter[name]["count"] += 1
         
-        return [(place, count) for place, count in place_counter.items() if count >= min_frequency]
-
+        return [
+            {
+                "name": name,
+                "count": meta["count"],
+                "website": meta["website"]
+            }
+            for name, meta in place_counter.items()
+            if meta["count"] >= min_frequency
+        ]
     except Exception as e:
         logger.warning(f"장소 추출 오류: {str(e)}")
-        return []
+        return [] 
 
 # 5. 최종 추천 시스템
 def get_chat_based_recommendations(
@@ -185,7 +187,7 @@ def get_chat_based_recommendations(
     """
     if not isinstance(user_id, int) or user_id <= 0:
         logger.warning("유효하지 않은 user_id 입력: {}".format(user_id))
-        return []
+        return [] 
     
     try:
         print(f"[DEBUG] 추천 시작 - 사용자 ID: {user_id}")
@@ -200,52 +202,47 @@ def get_chat_based_recommendations(
             return []
             
         # 유사 사용자들의 채팅에서 언급된 장소 카운트
-        combined_place_freq: Dict[str, int] = {}
-        
-        # 모든 유사 사용자의 채팅 기록에서 장소 추출
+        combined_place_freq: Dict[str, Dict] = {}
+    
+
         for sim_uid in similar_user_ids:
             sim_places = extract_places_from_chathistory(sim_uid)
-            print(f"[DEBUG] 유사 사용자 {sim_uid}의 장소: {sim_places}")
-            
-            if not sim_places:
-                print(f"[DEBUG] 유사 사용자 {sim_uid}에서 추출된 장소 없음")
-                continue
-                
-            # 유사 사용자의 장소 빈도 합산
-            for place, freq in sim_places:
-                combined_place_freq[place] = combined_place_freq.get(place, 0) + freq
-        
-        print(f"[DEBUG] 유사 사용자들의 모든 장소 및 빈도: {combined_place_freq}")
-        
-        # 빈도 정보가 없으면 빈 리스트 반환
+            for place in sim_places:
+                name = place["name"]
+                website = place.get("website")
+                count = place["count"]
+
+                if name not in combined_place_freq:
+                    combined_place_freq[name] = {"score": count, "website": website}
+                else:
+                    combined_place_freq[name]["score"] += count
+
         if not combined_place_freq:
-            print("[DEBUG] 유사 사용자들의 장소 정보 없음. 빈 결과 반환")
             return []
-        
-        # 내 장소 추출 (가중치 계산용)
-        my_places = dict(extract_places_from_chathistory(user_id))
-        print(f"[DEBUG] 내 장소: {my_places}")
-        
-        # 가중치 적용
-        weighted_places: Dict[str, float] = {}
-        for place, total_freq in combined_place_freq.items():
-            # 내 장소와 겹치면 가중치 2배
-            overlap_multiplier = 2.0 if place in my_places else 1.0
-            weighted_places[place] = total_freq * overlap_multiplier
-        
-        print(f"[DEBUG] 가중치 적용된 장소 점수: {weighted_places}")
-        
-        # 점수 기준으로 정렬
-        top_place_names = sorted(weighted_places.items(), key=lambda x: x[1], reverse=True)[:top_n]
-        print(f"[DEBUG] 최종 추천 장소 및 점수: {top_place_names}")
-        
-        # 최종 추천 장소명만 추출하여 리스트로 반환
-        result_places = [place_name for place_name, _ in top_place_names]
-        print(f"[DEBUG] 최종 반환할 장소 이름 리스트: {result_places}")
-        
-        # 여기서 Place 객체를 찾는 대신, 추출된 장소 이름 리스트를 직접 반환
-        return result_places
-        
+
+        my_places = {p["name"] for p in extract_places_from_chathistory(user_id)}
+
+        weighted_places: Dict[str, Dict] = {}
+        for name, data in combined_place_freq.items():
+            multiplier = 2.0 if name in my_places else 1.0
+            score = data["score"] * multiplier
+            weighted_places[name] = {
+                "score": score,
+                "website": data.get("website")
+            }
+
+        sorted_places = sorted(weighted_places.items(), key=lambda x: x[1]["score"], reverse=True)[:top_n]
+
+        result = [
+            {
+                "name": name,
+                "website": data["website"],
+                "score": data["score"]
+            }
+            for name, data in sorted_places
+        ]
+
+        return result
     except Exception as e:
         print(f"[DEBUG] 추천 시스템 전체 오류: {str(e)}")
         logger.error(f"추천 시스템 오류: {str(e)}")
