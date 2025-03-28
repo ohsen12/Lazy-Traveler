@@ -150,6 +150,7 @@ def get_user_tags(username):
     except User.DoesNotExist:
         return ""
 
+#대분류 중 사용자가 태그만 선택
 @sync_to_async
 def get_preferred_tags_by_schedule(user_tags, schedule_categories):
 
@@ -162,14 +163,28 @@ def get_preferred_tags_by_schedule(user_tags, schedule_categories):
 
     return result
 
-# 대화 내역을 가져오는 함수
+#태그 기반으로 장소 검색
 @sync_to_async
-def get_context(session_id, max_turns=5):
-    chat_history = ChatHistory.objects.filter(session_id=session_id).order_by("-created_at")[:max_turns]
-    return "\n\n".join([f"User: {chat.message}\nBot: {chat.response}" for chat in reversed(chat_history)])
+def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
+    from .openai_chroma_config import place_vector_store
+    all_docs = []
+    seen_place_ids = set()
 
+    for category, tags in preferred_tag_mapping.items():
+        for tag in tags:
+            results = place_vector_store.similarity_search(
+                query=f"{user_query} {tag}",
+                k=2,
+                filter={"type": "place"}
+            )
+            for doc in results:
+                place_id = doc.metadata.get("place_id")
+                if place_id not in seen_place_ids:
+                    all_docs.append(doc)
+                    seen_place_ids.add(place_id)
 
-   
+    return all_docs
+
 # 거리 계산 함수
 def calculate_distance(lat1, lon1, lat2, lon2):
     lat1 = float(lat1)
@@ -201,91 +216,37 @@ def sort_places_by_distance(places, latitude, longitude):
         )
     )
 
-# 스케줄 LLM전 정제
-@sync_to_async
-def schedule_to_text(schedule):
-    """
-    스케줄 데이터를 텍스트로 변환해서 LLM에 넘길 수 있도록 준비
-    """
-    lines = []
-    for place in schedule:
-        lines.append(f"""
-⏰ {place['time']} - {place['desc']}
-- 장소: **{place['name']}**
-- 카테고리: {place['category']}
-- 주소: {place['address']}
-- 운영시간: {place['opening_hours']} 
-- 거리: {place['distance_km']}
-- 평점: {place['rating']}
-- 웹사이트: {place['website']}
-        """)
-    return "\n".join(lines)
+llm_chain = LLMChain(llm=llm, prompt=opening_hours_prompt)
+#운영시간 확인
+async def filter_open_places_with_llm(docs, now: datetime):
 
+    results = []
+    weekday_korean = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"][now.weekday()]
+    visit_time = now.strftime("%Y-%m-%d %H:%M")
 
+    for doc in docs:
+        metadata = doc.metadata
+        opening_hours = metadata.get("opening_hours")
 
-# 카테고리별 스케줄
-@sync_to_async
-def build_schedule_by_categories(sorted_places, schedule_categories, start_time):
-    schedule = []
-    used_place_ids = set()
+        if not opening_hours:
+            continue
 
-    time_slots = [
-        (start_time + timedelta(hours=i)).strftime("%H:%M") for i in range(len(schedule_categories))
-    ]
+        try:
+            response = await llm_chain.ainvoke({
+                "opening_hours": opening_hours,
+                "visit_time": visit_time,
+                "weekday": weekday_korean
+            })
+            answer = response.get("text", "").strip()
+            if "열려 있음" in answer:
+                results.append(doc)
+        except Exception as e:
+            print(f"error: {e}")
+            continue
 
-    for i, category in enumerate(schedule_categories):
-        print(f"\n[DEBUG] 현재 요청된 대분류 카테고리: {category}")
-        
-        for place in sorted_places:
-            metadata = place.metadata
-            raw_category = metadata.get('category', '').strip()
-            print(f"[DEBUG] 장소: {metadata.get('name')} / category: {raw_category}")
+    return results
 
-            if metadata.get('place_id') in used_place_ids:
-                continue
-
-            if category in CATEGORY_MAPPING:
-                for tag in CATEGORY_MAPPING[category]:
-                    if tag in raw_category:
-                        print(f"[MATCH] {raw_category} ← {tag} (category: {category})")
-                        used_place_ids.add(metadata.get('place_id'))
-                        schedule.append({
-                            "time": time_slots[i],
-                            "desc": category,
-                            "name": metadata.get('name'),
-                            "category": metadata.get('category'),
-                            "address": metadata.get('address'),
-                            "distance_km": f"{metadata.get('distance', 0):.2f}km",
-                            "rating": metadata.get('rating'),
-                            "website": metadata.get('website')
-                        })
-                        break
-
-            else:
-                print(f"[NO MATCH] {raw_category}는 CATEGORY_MAPPING에 정의되지 않음")
-
-    return schedule
-
-#태그데이터 대분류로 변경
-@sync_to_async
-def map_tags_to_categories(user_tags):
-    mapped_categories = set()
-
-    if not user_tags:
-        return list(CATEGORY_MAPPING.keys()) # 반환
-
-    for category, tags in CATEGORY_MAPPING.items():
-        for tag in user_tags:
-            if tag in tags:
-                mapped_categories.add(category)
-                break  # 중복 방지
-
-    return list(mapped_categories)
-
-
-
-
-
+#선호 태그와 일정 카테고리 기반 스케줄 생성
 @sync_to_async
 def build_schedule_by_categories_with_preferences(sorted_places, schedule_categories, preferred_tag_mapping, start_time):
     schedule = []
@@ -337,7 +298,9 @@ def build_schedule_by_categories_with_preferences(sorted_places, schedule_catego
 
     return schedule
 
+# 스케줄 데이터 텍스트 변환
 @sync_to_async
+<<<<<<< HEAD
 def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
     from .openai_chroma_config import place_vector_store
     all_docs = []
@@ -388,3 +351,28 @@ async def filter_open_places_with_llm(docs, now: datetime):
             continue
 
     return results
+=======
+def schedule_to_text(schedule):
+    """
+    스케줄 데이터를 텍스트로 변환해서 LLM에 넘길 수 있도록 준비
+    """
+    lines = []
+    for place in schedule:
+        lines.append(f"""
+⏰ {place['time']} - {place['desc']}
+- 장소: **{place['name']}**
+- 카테고리: {place['category']}
+- 주소: {place['address']}
+- 운영시간: {place['opening_hours']} 
+- 거리: {place['distance_km']}
+- 평점: {place['rating']}
+- 웹사이트: {place['website']}
+        """)
+    return "\n".join(lines)
+
+# 대화 내역을 가져오는 함수
+@sync_to_async
+def get_context(session_id, max_turns=5):
+    chat_history = ChatHistory.objects.filter(session_id=session_id).order_by("-created_at")[:max_turns]
+    return "\n\n".join([f"User: {chat.message}\nBot: {chat.response}" for chat in reversed(chat_history)])
+>>>>>>> backup-branch
