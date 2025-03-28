@@ -73,7 +73,8 @@ async def handle_place_query(state: MyState) -> MyState:
 
 # ✅ 4. 일정 스케줄링 처리
 async def handle_schedule_query(state: MyState) -> MyState:
-    now = datetime.now()
+    # now = datetime.now()
+    now = datetime(2025, 3, 27, 9, 0, 0)
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     start_time = now
 

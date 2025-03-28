@@ -73,7 +73,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 print(f"✅ [DEBUG] 채팅 기록 저장 완료: {user_query}")  # 🔥 저장 성공 여부 확인
                 
                 # ✅ 비슷한 취향의 다른 유저 추천 기능 추가
-                recommendations = await self.get_similar_user_recommendations(self.user.id)
+                recommendations = await self.get_similar_user_recommendations(self.user.id) or []
                 print("recommendation:", recommendations)
                 # 기존 응답에 추천 정보 추가
                 response_data = {
@@ -81,10 +81,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "response": response_text,
                     "session_id": self.session_id,
                 }
-                
-                # 추천 결과가 있는 경우에만 추가
-                if recommendations and len(recommendations) > 0:
+
+                if recommendations:
                     response_data["recommendations"] = recommendations
+
             else:
                 # 비로그인 사용자에게는 기본 응답만
                 response_data = {
@@ -109,17 +109,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if not recommendations:
                 return []
 
-            return [
-                {
-                    "id": None,
-                    "name": r["name"],
-                    "website": r["website"],
-                    "tags": [],
-                    "address": "",
-                    "rating": 0.0
-                }
-                for r in recommendations
-            ]
+            safe_recommendations = []
+            for r in recommendations:
+                name = r.get("name") or ""
+                website = r.get("website") or ""
+                if name:
+                    safe_recommendations.append({
+                        "name": name,
+                        "website": website
+                    })
+
+            return safe_recommendations
         except Exception as e:
             print(f"🚨 [ERROR] 추천 장소 가져오기 실패: {str(e)}")
             return []

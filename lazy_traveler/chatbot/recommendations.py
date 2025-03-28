@@ -141,6 +141,8 @@ def extract_places_from_chathistory(
         for chat in user_chats:
             # 챗봇 응답에서 장소 정보 추출
             extracted_places = extract_place_info(chat.response)
+            if not extracted_places:
+                continue
             all_places.extend(extracted_places)
         
         # 장소명과 출현 빈도를 저장할 딕셔너리
@@ -150,6 +152,9 @@ def extract_places_from_chathistory(
         for place_info in all_places:
             name = place_info.get('name')
             website = place_info.get('website')
+            
+            if not name:
+                continue
         
             if name not in place_counter:
                 place_counter[name] = {"count": 1, "website": website}
@@ -207,9 +212,15 @@ def get_chat_based_recommendations(
 
         for sim_uid in similar_user_ids:
             sim_places = extract_places_from_chathistory(sim_uid)
+            if not sim_places:
+                continue
             for place in sim_places:
+                if not place:
+                    continue
                 name = place["name"]
-                website = place.get("website")
+                if not name:
+                    continue
+                website = place.get("website") or ""
                 count = place["count"]
 
                 if name not in combined_place_freq:
@@ -220,7 +231,11 @@ def get_chat_based_recommendations(
         if not combined_place_freq:
             return []
 
-        my_places = {p["name"] for p in extract_places_from_chathistory(user_id)}
+        my_places_raw = extract_places_from_chathistory(user_id)
+        if not my_places_raw:
+            my_places = set()
+        else:
+            my_places = {p["name"] for p in my_places_raw}
 
         weighted_places: Dict[str, Dict] = {}
         for name, data in combined_place_freq.items():
@@ -228,16 +243,16 @@ def get_chat_based_recommendations(
             score = data["score"] * multiplier
             weighted_places[name] = {
                 "score": score,
-                "website": data.get("website")
+                "website": data.get("website") or ""
             }
 
         sorted_places = sorted(weighted_places.items(), key=lambda x: x[1]["score"], reverse=True)[:top_n]
 
         result = [
             {
-                "name": name,
-                "website": data["website"],
-                "score": data["score"]
+                "name": name or "",
+                "website": data.get("website") or "",
+                "score": data.get("score", 0)
             }
             for name, data in sorted_places
         ]
@@ -290,19 +305,19 @@ def extract_places_from_response(response):
     
     return recommended_places
 
-def extract_places_from_chat_history(user_chats):
-    """
-    사용자의 채팅 히스토리에서 장소 이름을 추출하는 함수
-    """
-    all_places = []
+# def extract_places_from_chat_history(user_chats):
+#     """
+#     사용자의 채팅 히스토리에서 장소 이름을 추출하는 함수
+#     """
+#     all_places = []
     
-    for chat in user_chats:
-        # 챗봇 응답에서 장소 추출
-        if hasattr(chat, 'response') and chat.response:
-            places = extract_places_from_response(chat.response)
-            all_places.extend(places)
+#     for chat in user_chats:
+#         # 챗봇 응답에서 장소 추출
+#         if hasattr(chat, 'response') and chat.response:
+#             places = extract_places_from_response(chat.response)
+#             all_places.extend(places)
     
-    return all_places
+#     return all_places
 
 def process_recommendations(user_id=None):
     """
