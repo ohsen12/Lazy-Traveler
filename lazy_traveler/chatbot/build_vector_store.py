@@ -1,97 +1,119 @@
-import os
-import math
-from langchain_chroma import Chroma
+from django.conf import settings
 from langchain_openai import OpenAIEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.schema import Document
-import openai
+from langchain_chroma import Chroma
+import json
+import os
 from dotenv import load_dotenv
+import django
+import sys
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'lazy_traveler.settings')
+
+django.setup()
 
 # .env 파일 로드
 load_dotenv()
 
-# API key 설정
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-
-def build_vector_store():
+def build_vector_store():   
     try:
-        current_dir = os.getcwd()
-        print(f"현재 작업 디렉토리: {current_dir}")
-        
-        chatbot_dir = os.path.join(current_dir, "chatbot")  # chatbot 디렉토리 경로
-        
-        txt_folder = os.path.join(chatbot_dir, "txt_folder")  # chatbot/txt_folder 경로
-        print(f"텍스트 파일 폴더 경로: {txt_folder}")
-
-        # 폴더 존재 여부 확인
-        if not os.path.exists(txt_folder):
-            print(f"❌ 경로 오류: {txt_folder} 폴더가 존재하지 않습니다.")
-        else:
-            print(f"✅ 텍스트 폴더 경로: {txt_folder}")
-
-        
-        # 벡터 스토어 저장 경로 확인
-        vector_store_path = os.path.join(current_dir, "vector_store")
-        print(f"벡터 스토어 저장 경로: {vector_store_path}")
-        
-        # 1. 폴더 내 모든 텍스트 파일 읽기
-        all_docs = []
-        for filename in os.listdir(txt_folder):
-            if filename.endswith(".txt"):
-                txt_file_path = os.path.join(txt_folder, filename)
-                try:
-                    with open(txt_file_path, "r", encoding="utf-8") as file:
-                        content = file.read()
-                        print(f"파일 로딩 성공: {filename}")
-                        print(f"파일 내용의 첫 100자: {content[:100]}")
-                        
-                        # 2. 문서 chunking 하기
-                        text_splitter = RecursiveCharacterTextSplitter(chunk_size=700, chunk_overlap=350)
-                        splits = text_splitter.split_text(content)
-                        print(f"청크 수: {len(splits)}")
-
-                        # 3. 문자열을 Document 객체로 변환
-                        docs = [Document(page_content=split) for split in splits]
-                        all_docs.extend(docs)
-                        
-                except Exception as e:
-                    print(f"파일 로딩 중 오류 발생: {e}")
-                    continue
-
-        print(f"총 {len(all_docs)} 개의 Document 객체 수집 완료.")
-
-        # 4. embedding 도구 설정
+        # 1. embeddings 도구 설정
         embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-        
-        # 5. Chroma 벡터스토어 초기화
-        vector_store = Chroma(persist_directory=vector_store_path, embedding_function=embeddings)
 
-        # 6. 배치 크기 조정 및 벡터 처리
-        batch_size = 166  # 최대 배치 크기
-        num_batches = math.ceil(len(all_docs) / batch_size)  # 총 배치 수 계산
+        current_dir = os.getcwd()
 
-        for i in range(num_batches):
-            batch_start = i * batch_size
-            batch_end = min((i + 1) * batch_size, len(all_docs))
-            batch = all_docs[batch_start:batch_end]
-            
-            # 배치에 대해 임베딩 처리
-            print(f"배치 {i+1}/{num_batches} 처리 중, 문서 수: {len(batch)}")
-            vectors = embeddings.embed_documents([doc.page_content for doc in batch])
+        function_vector_dir = os.path.join(current_dir, 'vector_function')
+        place_vector_dir = os.path.join(current_dir,'vector_place')
 
-            # 벡터와 문서 데이터를 Chroma에 추가
-            # 배치의 메타데이터 추가: 파일명, 청크 번호
-            vector_store.add_texts([doc.page_content for doc in batch],
-                                   metadatas=[{"filename": txt_file_path, "chunk_id": idx} for idx in range(len(batch))])
+        os.makedirs(function_vector_dir, exist_ok=True)
+        os.makedirs(place_vector_dir, exist_ok=True)
 
-            # 디버깅을 위한 배치별 상태 출력
-            print(f"배치 {i+1}/{num_batches} 완료")
+        function_vector_store = Chroma(
+            collection_name="function_collection",
+            embedding_function=embeddings,
+            persist_directory=function_vector_dir
+        )
 
-        # 저장 확인
-        print(f"\n📂 벡터 스토어 문서 수: {vector_store._collection.count()}")
-        print(f"📂 벡터스토어 저장 경로: {vector_store._persist_directory}")
-        
+        place_vector_store = Chroma(
+            collection_name="place_collection",
+            embedding_function=embeddings,
+            persist_directory=place_vector_dir
+)
+
+        # 4. 질문 응답 데이터 추출 및 벡터화 (function_collection용)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        qa_folder = os.path.join(script_dir, "qa_folder")
+        qa_files = [f for f in os.listdir(qa_folder) if f.endswith(".json")]
+
+        all_questions = []
+        all_metadatas_qa = []
+
+        for qa_filename in qa_files:
+            with open(os.path.join(qa_folder, qa_filename), "r", encoding="utf-8") as file:
+                qa_data = json.load(file)
+
+            for qa in qa_data.get("질문들", []):  # "질문들" 키 아래의 데이터 처리
+                question = qa.get("question", "Unknown question")
+                answer = qa.get("answer", "Unknown answer")
+
+                # 질문과 답변을 하나의 텍스트로 결합하여 벡터화
+                text_data = f"질문: {question} 답변: {answer}"
+
+                # 메타데이터에 type: qa 추가
+                metadata = {
+                    "question": question,
+                    "answer": answer,
+                    "type": "qa"
+                }
+
+                all_questions.append(text_data)
+                all_metadatas_qa.append(metadata)
+
+        # 5. 장소 데이터 추출 및 벡터화 (place_collection용)
+        place_folder = os.path.join(script_dir, "place_folder")
+        place_files = [f for f in os.listdir(place_folder) if f.endswith(".json")] 
+
+        all_texts_places = []
+        all_metadatas_places = []
+
+        for place_filename in place_files:
+            with open(os.path.join(place_folder, place_filename), "r", encoding="utf-8") as file:
+                places = json.load(file)
+
+            for place in places:
+                text_data = f"{place.get('name', 'Unknown')} {place.get('category', 'Unknown')} {place.get('address', 'Unknown')}"
+
+                metadata = {
+                    "name": place.get('name', 'Unknown'),
+                    "category": place.get('category', 'Unknown'),
+                    "address": place.get('address', 'Unknown'),
+                    "latitude": place.get('latitude', 0),
+                    "longitude": place.get('longitude', 0),
+                    "rating": place.get('rating', 'N/A'),
+                    "review_count": place.get('review_count', 'N/A'),
+                    "opening_hours": ', '.join(place.get('opening_hours', [])) if isinstance(place.get('opening_hours', []), list) else str(place.get('opening_hours', 'N/A')),
+                    "phone": place.get('phone', 'N/A'),
+                    "website": place.get('website', 'N/A'),
+                    "place_id": place.get('place_id', 'N/A'),
+                    "type": "place"
+                }
+
+                all_texts_places.append(text_data)
+                all_metadatas_places.append(metadata)
+
+        # 6. 기능 데이터 벡터 저장 (function_collection에)
+        if all_questions:
+            function_vector_store.add_texts(all_questions, metadatas=all_metadatas_qa)
+            print(f"✅ 총 {len(all_questions)} 개의 기능(질문 응답) 데이터 벡터 저장 완료!")
+
+        # 7. 장소 데이터 벡터 저장 (place_collection에)
+        if all_texts_places:
+            place_vector_store.add_texts(all_texts_places, metadatas=all_metadatas_places)
+            print(f"✅ 총 {len(all_texts_places)} 개의 장소 데이터 벡터 저장 완료!")
+
+        print("✅ 벡터 DB 저장 완료!")
     except Exception as e:
         print(f"에러 발생: {str(e)}")
 

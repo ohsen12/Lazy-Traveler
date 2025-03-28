@@ -35,7 +35,7 @@ if not SECRET_KEY:
     raise ValueError("SECRET_KEY가 설정되지 않았습니다! .env 파일을 확인하세요.")
 
 # ✅ SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True #배포시에는 False값으로
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
@@ -61,7 +61,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    #'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -121,14 +121,14 @@ WSGI_APPLICATION = 'lazy_traveler.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# ✅ PostgreSQL 변경
+# ✅ PostgreSQL
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('POSTGRES_DB'),
         'USER': os.getenv('POSTGRES_USER'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-        'HOST': os.getenv('POSTGRES_HOST'),  # Docker Compose에서 서비스 이름을 그대로 사용
+        'HOST': os.getenv('POSTGRES_HOST'),
         'PORT': os.getenv('POSTGRES_PORT'),
     }
 }
@@ -182,17 +182,6 @@ USE_I18N = True
 
 USE_TZ = False # ✅ 서버 시간대
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = 'static/'
-
-# 📷 static 파일을 추가로 검색할 디렉토리를 지정 (베이스 디렉토리의 static)
-STATICFILES_DIRS = [BASE_DIR / "static"]
-
-# 📷 배포 관련
-STATIC_ROOT = BASE_DIR / "staticfiles"  
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

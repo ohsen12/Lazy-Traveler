@@ -3,7 +3,9 @@ import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import ChatHistory
-from .chat_logic import get_recommendation
+from .recommendation_service import get_recommendation
+from .recommendations import get_chat_based_recommendations, get_user_tags_by_id
+from django.core.serializers.json import DjangoJSONEncoder
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -68,18 +70,61 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 print(f"📌 [DEBUG] save_chat_history 호출됨: {user_query}")  # 🔥 디버깅용 로그
                 await self.save_chat_history(user_query, response_text)
                 print(f"✅ [DEBUG] 채팅 기록 저장 완료: {user_query}")  # 🔥 저장 성공 여부 확인
+                
+                # ✅ 비슷한 취향의 다른 유저 추천 기능 추가
+                recommendations = await self.get_similar_user_recommendations(self.user.id)
+                
+                # 기존 응답에 추천 정보 추가
+                response_data = {
+                    "message": user_query,
+                    "response": response_text,
+                    "session_id": self.session_id,
+                }
+                
+                # 추천 결과가 있는 경우에만 추가
+                if recommendations and len(recommendations) > 0:
+                    response_data["recommendations"] = recommendations
+            else:
+                # 비로그인 사용자에게는 기본 응답만
+                response_data = {
+                    "message": user_query,
+                    "response": response_text,
+                    "session_id": self.session_id
+                }
 
             # ✅ 응답 전송
-            await self.send(text_data=json.dumps({
-                "message": user_query,
-                "response": response_text,
-                "session_id": self.session_id
-            }))
+            await self.send(text_data=json.dumps(response_data, ensure_ascii=False, cls=DjangoJSONEncoder))
 
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({"error": "잘못된 JSON 형식입니다."}))
         except Exception as e:
             await self.send(text_data=json.dumps({"error": f"서버 오류 발생: {str(e)}"}))
+
+    @database_sync_to_async
+    def get_similar_user_recommendations(self, user_id):
+        """비슷한 취향의 다른 유저들이 좋아하는 장소를 추천"""
+        try:
+            # 추천 알고리즘으로 장소 가져오기 (최대 5개)
+            recommendations = get_chat_based_recommendations(user_id, top_n=5)
+            
+            if not recommendations.exists():
+                return []
+                
+            # 장소 정보를 딕셔너리 리스트로 변환
+            place_list = []
+            for place in recommendations:
+                place_list.append({
+                    "id": place.id,
+                    "name": place.name,
+                    "tags": place.tags,
+                    "address": place.address,
+                    "rating": float(place.rating) if place.rating else 0.0
+                })
+                
+            return place_list
+        except Exception as e:
+            print(f"🚨 [ERROR] 추천 장소 가져오기 실패: {str(e)}")
+            return []
 
     async def save_chat_history(self, user_query, response_text):
         """로그인한 사용자의 대화 내역을 비동기적으로 저장"""
