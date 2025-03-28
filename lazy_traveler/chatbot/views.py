@@ -11,7 +11,7 @@ from .place_constructor import extract_place_info, process_place_info
 from accounts.models import User, Place
 from django.db.models import Min
 from collections import defaultdict
-from .recommendations import process_recommendations, extract_places_from_response
+from .recommendations import extract_places_from_response, process_recommendations
 import json
 import logging
 
@@ -59,9 +59,9 @@ class ChatBotView(APIView):
                 recommended_places = extract_places_from_response(response_text)
                 logger.info(f"Extracted places: {recommended_places}")
                 
-                # 추출된 장소가 있으면 추가 처리
-                if recommended_places:
-                    processed_recommendations = process_recommendations(recommended_places)
+                # 사용자 ID가 있으면 추천 처리
+                if user:
+                    processed_recommendations = process_recommendations(user.id)
                     logger.info(f"Processed recommendations: {processed_recommendations}")
                     
                     # 응답 데이터에 추천 정보 추가

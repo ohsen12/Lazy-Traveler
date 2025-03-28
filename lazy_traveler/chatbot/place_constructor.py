@@ -14,18 +14,129 @@ def extract_place_info(response_text: str) -> List[dict]:
             각 딕셔너리는 {"name": 장소 이름, "cid": cid 값} 형태
     """
     places = []
+    extracted_places = set()  # 중복 추출 방지
     
-    for i in range(1, 4):
+    # HTML 형식인 경우 BeautifulSoup으로 파싱
+    if '<div' in response_text or '<strong>' in response_text:
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(response_text, 'html.parser')
+            
+            # 패턴 1: schedule-item 클래스 내의 장소명 추출
+            for item in soup.find_all('div', class_='schedule-item'):
+                # 📍 이모지 다음에 오는 <strong> 태그 찾기
+                text_content = item.get_text()
+                strong_tags = item.find_all('strong')
+                
+                # 장소명이 포함된 strong 태그 찾기 (보통 📍 이모지 근처)
+                place_name = None
+                for strong in strong_tags:
+                    if '📍' in strong.previous_sibling if strong.previous_sibling else '':
+                        place_name = strong.text.strip()
+                        break
+                
+                # strong 태그에서 찾지 못한 경우 텍스트에서 직접 찾기
+                if not place_name:
+                    place_match = re.search(r'📍\s*([^\n]+)', text_content)
+                    if place_match:
+                        place_name = place_match.group(1).strip()
+                        # HTML 태그 제거
+                        place_name = re.sub(r'<[^>]+>', '', place_name)
+                
+                if place_name and place_name not in extracted_places:
+                    # cid 찾기 (웹사이트 링크에서)
+                    cid = None
+                    link = item.find('a', href=re.compile(r'maps\.google\.com/\?cid='))
+                    if link:
+                        cid_match = re.search(r'cid=(\d+)', link.get('href', ''))
+                        if cid_match:
+                            cid = cid_match.group(1)
+                    
+                    places.append({"name": place_name, "cid": cid})
+                    extracted_places.add(place_name)
+        
+        except ImportError:
+            # BeautifulSoup이 없는 경우 정규식만으로 처리
+            print("[WARNING] BeautifulSoup을 찾을 수 없습니다. 정규식만으로 처리합니다.")
+            pass
+    
+    # 정규식 패턴으로 추출 (HTML 파싱이 실패하거나 HTML이 아닌 경우)
+    
+    # 패턴 1: 숫자 이모지 + 장소: **장소명** 형식 (1️⃣, 2️⃣, 3️⃣ 등)
+    for i in range(1, 10):  # 최대 9개까지 검색
         place_name_match = re.search(rf'{i}️⃣.*?장소: \*\*([^*]+)\*\*', response_text, re.DOTALL)
         if place_name_match:
             place_name = place_name_match.group(1).strip()
+            if place_name in extracted_places:
+                continue
+                
             cid = None
-            cid_match = re.search(rf'{i}️⃣.*?웹사이트: \[.+?\]\(https:\/\/maps\.google\.com\/\?cid=(\d+)\)\n', 
-                                response_text,re.DOTALL)
+            cid_match = re.search(rf'{i}️⃣.*?웹사이트: \[.+?\]\(https:\/\/maps\.google\.com\/\?cid=(\d+)\)', 
+                                response_text, re.DOTALL)
             if cid_match:
                 cid = cid_match.group(1).strip()
             places.append({"name": place_name, "cid": cid})
+            extracted_places.add(place_name)
+    
+    # 패턴 2: 📍 이모지 + <strong>장소명</strong> 형식
+    strong_matches = re.finditer(r'📍\s*<strong>([^<]+)</strong>', response_text, re.DOTALL)
+    for match in strong_matches:
+        place_name = match.group(1).strip()
+        if place_name in extracted_places:
+            continue
             
+        # cid 찾기
+        start_pos = match.start()
+        search_text = response_text[start_pos:start_pos + 500]
+        cid = None
+        cid_match = re.search(r'<a href="https:\/\/maps\.google\.com\/\?cid=(\d+)"', search_text, re.DOTALL)
+        if cid_match:
+            cid = cid_match.group(1).strip()
+        places.append({"name": place_name, "cid": cid})
+        extracted_places.add(place_name)
+    
+    # 패턴 3: 📍 이모지 + 장소명 형식 (HTML 태그 없음)
+    emoji_matches = re.finditer(r'📍\s*([^\n<]+)', response_text, re.DOTALL)
+    for match in emoji_matches:
+        place_name = match.group(1).strip()
+        if place_name in extracted_places:
+            continue
+        
+        # cid 찾기
+        start_pos = match.start()
+        search_text = response_text[start_pos:start_pos + 500]
+        cid = None
+        cid_match = re.search(r'https:\/\/maps\.google\.com\/\?cid=(\d+)', search_text, re.DOTALL)
+        if cid_match:
+            cid = cid_match.group(1).strip()
+        places.append({"name": place_name, "cid": cid})
+        extracted_places.add(place_name)
+    
+    # 패턴 4: 장소: 장소명 형식
+    place_matches = re.finditer(r'장소:\s*([^\n]+)', response_text, re.DOTALL)
+    for match in place_matches:
+        place_name = match.group(1).strip()
+        # 별표(**) 제거
+        place_name = re.sub(r'\*\*([^*]+)\*\*', r'\1', place_name)
+        if place_name in extracted_places:
+            continue
+        
+        # cid 찾기
+        start_pos = match.start()
+        search_text = response_text[start_pos:start_pos + 500]
+        cid = None
+        cid_match = re.search(r'웹사이트:.*?https:\/\/maps\.google\.com\/\?cid=(\d+)', search_text, re.DOTALL)
+        if cid_match:
+            cid = cid_match.group(1).strip()
+        places.append({"name": place_name, "cid": cid})
+        extracted_places.add(place_name)
+    
+    # 디버깅용 로그
+    if places:
+        print(f"[DEBUG] 추출된 장소 정보: {places}")
+    else:
+        print("[WARNING] 장소 정보를 추출하지 못했습니다.")
+        
     return places
 
 
