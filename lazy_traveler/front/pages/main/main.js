@@ -149,7 +149,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
 
         // 토큰이 있을 경우 서버에서 유저 데이터 가져오기
-        const response = await axios.get("https://api.lazy-traveler.store/accounts/mypage/", {
+        const response = await axios.get("http://127.0.0.1:8000/accounts/mypage/", {
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
@@ -199,8 +199,8 @@ function connectWebSocket() {
     // 로컬 스토리지에서 토큰을 가져와 Authorization 헤더에 추가
     const token = localStorage.getItem("access_token");
     const url = token 
-    ? `wss://api.lazy-traveler.store/ws/chat/?token=${token}` 
-    : "wss://api.lazy-traveler.store/ws/chat/";
+    ? `ws://127.0.0.1:8000/ws/chat/?token=${token}` 
+    : "ws://127.0.0.1:8000/ws/chat/";
 
     socket = new WebSocket(url);
 
@@ -213,6 +213,11 @@ function connectWebSocket() {
 
         // 로딩 메시지 업데이트
         updateBotResponse(data.response);
+
+        // 추천 결과가 있는 경우 표시
+        if (data.recommendations && data.recommendations.length > 0) {
+            displayRecommendations(data.recommendations);
+        }
 
         // 세션 ID 업데이트
         if (data.session_id) {
@@ -317,7 +322,7 @@ function logout() {
     localStorage.removeItem("access_token");  // ✅ 엑세스 토큰 삭제
     localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
     alert("로그아웃 되었습니다.");
-    window.location.href = "https://lazy-traveler.store/pages/main/main.html";
+    window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/main/main.html";
 }
 
 // 대화 내역 불러오기
@@ -331,7 +336,7 @@ function loadChatHistory() {
             return;
         }
 
-        axios.get("https://api.lazy-traveler.store/chatbot/chat_history/", {
+        axios.get("http://127.0.0.1:8000/chatbot/chat_history/", {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token,
@@ -465,7 +470,7 @@ function loadSessionMessages(session_id) {
     const token = localStorage.getItem("access_token");
     
     // 사용자 정보를 가져온 후 채팅 내역을 불러옵니다.
-    axios.get("https://api.lazy-traveler.store/accounts/mypage/", {
+    axios.get("http://127.0.0.1:8000/accounts/mypage/", {
         headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -478,7 +483,7 @@ function loadSessionMessages(session_id) {
         const tagList = tags ? tags.split(',') : [];
 
         // 채팅 내역을 불러옵니다.
-        return axios.get(`https://api.lazy-traveler.store/chatbot/chat_history/?session_id=${session_id}`, {
+        return axios.get(`http://127.0.0.1:8000/chatbot/chat_history/?session_id=${session_id}`, {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token,
@@ -650,10 +655,10 @@ function goToMypage() {
     const token = localStorage.getItem("access_token");
     if (!token) {
         // 비로그인 상태일 때 로그인 페이지로 이동
-        window.location.href = "https://lazy-traveler.store/pages/login/login.html";
+        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
     } else {
         // 로그인 상태일 때 마이페이지로 이동
-        window.location.href = "https://lazy-traveler.store/pages/mypage/mypage.html";
+        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/mypage/mypage.html";
     }
 }
 
@@ -670,7 +675,7 @@ function reloadChatHistory() {
         }
     });
 
-    axios.get("https://api.lazy-traveler.store/chatbot/chat_history/", {
+    axios.get("http://127.0.0.1:8000/chatbot/chat_history/", {
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + token,
@@ -733,7 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 메인 페이지로 이동
 function goToMain() {
-    window.location.href = "https://lazy-traveler.store/pages/main/main.html";
+    window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/main/main.html";
 }
 
 // 채팅창 스크롤을 최상단으로 이동시키는 함수
@@ -827,4 +832,59 @@ function sendMessage() {
     if (!isProcessingMessage) {
         processAndSendMessage();
     }
+}
+
+// 추천 결과를 표시하는 함수 추가
+function displayRecommendations(recommendations) {
+    // 이미 추가된 추천 결과가 있다면 제거
+    const existingRec = document.querySelector('.recommendations-container');
+    if (existingRec) {
+        existingRec.remove();
+    }
+
+    const chatBox = document.getElementById("chat-box");
+    
+    // 추천 컨테이너 생성
+    const recommendationsContainer = document.createElement("div");
+    recommendationsContainer.classList.add("recommendations-container");
+    
+    // 추천 제목 추가
+    const recommendationsTitle = document.createElement("div");
+    recommendationsTitle.classList.add("recommendations-title");
+    recommendationsTitle.innerHTML = "<h3>비슷한 취향의 다른 유저들이 좋아하는 장소</h3>";
+    recommendationsContainer.appendChild(recommendationsTitle);
+    
+    // 추천 장소 리스트 생성
+    const recommendationsList = document.createElement("div");
+    recommendationsList.classList.add("recommendations-list");
+    
+    recommendations.forEach(place => {
+        const placeItem = document.createElement("div");
+        placeItem.classList.add("recommendation-item");
+        
+        // 장소 평점을 별점으로 표시
+        const ratingStars = "★".repeat(Math.floor(place.rating)) + "☆".repeat(5 - Math.floor(place.rating));
+        
+        // 장소 태그 표시
+        const tagList = place.tags && place.tags.length > 0 
+            ? `<div class="place-tags">${place.tags.join(', ')}</div>` 
+            : '';
+        
+        placeItem.innerHTML = `
+            <div class="place-name">${place.name}</div>
+            <div class="place-rating">${ratingStars} (${place.rating.toFixed(1)})</div>
+            ${tagList}
+            <div class="place-address">${place.address}</div>
+        `;
+        
+        recommendationsList.appendChild(placeItem);
+    });
+    
+    recommendationsContainer.appendChild(recommendationsList);
+    
+    // 채팅 박스에 추천 컨테이너 추가
+    chatBox.appendChild(recommendationsContainer);
+    
+    // 추천 결과가 표시된 후 스크롤을 최하단으로 이동
+    scrollChatToBottom();
 }

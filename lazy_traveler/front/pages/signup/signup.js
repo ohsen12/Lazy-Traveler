@@ -1,6 +1,6 @@
 // 메인 페이지로 이동하는 함수
 function goToMain() {
-    window.location.href = 'https://lazy-traveler.store/pages/main/main.html';
+    window.location.href = 'http://127.0.0.1:5500/lazy_traveler/front/pages/main/main.html';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await axios.post('https://api.lazy-traveler.store/accounts/check_username/', {
+            const response = await axios.post('http://127.0.0.1:8000/accounts/check_username/', {
                 username: username
             }, {
                 headers: {
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await axios.post('https://api.lazy-traveler.store/accounts/signup/', {
+            const response = await axios.post('http://127.0.0.1:8000/accounts/signup/', {
                 username: username,
                 password: password,
                 password2: password2,
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.status === 201 || response.status === 200) {
                 alert('회원가입이 완료되었습니다.');
                 // 로그인 페이지로 이동
-                window.location.href = 'https://lazy-traveler.store/pages/login/login.html';
+                window.location.href = 'http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html';
             }
         } catch (error) {
             if (error.response?.data?.detail) {
@@ -174,6 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 로그인 페이지 이동 링크
     document.querySelector('.footer a').addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = 'https://lazy-traveler.store/pages/login/login.html';
+        window.location.href = 'http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html';
     });
 });

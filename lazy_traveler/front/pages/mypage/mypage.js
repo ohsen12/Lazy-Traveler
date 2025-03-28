@@ -1,11 +1,11 @@
 // 메인 페이지로 이동
 function goToMain() {
-    window.location.href = "https://lazy-traveler.store/pages/main/main.html";
+    window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/main/main.html";
 }
 
 document.addEventListener("DOMContentLoaded", async function() {
     try {
-        const response = await axios.get("https://api.lazy-traveler.store/accounts/mypage/", {
+        const response = await axios.get("http://127.0.0.1:8000/accounts/mypage/", {
             headers: {
                 "Authorization": "Bearer " + localStorage.getItem("access_token"),
                 "Content-Type": "application/json"
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 function logout() {
     const refreshToken = localStorage.getItem("refresh_token");
     
-    axios.post("https://api.lazy-traveler.store/accounts/logout/", {
+    axios.post("http://127.0.0.1:8000/accounts/logout/", {
         refresh_token: refreshToken
     }, {
         headers: {
@@ -50,7 +50,7 @@ function logout() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("session_id");
         alert("로그아웃되었습니다.");
-        window.location.href = "https://lazy-traveler.store/pages/login/login.html";
+        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
     })
     .catch(() => {
         alert("로그아웃 중 오류가 발생했습니다.");
@@ -74,7 +74,7 @@ function delete_account() {
         return;
     }
 
-    axios.delete('https://api.lazy-traveler.store/accounts/delete_account/', {
+    axios.delete('http://127.0.0.1:8000/accounts/delete_account/', {
         headers: {
             'Authorization': `Bearer ${accessToken}`
         }
@@ -84,7 +84,7 @@ function delete_account() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("session_id");
         alert("회원 탈퇴가 완료되었습니다.");
-        window.location.href = "https://lazy-traveler.store/pages/login/login.html";
+        window.location.href = "http://127.0.0.1:5500/lazy_traveler/front/pages/login/login.html";
     })
     .catch(() => {
         alert("회원탈퇴 중 오류가 발생했습니다.");
@@ -138,7 +138,7 @@ async function changePassword(event) {
     }
 
     try {
-        const response = await axios.post('https://api.lazy-traveler.store/accounts/update_password/', {
+        const response = await axios.post('http://127.0.0.1:8000/accounts/update_password/', {
             current_password: currentPassword,
             new_password: newPassword
         }, {
@@ -190,7 +190,7 @@ function clearTagErrorMessage() {
 
 const getTags = async () => {
     try {
-        const response = await axios.get("https://api.lazy-traveler.store/accounts/update_tags/", {
+        const response = await axios.get("http://127.0.0.1:8000/accounts/update_tags/", {
             headers: {
                 'Authorization': 'Bearer ' + localStorage.getItem('access_token')
             }
@@ -256,7 +256,7 @@ document.getElementById('save-tags-btn').addEventListener('click', async () => {
     }
 
     try {
-        const response = await axios.put("https://api.lazy-traveler.store/accounts/update_tags/", {
+        const response = await axios.put("http://127.0.0.1:8000/accounts/update_tags/", {
             tags: selectedTags.join(',')
         }, {
             headers: {

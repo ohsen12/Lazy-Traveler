@@ -6,6 +6,9 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import ChatHistory
 from .serializers import ChatHistorySerializer
 from .recommendation_service import get_recommendation
+from .place_constructor import extract_place_info, process_place_info
+# ----
+from accounts.models import User, Place
 from django.db.models import Min
 from collections import defaultdict
 

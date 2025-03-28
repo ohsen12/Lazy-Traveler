@@ -6,7 +6,7 @@ document.getElementById("login-form").addEventListener("submit", async function(
     const messageDiv = document.getElementById('login-message');
 
     try {
-        const response = await axios.post("https://api.lazy-traveler.store/accounts/login/", {
+        const response = await axios.post("http://127.0.0.1:8000/accounts/login/", {
             username: username,
             password: password
         });
@@ -27,5 +27,5 @@ document.getElementById("login-form").addEventListener("submit", async function(
 });
 
 function goToMain() {
-    window.location.href = 'https://lazy-traveler.store/pages/main/main.html';
+    window.location.href = 'http://127.0.0.1:5500/lazy_traveler/front/pages/main/main.html';
 }
