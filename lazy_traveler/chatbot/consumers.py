@@ -105,24 +105,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def get_similar_user_recommendations(self, user_id):
         """비슷한 취향의 다른 유저들이 좋아하는 장소를 추천"""
         try:
-            # 추천 알고리즘으로 장소 가져오기 (최대 5개)
             recommendations = get_chat_based_recommendations(user_id, top_n=5)
-            
             if not recommendations:
                 return []
-                
-            # 이제 recommendations는 문자열 리스트이므로 그에 맞게 처리
-            place_list = []
-            for place_name in recommendations:
-                place_list.append({
-                    "id": None,  # 문자열만 있으므로 ID는 None으로 설정
-                    "name": place_name,
-                    "tags": [],  # 태그 정보 없음
-                    "address": "",  # 주소 정보 없음
-                    "rating": 0.0  # 평점 정보 없음
-                })
-                
-            return place_list
+
+            return [
+                {
+                    "id": None,
+                    "name": r["name"],
+                    "website": r["website"],
+                    "tags": [],
+                    "address": "",
+                    "rating": 0.0
+                }
+                for r in recommendations
+            ]
         except Exception as e:
             print(f"🚨 [ERROR] 추천 장소 가져오기 실패: {str(e)}")
             return []

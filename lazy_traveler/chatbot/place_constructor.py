@@ -48,11 +48,13 @@ def extract_place_info(response_text: str) -> List[dict]:
                     cid = None
                     link = item.find('a', href=re.compile(r'maps\.google\.com/\?cid='))
                     if link:
-                        cid_match = re.search(r'cid=(\d+)', link.get('href', ''))
+                        href = link.get('href', '')
+                        cid_match = re.search(r'cid=(\d+)', href)
                         if cid_match:
                             cid = cid_match.group(1)
+                            website = href
                     
-                    places.append({"name": place_name, "cid": cid})
+                    places.append({"name": place_name, "cid": cid, "website": website})
                     extracted_places.add(place_name)
         
         except ImportError:
