@@ -131,18 +131,35 @@ def extract_places_from_chathistory(
     
     try:
         user_chats = ChatHistory.objects.filter(user_id=user_id)
-        all_places = Place.objects.all()
         
+        from .place_constructor import extract_place_info
+        
+        # 챗봇 응답에서 추출한 장소 정보들을 저장할 리스트
+        all_places = []
+        
+        # 각 채팅 히스토리에서 장소 정보 추출
+        for chat in user_chats:
+            # 챗봇 응답에서 장소 정보 추출
+            extracted_places = extract_place_info(chat.response)
+            all_places.extend(extracted_places)
+        
+        # 장소명과 출현 빈도를 저장할 딕셔너리
         place_counter: Dict[str, int] = {}
         
+        # 추출된 장소들의 출현 빈도 계산
+        for place_info in all_places:
+            place_name = place_info.get('name')
+            if place_name:
+                place_counter[place_name] = place_counter.get(place_name, 0) + 1
+        
+        # 추가적으로 메시지 내용에서 직접 텍스트 매칭 (향후 NLP 기술 적용 가능)
         for chat in user_chats:
-            # 단순 문자열 매칭 (향후 NLP 기술 적용 가능)
             text = f"{chat.message} {chat.response}".lower()
             
-            for place in all_places:
-                if place.name:
-                    if f" {place.name.lower()} " in f" {text} ":
-                        place_counter[place.name] = place_counter.get(place.name, 0) + 1
+            # 이미 카운터에 있는 장소명들에 대해 추가 검색
+            for place_name in place_counter.keys():
+                if place_name.lower() in text:
+                    place_counter[place_name] = place_counter.get(place_name, 0) + 1
         
         return [(place, count) for place, count in place_counter.items() if count >= min_frequency]
 
@@ -174,8 +191,9 @@ def get_chat_based_recommendations(
         # 유사 사용자 찾기
         similar_user_ids = get_similar_users(user_id)
         if not similar_user_ids:
-            logger.info("유사 사용자 없음. 인기 장소 추천")
+            print("유사 사용자 없음. 인기 장소 추천")
             return Place.objects.order_by('-rating')[:top_n]
+        print(f"유사 사용자 찾음: {similar_user_ids}")
 
         combined_place_freq: Dict[str, int] = {}
         for sim_uid in similar_user_ids:
@@ -185,14 +203,15 @@ def get_chat_based_recommendations(
 
         my_places = dict(extract_places_from_chathistory(user_id))
         
+        
         weighted_places: Dict[str, int] = {}
         for place, total_freq in combined_place_freq.items():
             overlap_multiplier = 2 if place in my_places else 1
             weighted_places[place] = total_freq * overlap_multiplier
 
         top_place_names = sorted(weighted_places, key=weighted_places.get, reverse=True)[:top_n]
-        return Place.objects.filter(name__in=top_place_names)
+        return top_place_names
 
     except Exception as e:
-        logger.error(f"추천 시스템 오류: {str(e)}")
-        return Place.objects.none()
+        print(f"추천 시스템 오류: {str(e)}")
+        return None

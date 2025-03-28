@@ -11,6 +11,11 @@ from .place_constructor import extract_place_info, process_place_info
 from accounts.models import User, Place
 from django.db.models import Min
 from collections import defaultdict
+from .recommendations import process_recommendations, extract_places_from_response
+import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -41,28 +46,49 @@ class ChatBotView(APIView):
         if user and (new_session or not session_id):
             session_id = str(uuid.uuid4())  # 로그인한 경우에는 새로운 session_id 생성
 
-        # 챗봇 응답 생성
-        response_text = get_recommendation(user_query, session_id, username, latitude, longitude)
-
-        # 로그인한 사용자만 대화 내역 저장
-        if user:
-            ChatHistory.objects.create(
-                user=user,
-                message=user_query,
-                response=response_text,
-                session_id=session_id
-            )
-
-        # 로그인 여부에 따라 응답 반환
-        response_data = {
-            "message": user_query,
-            "response": response_text,
+        try:
+            # 챗봇 응답 생성
+            response_text = get_recommendation(user_query, session_id, username, latitude, longitude)
             
-        }
-        if user:
-            response_data["session_id"] = session_id  # 로그인한 경우에만 session_id 포함
-
-        return Response(response_data, status=status.HTTP_200_OK)
+            # 로깅 추가
+            logger.info(f"Chatbot response: {response_text[:100]}...")
+            
+            # 추천 알고리즘 처리
+            try:
+                # HTML 응답에서 장소 추출
+                recommended_places = extract_places_from_response(response_text)
+                logger.info(f"Extracted places: {recommended_places}")
+                
+                # 추출된 장소가 있으면 추가 처리
+                if recommended_places:
+                    processed_recommendations = process_recommendations(recommended_places)
+                    logger.info(f"Processed recommendations: {processed_recommendations}")
+                    
+                    # 응답 데이터에 추천 정보 추가
+                    response_data = {
+                        "message": user_query,
+                        "response": response_text,
+                        "recommendations": processed_recommendations,
+                        "session_id": session_id
+                    }
+            except Exception as e:
+                logger.error(f"Error processing recommendations: {str(e)}")
+                # 추천 처리 실패해도 기본 응답은 반환
+            
+            # 로그인한 사용자만 대화 내역 저장
+            if user:
+                ChatHistory.objects.create(
+                    user=user,
+                    message=user_query,
+                    response=response_text,
+                    session_id=session_id
+                )
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error in ChatbotView: {str(e)}")
+            return Response({'error': str(e)}, status=500)
 
 
 class ChatHistoryView(APIView):
