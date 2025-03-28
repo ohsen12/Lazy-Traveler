@@ -73,7 +73,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 
                 # ✅ 비슷한 취향의 다른 유저 추천 기능 추가
                 recommendations = await self.get_similar_user_recommendations(self.user.id)
-                
+                print("recommendation:", recommendations)
                 # 기존 응답에 추천 정보 추가
                 response_data = {
                     "message": user_query,
