@@ -6,6 +6,7 @@ from .models import ChatHistory
 from .recommendation_service import get_recommendation
 from .recommendations import get_chat_based_recommendations, get_user_tags_by_id
 from django.core.serializers.json import DjangoJSONEncoder
+from .recommendation_LangGraph import get_recommendation
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
