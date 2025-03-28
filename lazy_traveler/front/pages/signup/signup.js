@@ -1,3 +1,8 @@
+// 메인 페이지로 이동하는 함수
+function goToMain() {
+    window.location.href = 'https://lazy-traveler.store/pages/main/main.html';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 필요한 DOM 요소들 선택
     const idInput = document.querySelector('input[placeholder="ID를 입력해주세요"]');
@@ -57,9 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             if (error.response?.status === 409) {
-                showMessage(idMessage, '* 사용할 수 없는 ID입니다', false);
+                showMessage(idMessage, '사용할 수 없는 ID입니다', false);
             } else {
-                showMessage(idMessage, '* 사용할 수 없는 ID입니다', false);
+                showMessage(idMessage, '사용할 수 없는 ID입니다', false);
             }
             isIdChecked = false;
         }
@@ -171,8 +176,4 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         window.location.href = 'https://lazy-traveler.store/pages/login/login.html';
     });
-
-    function goToMain() {
-        window.location.href = 'https://lazy-traveler.store/pages/main/main.html';
-    }
 });
