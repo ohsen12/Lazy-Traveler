@@ -38,7 +38,7 @@ def search_places(user_query, user_latitude, user_longitude):
     # 1️⃣ 기본 벡터 검색 실행
     place_results = place_vector_store.similarity_search_with_score(
         query=user_query,
-        k=20,  # 검색 결과를 넉넉히 받아온 후 필터링
+        k=10,  # 검색 결과를 넉넉히 받아온 후 필터링
         filter={"type": "place"}
     )
     
@@ -185,6 +185,34 @@ def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
 
     return all_docs
 
+@sync_to_async
+def fast_search_places_by_preferred_tags(user_query, preferred_tag_mapping):
+    from .openai_chroma_config import place_vector_store
+
+    all_docs = []
+    seen_place_ids = set()
+
+    for category, tags in preferred_tag_mapping.items():
+        if not tags:
+            continue
+
+        query = f"{user_query} " + " ".join(tags)
+        print(f"[DEBUG] {category}' 쿼리: {query}")
+
+        results = place_vector_store.similarity_search(
+            query=query,
+            k=5,
+            filter={"type": "place"}
+        )
+
+        for doc in results:
+            place_id = doc.metadata.get("place_id")
+            if place_id and place_id not in seen_place_ids:
+                all_docs.append(doc)
+                seen_place_ids.add(place_id)
+
+    print(f"[DEBUG] 총 장소 결과 개수: {len(all_docs)}")
+    return all_docs
 # 거리 계산 함수
 def calculate_distance(lat1, lon1, lat2, lon2):
     lat1 = float(lat1)
@@ -300,56 +328,6 @@ def build_schedule_by_categories_with_preferences(sorted_places, schedule_catego
 
 # 스케줄 데이터 텍스트 변환
 @sync_to_async
-def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
-    from .openai_chroma_config import place_vector_store
-    all_docs = []
-    seen_place_ids = set()
-
-    for category, tags in preferred_tag_mapping.items():
-        for tag in tags:
-            results = place_vector_store.similarity_search(
-                query=f"{user_query} {tag}",
-                k=2,
-                filter={"type": "place"}
-            )
-            for doc in results:
-                place_id = doc.metadata.get("place_id")
-                if place_id not in seen_place_ids:
-                    all_docs.append(doc)
-                    seen_place_ids.add(place_id)
-
-    return all_docs
-
-
-llm_chain = LLMChain(llm=llm, prompt=opening_hours_prompt)
-#운영시간 확인
-async def filter_open_places_with_llm(docs, now: datetime):
-
-    results = []
-    weekday_korean = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"][now.weekday()]
-    visit_time = now.strftime("%Y-%m-%d %H:%M")
-
-    for doc in docs:
-        metadata = doc.metadata
-        opening_hours = metadata.get("opening_hours")
-
-        if not opening_hours:
-            continue
-
-        try:
-            response = await llm_chain.ainvoke({
-                "opening_hours": opening_hours,
-                "visit_time": visit_time,
-                "weekday": weekday_korean
-            })
-            answer = response.get("text", "").strip()
-            if "열려 있음" in answer:
-                results.append(doc)
-        except Exception as e:
-            print(f"error: {e}")
-            continue
-
-    return results
 def schedule_to_text(schedule):
     """
     스케줄 데이터를 텍스트로 변환해서 LLM에 넘길 수 있도록 준비
@@ -367,6 +345,34 @@ def schedule_to_text(schedule):
 - 웹사이트: {place['website']}
         """)
     return "\n".join(lines)
+
+@sync_to_async
+def schedule_to_html(schedule: list[dict]) -> str:
+
+    html_blocks = []
+
+    for place in schedule:
+        html = f"""
+        <div class="schedule-item">
+          ⏰ <strong>{place['time']}</strong> - {place['desc']}<br/>
+          📍 <strong>{place['name']}</strong><br/>
+          🏷️ 카테고리: {place.get('category', '없음')}<br/>
+          📫 주소: {place.get('address', '없음')}<br/>
+          🕒 운영시간: {place.get('opening_hours', '없음')}<br/>
+          📏 거리: {place.get('distance_km', 'N/A')}<br/>
+          ⭐ 평점: {place.get('rating', 'N/A')}<br/>
+          🔗 <a href="{place.get('website', '#')}" target="_blank">웹사이트 바로가기</a>
+        </div>
+        <hr/>
+        """
+        html_blocks.append(html)
+
+    return f"""
+    <div class="bot-response">
+      <p>📍 추천 일정을 아래에서 확인해보세요!</p>
+      {''.join(html_blocks)}
+    </div>
+    """
 
 # 대화 내역을 가져오는 함수
 @sync_to_async
