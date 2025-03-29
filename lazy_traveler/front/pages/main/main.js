@@ -834,57 +834,10 @@ function sendMessage() {
     }
 }
 
-// 추천 결과를 표시하는 함수 추가
-function displayRecommendations(recommendations) {
-    // 이미 추가된 추천 결과가 있다면 제거
-    const existingRec = document.querySelector('.recommendations-container');
-    if (existingRec) {
-        existingRec.remove();
-    }
+// 스케줄 메시지 전송 함수
+function sendScheduleMessage() {
+    const messageInput = document.getElementById("user-message");
+    messageInput.value = "스케줄링 해줘";
+    processAndSendMessage();
 
-    const chatBox = document.getElementById("chat-box");
-    
-    // 추천 컨테이너 생성
-    const recommendationsContainer = document.createElement("div");
-    recommendationsContainer.classList.add("recommendations-container");
-    
-    // 추천 제목 추가
-    const recommendationsTitle = document.createElement("div");
-    recommendationsTitle.classList.add("recommendations-title");
-    recommendationsTitle.innerHTML = "<h3>비슷한 취향의 다른 유저들이 좋아하는 장소</h3>";
-    recommendationsContainer.appendChild(recommendationsTitle);
-    
-    // 추천 장소 리스트 생성
-    const recommendationsList = document.createElement("div");
-    recommendationsList.classList.add("recommendations-list");
-    
-    recommendations.forEach(place => {
-        const placeItem = document.createElement("div");
-        placeItem.classList.add("recommendation-item");
-        
-        // 장소 평점을 별점으로 표시
-        const ratingStars = "★".repeat(Math.floor(place.rating)) + "☆".repeat(5 - Math.floor(place.rating));
-        
-        // 장소 태그 표시
-        const tagList = place.tags && place.tags.length > 0 
-            ? `<div class="place-tags">${place.tags.join(', ')}</div>` 
-            : '';
-        
-        placeItem.innerHTML = `
-            <div class="place-name">${place.name}</div>
-            <div class="place-rating">${ratingStars} (${place.rating.toFixed(1)})</div>
-            ${tagList}
-            <div class="place-address">${place.address}</div>
-        `;
-        
-        recommendationsList.appendChild(placeItem);
-    });
-    
-    recommendationsContainer.appendChild(recommendationsList);
-    
-    // 채팅 박스에 추천 컨테이너 추가
-    chatBox.appendChild(recommendationsContainer);
-    
-    // 추천 결과가 표시된 후 스크롤을 최하단으로 이동
-    scrollChatToBottom();
 }

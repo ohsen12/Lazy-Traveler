@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -43,6 +44,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             latitude = data.get("latitude")
             longitude = data.get("longitude")
             session_id = data.get("session_id")
+            raw_timestamp = data.get("timestamp")
+
+            timestamp = None
+            if raw_timestamp:
+                try:
+                    timestamp = datetime.fromisoformat(raw_timestamp)
+                except ValueError:
+                    await self.send(text_data=json.dumps({"error": "올바른 timestamp 형식이 아닙니다."}))
+                    return
+
 
             if not user_query:
                 await self.send(text_data=json.dumps({"error": "메시지를 입력해주세요."}))
@@ -63,7 +74,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 session_id=self.session_id, 
                 username=self.username, 
                 latitude=latitude, 
-                longitude=longitude
+                longitude=longitude,
+                timestamp= timestamp ## timestamp 추가
             )
 
             # ✅ 채팅 기록 저장 (로그인한 사용자만)

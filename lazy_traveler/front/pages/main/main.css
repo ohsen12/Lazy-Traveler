@@ -8,6 +8,7 @@
     src: url('/fonts/온글잎.otf') format('opentype');
 }
 
+
 body {
     font-family: 'basicfont', sans-serif;
     margin: 0;
@@ -582,96 +583,4 @@ header {
 /* 코치마크가 표시될 때 메인 컨텐츠 숨김 */
 .coachmark-container.show + .app-container {
     display: none;
-}
-
-/* 추천 결과 스타일 */
-.recommendations-container {
-    margin: 20px 0;
-    padding: 15px;
-    border-radius: 15px;
-    background-color: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-.recommendations-title {
-    margin-bottom: 15px;
-    color: #4e1d92;
-    text-align: center;
-}
-
-.recommendations-title h3 {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0;
-}
-
-.recommendations-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 15px;
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 5px;
-}
-
-.recommendation-item {
-    padding: 15px;
-    border-radius: 10px;
-    background-color: #f8f4ff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s;
-    cursor: pointer;
-}
-
-.recommendation-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.place-name {
-    font-weight: 600;
-    font-size: 16px;
-    color: #4e1d92;
-    margin-bottom: 5px;
-}
-
-.place-rating {
-    color: #f5b400;
-    font-size: 14px;
-    margin-bottom: 5px;
-}
-
-.place-tags {
-    color: #6e6e6e;
-    font-size: 12px;
-    margin-bottom: 5px;
-    font-style: italic;
-}
-
-.place-address {
-    color: #555;
-    font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* 모바일 반응형 */
-@media (max-width: 768px) {
-    .recommendations-list {
-        grid-template-columns: 1fr;
-    }
 }
