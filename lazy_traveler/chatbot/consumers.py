@@ -115,20 +115,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
         “”"비슷한 취향의 다른 유저들이 좋아하는 장소를 추천“”"
         try:
             recommendations = get_chat_based_recommendations(user_id, top_n=5)
-            if not recommendations:
-                return []
+            if not recommendations.exists():
+                return ""
 
-            safe_recommendations = []
+            links = []
             for r in recommendations:
-                name = r.get(“name”) or “”
-                website = r.get(“website”) or “”
-                if name:
-                    safe_recommendations.append({
-                        “name”: name,
-                        “website”: website
-                    })
+                name = r.name or "장소명"
+                website = r.website or "#"
+                links.append(f'<a href="{website}" class="chat-recommend-place" target="_blank">{name}</a>')
 
-            return safe_recommendations
+            html = '''
+            <div class="chat-recommendation-box">
+                나와 <span style="color:#FA5882; font-weight:bold">관심사</span>가 같은 
+                <span style="color:#7A70E3; font-weight:bold">분들</span>이 많이 찾았어요! 👉 
+            '''
+            html += " ".join(links)
+            html += "</div>"
+
+            return html
         except Exception as e:
             print(f”:rotating_light: [ERROR] 추천 장소 가져오기 실패: {str(e)}“)
             return []async def receive(self, text_data):
