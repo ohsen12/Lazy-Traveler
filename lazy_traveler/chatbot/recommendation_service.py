@@ -19,14 +19,6 @@ from .openai_chroma_config import function_vector_store, llm
 
 
 async def get_recommendation(user_query, session_id=None, username=None, latitude=None, longitude=None):
-    now = datetime.now()
-    # now = datetime(2025, 3, 27, 9, 0, 0)
-    current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-    start_time = now
-
-    if latitude is None or longitude is None:
-        latitude, longitude = 37.5704, 126.9831
-
     #유저 질문 기능 분류(llm)
     question_type = await classify_question_with_llm(user_query)
 
@@ -56,6 +48,14 @@ async def get_recommendation(user_query, session_id=None, username=None, latitud
     if question_type == "unknown":
         error_message = "죄송합니다.😢 기능, 장소, 일정 스케줄링에 대해 문의해 주세요. 😊예) 회원가입 하는 법‘, ‘스케줄링 해줘‘, ‘맛집 추천해줘’"
         return error_message
+    
+    now = datetime.now()
+    current_time = now.strftime("%Y-%m-%d %H:%M:%S")
+    start_time = now
+
+    if latitude is None or longitude is None:
+        latitude, longitude = 37.5704, 126.9831
+
 
     #스케줄링 시간대
     schedule_type, schedule_categories = await determine_schedule_template(now) #시간 기반 스케줄링표 지정
