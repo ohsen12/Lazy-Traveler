@@ -300,7 +300,6 @@ def build_schedule_by_categories_with_preferences(sorted_places, schedule_catego
 
 # 스케줄 데이터 텍스트 변환
 @sync_to_async
-<<<<<<< HEAD
 def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
     from .openai_chroma_config import place_vector_store
     all_docs = []
@@ -351,7 +350,6 @@ async def filter_open_places_with_llm(docs, now: datetime):
             continue
 
     return results
-=======
 def schedule_to_text(schedule):
     """
     스케줄 데이터를 텍스트로 변환해서 LLM에 넘길 수 있도록 준비
@@ -375,4 +373,3 @@ def schedule_to_text(schedule):
 def get_context(session_id, max_turns=5):
     chat_history = ChatHistory.objects.filter(session_id=session_id).order_by("-created_at")[:max_turns]
     return "\n\n".join([f"User: {chat.message}\nBot: {chat.response}" for chat in reversed(chat_history)])
->>>>>>> backup-branch
