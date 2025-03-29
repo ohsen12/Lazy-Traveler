@@ -198,9 +198,7 @@ function connectWebSocket() {
 
     // 로컬 스토리지에서 토큰을 가져와 Authorization 헤더에 추가
     const token = localStorage.getItem("access_token");
-    const url = token 
-    ? `wss://api.lazy-traveler.store/ws/chat/?token=${token}` 
-    : "wss://api.lazy-traveler.store/ws/chat/";
+    const url = token ? `ws://localhost:8000/ws/chat/?token=${token}` : "ws://localhost:8000/ws/chat/";
 
     socket = new WebSocket(url);
 
@@ -489,74 +487,116 @@ function loadSessionMessages(session_id) {
             const chatBox = document.getElementById("chat-box");
             chatBox.innerHTML = ""; // 기존 메시지 삭제
 
-            // 기본 UI 요소 추가
+            // 기본 안내 메시지 추가
             const defaultMessage = document.createElement("div");
             defaultMessage.classList.add("message", "bot-message");
             defaultMessage.innerHTML = `
                 안녕하세요? ${username}님. Lazy Traveler예요.<br>
                 종로에서 즐길 수 있는 코스를 작성해드릴게요.<br>
-                고객님의 태그를 기반으로 코스를 제안해 드릴까요?
-            `;
+                고객님의 태그를 기반으로 코스를 제안해 드릴까요?`;
             chatBox.appendChild(defaultMessage);
 
+            // 위치 안내 메시지 추가
             const locationSection = document.createElement("div");
             locationSection.classList.add("location-section");
             locationSection.innerHTML = `
                 <p>고객님의 현재 위치는 종각역입니다. <br>
-                    핀을 움직여, 일정을 시작하실 위치를 변경해 보세요! </p>
-            `;
+                핀을 움직여, 일정을 시작하실 위치를 변경해 보세요! </p>`;
             chatBox.appendChild(locationSection);
 
             toggleChatInput(true);
 
             // 메시지 목록 추가
             messages.forEach(chat => {
+                // 사용자 메시지 추가
                 appendMessage(chat.message, "user-message");
-                appendMessage(chat.response, "bot-response");
+
+                let htmlContent = "";
+                const type = chat.type || "text";  // chat.type 사용
+
+                if (typeof chat.message === "string") {
+                    // 문자열이면 바로 사용
+                    htmlContent = chat.message;
+                } else if (type === "schedule") {
+                    htmlContent = chat.html || chat.schedule_text || "추천 일정이 없습니다.";
+                } else if (type === "place") {
+                    htmlContent = chat.html || "추천 장소가 없습니다.";
+                } else {
+                    htmlContent = chat.content || chat.response || "응답 없음";
+                }
+
+                // chat.response가 있는 경우, 이를 포함시키기
+                if (chat.response) {
+                    htmlContent = chat.response;
+                }
+
+                // HTML 파싱 및 처리
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, "text/html");
+                const isHTML = Array.from(doc.body.childNodes).some(
+                    node => node.nodeType === 1  // ELEMENT_NODE
+                );
+
+                // 로딩 메시지 여부 확인 후 교체 또는 추가
+                const lastBotResponse = chatBox.lastElementChild;
+                const loadingMessage = lastBotResponse?.querySelector("#bot-loading-message");
+
+                if (loadingMessage) {
+                    if (isHTML) {
+                        loadingMessage.outerHTML = htmlContent;
+                    } else {
+                        loadingMessage.textContent = htmlContent;
+                    }
+                } else {
+                    appendMessage(htmlContent, "bot-response");
+                }
             });
 
             scrollChatToTop();
-            hasStartedChat = false; // 새로운 세션을 로드할 때 대화 시작 상태 초기화
+            hasStartedChat = false;
         });
     })
     .catch(error => {
-        console.error("데이터를 불러올 수 없습니다.");
+        console.error("데이터를 불러올 수 없습니다.", error);
     });
 }
 
+
+
 function appendMessage(message, type) {
     const chatBox = document.getElementById("chat-box");
-
-    // 새로운 메시지 컨테이너 생성
     const messageContainer = document.createElement("div");
     messageContainer.classList.add("message", type);
-    
-    // ```html 태그 제거 및 메시지 정제
-    let cleanMessage = message;
-    if (typeof message === 'string') {
-        cleanMessage = message.replace(/```html\n?/g, '').replace(/```$/g, '');
+
+    let content = "";
+
+    try {
+        if (typeof message === "string") {
+            message = JSON.parse(message);
+        }
+
+        if (typeof message === "object" && message !== null) {
+            content = message.html || message.schedule_text || message.response || "응답 없음";
+        } else {
+            content = message;
+        }
+    } catch {
+        content = message;
     }
 
-    // HTML 여부 판단
     const parser = new DOMParser();
-    const doc = parser.parseFromString(cleanMessage, "text/html");
-    const isHTML = Array.from(doc.body.childNodes).some(
-        node => node.nodeType === 1  // ELEMENT_NODE
-    );
+    const doc = parser.parseFromString(content, "text/html");
+    const isHTML = Array.from(doc.body.childNodes).some(node => node.nodeType === 1);
 
     if (isHTML) {
-        // 실제 DOM 요소로 대체
-        messageContainer.innerHTML = cleanMessage;
+        messageContainer.innerHTML = DOMPurify.sanitize(content);
     } else {
-        // 일반 텍스트만 갱신
-        messageContainer.textContent = cleanMessage;
+        messageContainer.textContent = content;
     }
-    
-    // 채팅박스에 새 메시지 추가
+
     chatBox.appendChild(messageContainer);
 
-    // 대화가 시작된 경우에만 스크롤을 최하단으로 이동
-    if (hasStartedChat) {
+    if (typeof hasStartedChat !== "undefined" && hasStartedChat) {
         scrollChatToBottom();
     }
 }
@@ -591,38 +631,56 @@ function appendBotResponseWithLoading() {
 
 // 챗봇 응답 메시지 업데이트
 function updateBotResponse(responseMessage) {
+    // 안전하게 responseMessage가 존재하는지 확인
+    if (!responseMessage) {
+        return;
+    }
+
+    const type = responseMessage?.type || "text";
+
     const chatBox = document.getElementById("chat-box");
     const lastBotResponse = chatBox.lastElementChild;
-    
-    // ```html 태그 제거 및 메시지 정제
-    let cleanMessage = responseMessage;
-    if (typeof responseMessage === 'string') {
-        cleanMessage = responseMessage.replace(/```html\n?/g, '').replace(/```$/g, '');
-    }
+    const loadingMessage = lastBotResponse?.querySelector("#bot-loading-message");
 
-    // 로딩 메시지를 포함한 마지막 응답 찾기
-    if (lastBotResponse && lastBotResponse.classList.contains("bot-response")) {
-        const loadingMessage = lastBotResponse.querySelector("#bot-loading-message");
+    let htmlContent = "";
 
-        if (loadingMessage) {
-            // HTML 여부 판단
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(cleanMessage, "text/html");
-            const isHTML = Array.from(doc.body.childNodes).some(
-                node => node.nodeType === 1  // ELEMENT_NODE
-            );
-
-            if (isHTML) {
-                // 실제 DOM 요소로 대체
-                loadingMessage.outerHTML = cleanMessage;
-            } else {
-                // 일반 텍스트만 갱신
-                loadingMessage.textContent = cleanMessage;
-            }
+    // responseMessage가 문자열일 경우 바로 처리
+    if (typeof responseMessage === "string") {
+        htmlContent = responseMessage;
+    } else {
+        // 객체일 경우, type에 따라 다르게 처리
+        if (type === "schedule") {
+            htmlContent = responseMessage.html || responseMessage.schedule_text || "추천 일정이 없습니다.";
+        } else if (type === "place") {
+            htmlContent = responseMessage.html || "추천 장소가 없습니다.";
+        } else {
+            // 기본적인 응답 처리
+            htmlContent = responseMessage.content || responseMessage.response || "응답 없음";
         }
     }
+
+    // HTML 파싱 처리
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, "text/html");
+    const isHTML = Array.from(doc.body.childNodes).some(
+        node => node.nodeType === 1  // ELEMENT_NODE
+    );
+
+    // 로딩 메시지 처리
+    if (loadingMessage) {
+        if (isHTML) {
+            loadingMessage.outerHTML = htmlContent;
+        } else {
+            loadingMessage.textContent = htmlContent;
+        }
+    } else {
+        appendMessage(htmlContent, "bot-response");
+    }
+
+    // 채팅박스 스크롤을 맨 아래로 이동
     scrollChatToBottom();
 }
+
 
 // ✅ 페이지가 새로 고쳐지기 전에 localStorage에서 session_id를 삭제
 window.addEventListener('beforeunload', function() {
@@ -757,6 +815,22 @@ function processAndSendMessage() {
     const messageInput = document.getElementById("user-message");
     const message = messageInput.value.trim();
     const sendButton = document.getElementById("send-btn");
+    let datetimeValue = document.getElementById("custom-datetime-input").value;
+    let timestamp;
+    
+    function toKSTISOString(date) {
+      const kstOffset = 9 * 60 * 60 * 1000;
+      const kstDate = new Date(date.getTime() + kstOffset);
+      return kstDate.toISOString().replace("Z", "");
+    }
+    
+    if (!datetimeValue) {
+      const now = new Date();
+      timestamp = toKSTISOString(now);
+    } else {
+      const selectedDate = new Date(datetimeValue);
+      timestamp = toKSTISOString(selectedDate);
+    }
     
     if (!message || isProcessingMessage) return;
     
@@ -799,7 +873,8 @@ function processAndSendMessage() {
             latitude: position.getLat().toFixed(6),
             longitude: position.getLng().toFixed(6),
             session_id: localStorage.getItem("session_id") || "",
-            new_session: !localStorage.getItem("session_id")
+            new_session: !localStorage.getItem("session_id"),
+            timestamp: timestamp
         };
 
         // 메시지를 전송한 후에 입력창 초기화
@@ -827,4 +902,26 @@ function sendMessage() {
     if (!isProcessingMessage) {
         processAndSendMessage();
     }
+}
+
+function sendScheduleMessage() {
+    const messageInput = document.getElementById("user-message");
+    messageInput.value = "스케줄링 해줘";
+    processAndSendMessage();
+}
+
+function openCustomTimeModal() {
+    document.getElementById("custom-time-modal").style.display = "flex";
+}
+  
+function closeCustomTimeModal() {
+    document.getElementById("custom-time-modal").style.display = "none";
+}
+  
+function submitCustomTime() {
+    const messageInput = document.getElementById("user-message");
+    messageInput.value = "스케줄링 해줘";
+    processAndSendMessage();
+
+    closeCustomTimeModal();
 }
