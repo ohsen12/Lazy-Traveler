@@ -828,3 +828,10 @@ function sendMessage() {
         processAndSendMessage();
     }
 }
+
+// 스케줄 메시지 전송 함수
+function sendScheduleMessage() {
+    const messageInput = document.getElementById("user-message");
+    messageInput.value = "스케줄링 해줘";
+    processAndSendMessage();
+}

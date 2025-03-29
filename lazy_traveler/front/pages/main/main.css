@@ -8,6 +8,7 @@
     src: url('/fonts/온글잎.otf') format('opentype');
 }
 
+
 body {
     font-family: 'basicfont', sans-serif;
     margin: 0;
@@ -582,4 +583,54 @@ header {
 /* 코치마크가 표시될 때 메인 컨텐츠 숨김 */
 .coachmark-container.show + .app-container {
     display: none;
+}
+
+/* 스케줄 버튼 섹션 스타일 */
+.schedule-buttons-section {
+    padding: 20px;
+    margin-bottom: 10px;
+}
+
+.schedule-title {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.spot-icon {
+    width: 16px;
+    height: 15px;
+}
+
+.schedule-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.schedule-btn {
+    padding: 10px 20px;
+    border: 1px solid #5F5DE3;
+    border-radius: 20px;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    font-family: 'basicfont', sans-serif;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.schedule-btn:hover {
+    background-color: #5F5DE3;
+    color: white;
+}
+
+/* 채팅 입력창 스타일 업데이트 */
+.chat-input textarea {
+    font-family: 'basicfont', sans-serif;
 }
