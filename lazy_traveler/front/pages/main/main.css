@@ -656,20 +656,91 @@ header {
   .modal-actions button {
     margin: 10px 5px;
   }
-
-  .chat-recommendation-box {
-    background-color: #f5f5ff;
-    border: 1px solid #dedcff;
-    padding: 10px 15px;
-    border-radius: 12px;
-    font-size: 14px;
-    margin-top: 10px;
-    line-height: 1.6;
+  /* 캘린더 입력 필드 스타일링 */
+#custom-datetime-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    color: #333;
+    background-color: #fff;
+    margin-bottom: 20px;
+    transition: border-color 0.3s ease;
 }
 
+#custom-datetime-input:focus {
+    border-color: #7A70E3;
+    outline: none;
+}
+
+/* 모달 버튼 컨테이너 스타일링 */
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* 모달 버튼 스타일링 */
+.modal-actions button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* 확인 버튼 */
+.modal-actions button:first-child {
+    background-color: #7A70E3;
+    color: white;
+    border: none;
+}
+
+.modal-actions button:first-child:hover {
+    background-color: #6560c0;
+}
+
+/* 취소 버튼 */
+.modal-actions button:last-child {
+    background-color: #fff;
+    color: #666;
+    border: 2px solid #e0e0e0;
+}
+
+.modal-actions button:last-child:hover {
+    background-color: #f5f5f5;
+}
+
+/* 캘린더 아이콘 커스터마이징 */
+#custom-datetime-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    padding: 5px;
+    filter: invert(0.5);
+}
+
+#custom-datetime-input::-webkit-calendar-picker-indicator:hover {
+    filter: invert(0.7);
+}
+
+  .chat-recommendation-box {
+    background-color: #e8e7ff;
+    border-radius: 1rem;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    max-width: 90%;
+    word-break: keep-all;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}
 .chat-recommendation-box a {
-    color: #6b5ae0;
-    font-weight: bold;
+    margin-right: 8px;
     text-decoration: underline;
-    margin: 0 6px;
+    color: #7A70E3;
+    font-weight: bold;
+}
+.chat-recommendation-box span {
+    margin-right: 8px;
 }
