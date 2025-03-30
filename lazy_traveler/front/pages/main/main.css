@@ -589,6 +589,7 @@ header {
  .schedule-buttons-section {
     padding: 20px;
     margin-bottom: 10px;
+    background: transparent; /* 배경을 투명하게 설정 */
 }
 
 .schedule-title {
