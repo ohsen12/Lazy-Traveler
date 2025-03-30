@@ -35,7 +35,7 @@ if not SECRET_KEY:
     raise ValueError("SECRET_KEY가 설정되지 않았습니다! .env 파일을 확인하세요.")
 
 # ✅ SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True #배포시에는 False값으로
+DEBUG = True 
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
