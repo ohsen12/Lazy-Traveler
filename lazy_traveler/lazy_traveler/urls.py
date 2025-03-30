@@ -25,7 +25,3 @@ urlpatterns = [
     path('accounts/', include("accounts.urls")),
     path('chatbot/', include('chatbot.urls')),
 ]
-
-# 디버그 모드에서만 정적 파일을 서빙하도록 설정
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

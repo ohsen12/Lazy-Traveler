@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             });
         }
     } catch (error) {
-        console.error("오류 발생:", error);
         document.getElementById("username").textContent = "오류 발생";
         document.getElementById("tags").textContent = "오류 발생";
     }
@@ -53,8 +52,7 @@ function logout() {
         alert("로그아웃되었습니다.");
         window.location.href = "https://lazy-traveler.store/pages/login/login.html";
     })
-    .catch(error => {
-        console.error("로그아웃 오류:", error);
+    .catch(() => {
         alert("로그아웃 중 오류가 발생했습니다.");
     });
 }
@@ -88,8 +86,7 @@ function delete_account() {
         alert("회원 탈퇴가 완료되었습니다.");
         window.location.href = "https://lazy-traveler.store/pages/login/login.html";
     })
-    .catch(error => {
-        console.error("회원탈퇴 오류:", error);
+    .catch(() => {
         alert("회원탈퇴 중 오류가 발생했습니다.");
     });
 }
@@ -232,7 +229,6 @@ const getTags = async () => {
         // 초기 상태에서 저장 버튼 비활성화
         document.getElementById('save-tags-btn').disabled = true;
     } catch (error) {
-        console.error("태그 불러오기 실패:", error);
         alert("태그를 불러오는데 실패했습니다.");
     }
 };
@@ -273,7 +269,6 @@ document.getElementById('save-tags-btn').addEventListener('click', async () => {
         closeChangeTagsModal();
         location.reload();
     } catch (error) {
-        console.error("태그 저장 실패:", error);
         alert("태그 저장에 실패했습니다.");
     }
 });

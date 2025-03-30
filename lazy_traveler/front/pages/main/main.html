@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lazy Traveler</title>
+    <link rel="icon" type="image/png" href="/images/favicon.png">
     <!-- 필수 스크립트 추가 -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script type="text/javascript" 
-        src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5769d7f320e2be4038750917809a900a&libraries=services"></script>
+        src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5769d7f320e2be4038750917809a900a&libraries=services&autoload=false">
+    </script>
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
@@ -24,14 +26,14 @@
             <header>
                 <div class="logo-container">   
                     <a href="https://lazy-traveler.store/pages/main/main.html" class="logo-link"> 
-                        <img src="../../images/logo.svg" alt="Lazy Traveler" class="logo">
+                        <img src="../../images/logo.svg" alt="Lazy Traveler" class="logo" title="페이지 새로고침">
                     </a>
-                    <button class="refresh-btn" onclick="refreshChat()">
+                    <button class="refresh-btn" onclick="refreshChat()" title="채팅창 새로고침">
                         <img src="../../images/refresh.svg" alt="Refresh">
                     </button>
                 </div>
                 <div class="user-menu">
-                    <a href="#" class="profile-icon" onclick="goToMypage()">
+                    <a href="#" class="profile-icon" onclick="goToMypage()" title="마이페이지로 이동">
                         <img src="../../images/mypage.svg" alt="Profile">
                     </a>
                     <a href="#" class="logout" onclick="logout()">
@@ -69,10 +71,34 @@
                     <div id="messages-container">
                         <!-- 동적으로 메시지가 추가됨 -->
                     </div>
+                    
+                    <div class="schedule-buttons-section">
+                        <p class="schedule-title">
+                            <img src="/images/spot.svg" alt="spot" class="spot-icon">
+                            Lazy Traveler에 이렇게 물어보세요!
+                            <img src="/images/spot.svg" alt="spot" class="spot-icon">
+                        </p>
+
+                        <div class="schedule-buttons">
+                            <button class="schedule-btn now-btn" onclick="sendScheduleMessage()">지금 시간으로 스케줄 만들기</button>
+                            <button class="schedule-btn custom-btn" onclick="openCustomTimeModal()">원하는 시간으로 스케줄 만들기</button>
+                        </div>
+                    </div>
+
+                    <div id="custom-time-modal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                          <h3>원하는 시간을 선택해주세요</h3>
+                          <input type="datetime-local" id="custom-datetime-input" />
+                          <div class="modal-actions">
+                            <button onclick="submitCustomTime()">확인</button>
+                            <button onclick="closeCustomTimeModal()">취소</button>
+                          </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="chat-input">
-                    <textarea id="user-message" placeholder="궁금한 질문을 남겨주세요 (최대 200자)" maxlength="200"></textarea>
+                    <textarea id="user-message" placeholder="Lazy Traveler에 이렇게 물어보세요! 예) 맛집 추천해줘, 일정 짜줘, 회원 가입 어떻게 해?" maxlength="200"></textarea>
                     <button id="send-btn" onclick="sendMessage()">
                         <img src="../../images/send.svg" alt="Send">
                     </button>
@@ -87,6 +113,7 @@
             <img src="/images/x.svg" alt="닫기">
         </button>
     </div>
-    <script src="main.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
+    <script src="main.js" defer></script> 
 </body>
 </html>

@@ -7,6 +7,7 @@ from asgiref.sync import sync_to_async
 from langchain.chains import LLMChain
 from .prompt import query_prompt, opening_hours_prompt
 from geopy.distance import geodesic  # 거리 계산 라이브러리
+from typing import Set
 
 User = get_user_model()
 
@@ -38,7 +39,7 @@ def search_places(user_query, user_latitude, user_longitude):
     # 1️⃣ 기본 벡터 검색 실행
     place_results = place_vector_store.similarity_search_with_score(
         query=user_query,
-        k=20,  # 검색 결과를 넉넉히 받아온 후 필터링
+        k=10,  # 검색 결과를 넉넉히 받아온 후 필터링
         filter={"type": "place"}
     )
     
@@ -185,6 +186,34 @@ def search_places_by_preferred_tags(user_query, preferred_tag_mapping):
 
     return all_docs
 
+@sync_to_async
+def fast_search_places_by_preferred_tags(user_query, preferred_tag_mapping):
+    from .openai_chroma_config import place_vector_store
+
+    all_docs = []
+    seen_place_ids = set()
+
+    for category, tags in preferred_tag_mapping.items():
+        if not tags:
+            continue
+
+        query = f"{user_query} " + " ".join(tags)
+        print(f"[DEBUG] {category}' 쿼리: {query}")
+
+        results = place_vector_store.similarity_search(
+            query=query,
+            k=5,
+            filter={"type": "place"}
+        )
+
+        for doc in results:
+            place_id = doc.metadata.get("place_id")
+            if place_id and place_id not in seen_place_ids:
+                all_docs.append(doc)
+                seen_place_ids.add(place_id)
+
+    print(f"[DEBUG] 총 장소 결과 개수: {len(all_docs)}")
+    return all_docs
 # 거리 계산 함수
 def calculate_distance(lat1, lon1, lat2, lon2):
     lat1 = float(lat1)
@@ -318,8 +347,48 @@ def schedule_to_text(schedule):
         """)
     return "\n".join(lines)
 
+@sync_to_async
+def schedule_to_html(schedule: list[dict]) -> str:
+
+    html_blocks = []
+
+    for place in schedule:
+        html = f"""
+        <div class="schedule-item">
+          ⏰ <strong>{place['time']}</strong> - {place['desc']}<br/>
+          📍 <strong>{place['name']}</strong><br/>
+          🏷️ 카테고리: {place.get('category', '없음')}<br/>
+          📫 주소: {place.get('address', '없음')}<br/>
+          🕒 운영시간: {place.get('opening_hours', '없음')}<br/>
+          📏 거리: {place.get('distance_km', 'N/A')}<br/>
+          ⭐ 평점: {place.get('rating', 'N/A')}<br/>
+          🔗 <a href="{place.get('website', '#')}" target="_blank">웹사이트 바로가기</a>
+        </div>
+        <hr/>
+        """
+        html_blocks.append(html)
+
+    return f"""
+    <div class="bot-response">
+      <p>📍 추천 일정을 아래에서 확인해보세요!</p>
+      {''.join(html_blocks)}
+    </div>
+    """
+
 # 대화 내역을 가져오는 함수
 @sync_to_async
 def get_context(session_id, max_turns=5):
     chat_history = ChatHistory.objects.filter(session_id=session_id).order_by("-created_at")[:max_turns]
     return "\n\n".join([f"User: {chat.message}\nBot: {chat.response}" for chat in reversed(chat_history)])
+
+def calculate_similarity(tags1, tags2):
+    set1 = set(tags1)
+    set2 = set(tags2)
+
+    if not set1 and not set2:
+        return 0.0
+
+    intersection = set1 & set2
+    union = set1 | set2
+
+    return len(intersection) / len(union)

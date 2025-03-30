@@ -8,8 +8,8 @@ User = get_user_model()
 # 회원가입 시리얼라이저
 class SignupSerializer(serializers.ModelSerializer):
     # 회원가입 시 필요한 비밀번호와 비밀번호 확인 필드 추가
-    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
-    password2 = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    password = serializers.CharField(write_only=True, required=True)
+    password2 = serializers.CharField(write_only=True, required=True)
     
     class Meta:
         model = User
@@ -17,7 +17,9 @@ class SignupSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password' : {'write_only' : True}}
 
     def validate_username(self, value):
-        """아이디 중복 체크"""
+        """아이디 중복 체크 및 'admin'이 포함된 username 차단"""
+        if 'admin' in value.lower():  
+            raise serializers.ValidationError("사용자 이름에 'admin'을 포함할 수 없습니다.")
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("이미 존재하는 아이디입니다.")
         return value

@@ -3,18 +3,17 @@ from datetime import datetime
 from .prompt import place_prompt
 from typing import TypedDict
 from .utils import (
-    get_context,
     get_user_tags,
     sort_places_by_distance,
-    schedule_to_text,
+    schedule_to_html,
     build_schedule_by_categories_with_preferences,
     determine_schedule_template,
     get_preferred_tags_by_schedule,
-    search_places_by_preferred_tags,
     classify_question_with_llm,
     format_place_results_to_html,
     filter_open_places_with_llm,
-    search_places
+    search_places,
+    fast_search_places_by_preferred_tags
 )
 from .openai_chroma_config import function_vector_store, llm
 
@@ -68,7 +67,12 @@ async def handle_function_query(state: MyState) -> MyState:
 # ✅ 3. 장소 검색 처리
 async def handle_place_query(state: MyState) -> MyState:
     place_results = await search_places(state["user_query"], state["latitude"], state["longitude"])
-    state["response"] = await format_place_results_to_html(place_results)
+    # state["response"] = await format_place_results_to_html(place_results)
+    state["response"] = {
+    "type": "place",
+    "html": await format_place_results_to_html(place_results),
+    "count": len(place_results)
+    }
     return state
 
 
@@ -84,40 +88,26 @@ async def handle_schedule_query(state: MyState) -> MyState:
         state["response"] = "스케줄링 불가시간입니다. 오전 8시부터 오후 11시까지만 스케줄링이 가능합니다."
         return state
 
-    #####
-    latitude = state.get("latitude") or 37.5704
-    longitude = state.get("longitude") or 126.9831
 
-    if state["username"]:
-        user_tags = await get_user_tags(state["username"])
-        preferred_tag_mapping = await get_preferred_tags_by_schedule(user_tags, schedule_categories)
-        docs = await search_places_by_preferred_tags(state["user_query"], preferred_tag_mapping)
+    user_tags = await get_user_tags(state["username"])
+    preferred_tag_mapping = await get_preferred_tags_by_schedule(user_tags, schedule_categories)
+    docs = await fast_search_places_by_preferred_tags(state["user_query"], preferred_tag_mapping)
 
-        sorted_docs = await sort_places_by_distance(docs, state["latitude"], state["longitude"])
-        filtered_docs = await filter_open_places_with_llm(sorted_docs, now)
+    sorted_docs = await sort_places_by_distance(docs, state["latitude"], state["longitude"])
+    filtered_docs = await filter_open_places_with_llm(sorted_docs, now)
 
-        schedule = await build_schedule_by_categories_with_preferences(
-            filtered_docs, schedule_categories, preferred_tag_mapping, start_time
-        )
+    schedule = await build_schedule_by_categories_with_preferences(
+        filtered_docs, schedule_categories, preferred_tag_mapping, start_time
+    )
 
-        schedule_text = await schedule_to_text(schedule)
+    schedule_text = await schedule_to_html(schedule)
 
-        ####
-        context = await get_context(state["session_id"])
-        context += f"\n{schedule_text}"
-
-        chain = place_prompt | llm
-        result = await chain.ainvoke({
-            "context": context,
-            "location_context": f"현재 사용자의 위치는 위도 {state['latitude']}, 경도 {state['longitude']}입니다.",
-            "time_context": f"현재 시간은 {current_time}입니다.",
-            "question": state["user_query"]
-        })
-
-        state["response"] = result.content.strip() if result.content else "추천을 제공할 수 없습니다."
-
-    else:
-        state["response"] = "사용자 정보가 없습니다. 로그인 후 다시 시도해주세요."
+    state["response"] = {
+    "type": "schedule",
+    "schedule_text": schedule_text,
+    "time_context": current_time,
+    "question": state["user_query"]
+}
 
     return state
 
@@ -190,4 +180,8 @@ async def get_recommendation(
     # ✅ 실행
     result = await compiled_graph.ainvoke(state)
 
-    return result["response"]
+    return {
+    "user_query": result["user_query"],
+    "response": result["response"],
+    "question_type": result.get("question_type", "unknown")
+}

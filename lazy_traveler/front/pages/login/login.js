@@ -11,14 +11,13 @@ document.getElementById("login-form").addEventListener("submit", async function(
             password: password
         });
 
-        console.log("로그인 응답:", response.data);
 
         if (response.data.access) {
             localStorage.setItem("access_token", response.data.access);
             localStorage.setItem("refresh_token", response.data.refresh);
 
-            // ✅ 바로 페이지 이동 (alert 제거)
-            window.location.href = 'https://lazy-traveler.store/pages/main/main.html';
+            // ✅ 바로 페이지 이동
+            goToMain();
         } else {
             messageDiv.textContent = '비밀번호가 일치하지 않습니다.';
         }
@@ -26,3 +25,7 @@ document.getElementById("login-form").addEventListener("submit", async function(
             messageDiv.textContent = 'ID 혹은 비밀번호가 일치하지 않습니다';
     }
 });
+
+function goToMain() {
+    window.location.href = 'https://lazy-traveler.store/pages/main/main.html';
+}

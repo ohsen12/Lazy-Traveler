@@ -121,23 +121,18 @@ WSGI_APPLICATION = 'lazy_traveler.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# # ✅ PostgreSQL 변경
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('POSTGRES_DB'),
-#         'USER': os.getenv('POSTGRES_USER'),
-#         'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-#         'HOST': os.getenv('POSTGRES_HOST'),  # Docker Compose에서 서비스 이름을 그대로 사용
-#         'PORT': os.getenv('POSTGRES_PORT'),
-#     }
-# }
+# ✅ PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST'),
+        'PORT': os.getenv('POSTGRES_PORT'),
     }
 }
+
 # 🔨 커스텀 유저 모델 설정
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -150,8 +145,8 @@ REST_FRAMEWORK = {
 
 # 🔐 JWT 유효기간 설정 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1440),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     'BLACKLIST_ENABLED': True,  # 블랙리스트 기능 활성화
@@ -187,17 +182,6 @@ USE_I18N = True
 
 USE_TZ = False # ✅ 서버 시간대
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = 'static/'
-
-# 📷 static 파일을 추가로 검색할 디렉토리를 지정 (베이스 디렉토리의 static)
-STATICFILES_DIRS = [BASE_DIR / "static"]
-
-# 📷 배포 관련
-STATIC_ROOT = BASE_DIR / "staticfiles"  
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

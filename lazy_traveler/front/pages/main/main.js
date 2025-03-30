@@ -3,46 +3,44 @@ let socket;
 let currentSessionId = null;
 let hasStartedChat = false; // 대화 시작 여부를 추적하는 변수 추가
 let isProcessingMessage = false; // 메시지 처리 중 상태를 추적하는 변수 추가
+let messageCount = 0; // 메시지 전송 횟수를 추적하는 변수
+let lastMessageDate = new Date().toDateString(); // 마지막 메시지 전송 날짜
 
+// DOMContentLoaded 이벤트에서 카카오맵 초기화
 document.addEventListener("DOMContentLoaded", () => {
+    // 카카오맵 로드
     kakao.maps.load(() => {
-        initKakaoMap();  
+        const container = document.getElementById('map');
+        const options = {
+            center: new kakao.maps.LatLng(37.5704, 126.9831),
+            level: 3
+        };
+
+        map = new kakao.maps.Map(container, options);
+        geocoder = new kakao.maps.services.Geocoder();
+
+        marker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(37.5704, 126.9831),
+            map: map
+        });
+
+        infowindow = new kakao.maps.InfoWindow({
+            content: `<div style="padding:5px;">📍 종각역</div>`
+        });
+        infowindow.open(map, marker);
+
+        kakao.maps.event.addListener(map, "click", (event) => {
+            const position = event.latLng;
+            marker.setPosition(position);
+            getAddressFromCoords(position);
+        });
+
+        // 지도 초기화 후 UI 초기화
         initChatUI();
         connectWebSocket();
         showCoachmark();
     });
 });
-
-function initKakaoMap() {
-    console.log("✅ Kakao Maps 로드 완료");
-
-    const container = document.getElementById('map');
-    const options = {
-        center: new kakao.maps.LatLng(37.5704, 126.9831),
-        level: 3
-    };
-
-    map = new kakao.maps.Map(container, options);
-    geocoder = new kakao.maps.services.Geocoder();
-
-    marker = new kakao.maps.Marker({
-        position: new kakao.maps.LatLng(37.5704, 126.9831),
-        map: map
-    });
-
-    infowindow = new kakao.maps.InfoWindow({
-        content: `<div style="padding:5px;">📍 종각역</div>`
-    });
-    infowindow.open(map, marker);
-
-    kakao.maps.event.addListener(map, "click", (event) => {
-        const position = event.latLng;
-        marker.setPosition(position);
-        getAddressFromCoords(position);
-    });
-
-    console.log("✅ Kakao 지도 초기화 완료");
-}
 
 // 현재 위치 가져오기
 function getUserLocation() {
@@ -91,25 +89,32 @@ function getAddressFromCoords(coords) {
 function initChatUI() {
     connectWebSocket();
     
-    document.getElementById("send-btn").addEventListener("click", () => {
+    const sendButton = document.getElementById("send-btn");
+    const messageInput = document.getElementById("user-message");
+    
+    // 기존 이벤트 리스너 제거
+    sendButton.removeEventListener("click", processAndSendMessage);
+    messageInput.removeEventListener("keydown", handleEnterKey);
+    
+    // 새로운 이벤트 리스너 등록
+    sendButton.addEventListener("click", () => {
         if (!isProcessingMessage) {
             processAndSendMessage();
         }
     });
     
-    const messageInput = document.getElementById("user-message");
-    
-    // keydown 대신 keyup 이벤트 사용
-    messageInput.addEventListener("keyup", function(event) {
-        if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            
-            // 이미 처리 중인 메시지가 없을 때만 실행
-            if (!isProcessingMessage) {
-                processAndSendMessage();
-            }
+    // Enter 키 이벤트를 별도 함수로 분리
+    messageInput.addEventListener("keydown", handleEnterKey);
+}
+
+// Enter 키 처리를 위한 별도 함수
+function handleEnterKey(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        if (!isProcessingMessage) {
+            processAndSendMessage();
         }
-    });
+    }
 }
 
 //첫시작 대화창 및 user-menu숨기기
@@ -125,7 +130,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             if (botMessage) {
                 botMessage.innerHTML = `
                     안녕하세요? 고객님. Lazy Traveler에요.<br>
-                    저는 종로에서 여행하는 일정을 스케줄링 해드립니다.<br>
+                    종로에서 즐길 수 있는 코스를 작성해드릴게요.<br>
                     보다 정확한 답변을 원하시면, 로그인 하신 후 질문해주세요!
                 `;
             }
@@ -151,14 +156,16 @@ document.addEventListener("DOMContentLoaded", async function() {
             }
         });
 
-        const { username = "고객님", tags = "" } = response.data;
+        // username이 [User_ID]인 경우 '고객'으로 대체
+        let { username = "고객", tags = "" } = response.data;
+        username = username === "[User_ID]" ? "고객" : username;
         const tagList = tags ? tags.split(',') : [];
 
         // 시스템 메시지 동적으로 변경
         if (botMessage) {
             botMessage.innerHTML = `
                 안녕하세요? ${username}님. Lazy Traveler예요.<br>
-                저는 종로에서 여행하는 일정을 스케줄링 해드립니다.<br>
+                종로에서 즐길 수 있는 코스를 작성해드릴게요.<br>
                 ${tagList.length > 0 ? `고객님의 [${tagList.join(", ")}] 태그를 기반으로 코스를 제안해 드릴까요?` : 
                 "어느 장소에서 여행하는 루트를 추천해드릴까요?"}
             `;
@@ -168,7 +175,16 @@ document.addEventListener("DOMContentLoaded", async function() {
         setTimeout(scrollChatToTop, 100);
 
     } catch (error) {
-        console.error("오류 발생:", error);
+        // 오류 발생 시 기본 메시지 표시
+        const botMessage = document.querySelector(".message.bot-message");
+        if (botMessage) {
+            botMessage.innerHTML = `
+                안녕하세요? 고객님. Lazy Traveler예요.<br>
+                종로에서 즐길 수 있는 코스를 작성해드릴게요.<br>
+                어느 장소에서 여행하는 루트를 추천해드릴까요?
+            `;
+        }
+        setTimeout(scrollChatToTop, 100);
     }
 });
 
@@ -177,7 +193,6 @@ document.addEventListener("DOMContentLoaded", async function() {
 //웹 소켓
 function connectWebSocket() {
     if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log("✅ WebSocket 이미 연결됨");
         return;
     }
 
@@ -190,15 +205,20 @@ function connectWebSocket() {
     socket = new WebSocket(url);
 
     socket.onopen = function () {
-        console.log("✅ WebSocket 연결 성공!");
+        // WebSocket 연결 성공
     };
 
     socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
-        console.log("GPT-4 응답:", data.response);
 
         // 로딩 메시지 업데이트
         updateBotResponse(data.response);
+
+        if (data.recommendations && data.recommendations.length > 0) {
+            const html = renderRecommendationBox(data.recommendations);
+            appendMessage(html, "bot-response");
+        }
+
 
         // 세션 ID 업데이트
         if (data.session_id) {
@@ -206,82 +226,94 @@ function connectWebSocket() {
             // 응답을 받은 후 채팅 히스토리를 업데이트
             reloadChatHistory();
         }
+
+        // 응답이 완료되면 입력창과 전송 버튼 다시 활성화
+        const messageInput = document.getElementById("user-message");
+        const sendButton = document.getElementById("send-btn");
+        messageInput.disabled = false;
+        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
+        sendButton.disabled = false;
+        sendButton.style.opacity = "1";
+        isProcessingMessage = false;
     };
 
     socket.onerror = function (event) {
-        console.log("❌ WebSocket 에러 발생:", event);
-        if (event && event.message) {
-            console.log("Error Message:", event.message);
-        }
+        // WebSocket 연결 오류
     };
 
     socket.onclose = function () {
-        console.log("🔄 WebSocket 종료됨. 3초 후 재연결 시도...");
-        setTimeout(connectWebSocket, 10000);  // 3초 후 재연결
+        setTimeout(connectWebSocket, 10000);  // 10초 후 재연결
     };
 }
 
-
-// 메시지 처리 및 전송을 담당하는 새로운 함수
-function processAndSendMessage() {
-    const messageInput = document.getElementById("user-message");
-    const message = messageInput.value.trim();
+// 메시지 전송 횟수 초기화 함수
+function resetMessageCount() {
+    const currentDate = new Date().toDateString();
+    const lastDate = localStorage.getItem('lastMessageDate');
     
-    if (!message || isProcessingMessage) return;
-    
-    isProcessingMessage = true; // 처리 시작
-    
-    // 입력창 초기화를 메시지 처리 전에 수행
-    messageInput.value = "";
-    
-    // 실제 메시지 전송
-    if (!socket) {
-        console.warn("🚨 WebSocket이 초기화되지 않았습니다. 연결을 시도합니다...");
-        isProcessingMessage = false;
-        return;
-    }
-
-    if (socket.readyState === WebSocket.OPEN) {
-        hasStartedChat = true;
-        appendMessage(message, "user-message");
-        appendBotResponseWithLoading();
-
-        const position = marker.getPosition();
-        const requestData = {
-            message: message,
-            latitude: position.getLat().toFixed(6),
-            longitude: position.getLng().toFixed(6),
-            session_id: localStorage.getItem("session_id") || "",
-            new_session: !localStorage.getItem("session_id")
-        };
-
-        socket.send(JSON.stringify(requestData));
-        
-        // 메시지 전송 후 일정 시간 뒤에 상태 초기화
-        setTimeout(() => {
-            isProcessingMessage = false;
-        }, 500);
-    } else {
-        console.warn("🚨 WebSocket이 닫혀 있어 메시지를 보낼 수 없습니다.");
-        isProcessingMessage = false;
+    if (currentDate !== lastDate) {
+        localStorage.setItem('messageCount', '0');
+        localStorage.setItem('lastMessageDate', currentDate);
     }
 }
 
-// sendMessage 함수를 processAndSendMessage로 대체
-function sendMessage() {
-    if (!isProcessingMessage) {
-        processAndSendMessage();
+// 메시지 전송 가능 여부 확인 함수
+function canSendMessage() {
+    const currentDate = new Date().toDateString();
+    const lastDate = localStorage.getItem('lastMessageDate');
+    const count = parseInt(localStorage.getItem('messageCount') || '0');
+    
+    // 날짜가 변경되었다면 카운트 초기화
+    if (currentDate !== lastDate) {
+        resetMessageCount();
+        return true;
     }
+    
+    // 하루 100회 초과 시 false 반환
+    if (count >= 100) {
+        alert('하루에 100번까지 채팅이 가능해요! 🥹');
+        return false;
+    }
+    
+    return true;
 }
 
+// 리프레시 버튼 클릭 횟수 확인 함수
+function canRefresh() {
+    const currentDate = new Date().toDateString();
+    const lastDate = localStorage.getItem('lastRefreshDate');
+    const refreshCount = parseInt(localStorage.getItem('refreshCount') || '0');
+    
+    // 날짜가 변경되었다면 카운트 초기화
+    if (currentDate !== lastDate) {
+        localStorage.setItem('refreshCount', '0');
+        localStorage.setItem('lastRefreshDate', currentDate);
+        return true;
+    }
+    
+    // 하루 5회 초과 시 false 반환
+    if (refreshCount >= 5) {
+        alert('현재 리프레시 버튼은 하루 5번만 클릭 가능해요! 🥹');
+        return false;
+    }
+    
+    return true;
+}
 
 // 리프레시
 function refreshChat() {
+    if (!canRefresh()) {
+        return;
+    }
+    
+    // 리프레시 카운트 증가
+    const currentCount = parseInt(localStorage.getItem('refreshCount') || '0');
+    localStorage.setItem('refreshCount', (currentCount + 1).toString());
+    
     localStorage.removeItem("session_id");  // ✅ 세션 아이디 삭제
     currentSessionId = null;  // ✅ 메모리에서도 초기
     hasStartedChat = false;  // 대화 시작 상태 초기화
     window.location.reload(); // 페이지 새로고침화
-    console.log("챗봇 화면이 새로고침되었습니다.");
 }
 
 
@@ -297,8 +329,6 @@ function logout() {
 // 대화 내역 불러오기
 function loadChatHistory() {
     return new Promise((resolve) => {
-        console.log("대화 기록을 불러오는 중...");
-
         const token = localStorage.getItem("access_token");
 
         if (!token) {
@@ -314,7 +344,6 @@ function loadChatHistory() {
             }
         })
         .then(response => {
-            console.log("대화 기록 불러오기 성공:", response.data);
             const data = response.data;
             const historyList = document.getElementById("chat-history");
             historyList.innerHTML = "";
@@ -331,8 +360,7 @@ function loadChatHistory() {
             });
             resolve();
         })
-        .catch(error => {
-            console.error("대화 기록 불러오기 실패:", error);
+        .catch(() => {
             resolve();
         });
     });
@@ -370,8 +398,6 @@ function createSessionList(sessions) {
     sessionList.classList.add("accordion-content");
 
     sessions.forEach(session => {
-        console.log(`세션 ID: ${session.session_id}, 첫 메시지: ${session.first_message}`);
-
         const sessionItem = document.createElement("li");
         sessionItem.classList.add("history-item");
         sessionItem.innerHTML = `
@@ -438,8 +464,6 @@ function toggleChatInput(disable) {
 }
 
 function loadSessionMessages(session_id) {
-    console.log(`세션 ${session_id}의 메시지를 불러오는 중...`);
-
     currentSessionId = session_id;
     localStorage.setItem("session_id", session_id);
 
@@ -454,7 +478,9 @@ function loadSessionMessages(session_id) {
         }
     })
     .then(userResponse => {
-        const { username = "고객님", tags = "" } = userResponse.data;
+        // username이 [User_ID]인 경우 '고객'으로 대체
+        let { username = "고객", tags = "" } = userResponse.data;
+        username = username === "[User_ID]" ? "고객" : username;
         const tagList = tags ? tags.split(',') : [];
 
         // 채팅 내역을 불러옵니다.
@@ -464,61 +490,121 @@ function loadSessionMessages(session_id) {
                 "Authorization": "Bearer " + token,
             }
         }).then(response => {
-            console.log(`세션 ${session_id} 메시지 불러오기 성공:`, response.data);
             const messages = response.data;
 
             const chatBox = document.getElementById("chat-box");
             chatBox.innerHTML = ""; // 기존 메시지 삭제
 
-            // 기본 UI 요소 추가
+            // 기본 안내 메시지 추가
             const defaultMessage = document.createElement("div");
             defaultMessage.classList.add("message", "bot-message");
             defaultMessage.innerHTML = `
                 안녕하세요? ${username}님. Lazy Traveler예요.<br>
-                저는 종로에서 여행하는 일정을 스케줄링 해드립니다.<br>
-                ${tagList.length > 0 ? `고객님의 [${tagList.join(", ")}] 태그를 기반으로 코스를 제안해 드릴까요?` : 
-                "어느 장소에서 여행하는 루트를 추천해드릴까요?"}
-            `;
+                종로에서 즐길 수 있는 코스를 작성해드릴게요.<br>
+                고객님의 태그를 기반으로 코스를 제안해 드릴까요?`;
             chatBox.appendChild(defaultMessage);
 
+            // 위치 안내 메시지 추가
             const locationSection = document.createElement("div");
             locationSection.classList.add("location-section");
             locationSection.innerHTML = `
                 <p>고객님의 현재 위치는 종각역입니다. <br>
-                    핀을 움직여, 일정을 시작하실 위치를 변경해 보세요! </p>
-            `;
+                핀을 움직여, 일정을 시작하실 위치를 변경해 보세요! </p>`;
             chatBox.appendChild(locationSection);
 
             toggleChatInput(true);
 
             // 메시지 목록 추가
             messages.forEach(chat => {
+                // 사용자 메시지 추가
                 appendMessage(chat.message, "user-message");
-                appendMessage(chat.response, "bot-response");
+
+                let htmlContent = "";
+                const type = chat.type || "text";  // chat.type 사용
+
+                if (typeof chat.message === "string") {
+                    // 문자열이면 바로 사용
+                    htmlContent = chat.message;
+                } else if (type === "schedule") {
+                    htmlContent = chat.html || chat.schedule_text || "추천 일정이 없습니다.";
+                } else if (type === "place") {
+                    htmlContent = chat.html || "추천 장소가 없습니다.";
+                } else {
+                    htmlContent = chat.content || chat.response || "응답 없음";
+                }
+
+                // chat.response가 있는 경우, 이를 포함시키기
+                if (chat.response) {
+                    htmlContent = chat.response;
+                }
+
+                // HTML 파싱 및 처리
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, "text/html");
+                const isHTML = Array.from(doc.body.childNodes).some(
+                    node => node.nodeType === 1  // ELEMENT_NODE
+                );
+
+                // 로딩 메시지 여부 확인 후 교체 또는 추가
+                const lastBotResponse = chatBox.lastElementChild;
+                const loadingMessage = lastBotResponse?.querySelector("#bot-loading-message");
+
+                if (loadingMessage) {
+                    if (isHTML) {
+                        loadingMessage.outerHTML = htmlContent;
+                    } else {
+                        loadingMessage.textContent = htmlContent;
+                    }
+                } else {
+                    appendMessage(htmlContent, "bot-response");
+                }
             });
 
             scrollChatToTop();
-            hasStartedChat = false; // 새로운 세션을 로드할 때 대화 시작 상태 초기화
+            hasStartedChat = false;
         });
     })
     .catch(error => {
-        console.error("데이터 불러오기 실패:", error);
+        console.error("데이터를 불러올 수 없습니다.", error);
     });
 }
 
+
+
 function appendMessage(message, type) {
     const chatBox = document.getElementById("chat-box");
-
-    // 새로운 메시지 컨테이너 생성
     const messageContainer = document.createElement("div");
     messageContainer.classList.add("message", type);
-    messageContainer.textContent = message;
-    
-    // 채팅박스에 새 메시지 추가
+
+    let content = "";
+
+    try {
+        if (typeof message === "string") {
+            message = JSON.parse(message);
+        }
+
+        if (typeof message === "object" && message !== null) {
+            content = message.html || message.schedule_text || message.response || "응답 없음";
+        } else {
+            content = message;
+        }
+    } catch {
+        content = message;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, "text/html");
+    const isHTML = Array.from(doc.body.childNodes).some(node => node.nodeType === 1);
+
+    if (isHTML) {
+        messageContainer.innerHTML = DOMPurify.sanitize(content);
+    } else {
+        messageContainer.textContent = content;
+    }
+
     chatBox.appendChild(messageContainer);
 
-    // 대화가 시작된 경우에만 스크롤을 최하단으로 이동
-    if (hasStartedChat) {
+    if (typeof hasStartedChat !== "undefined" && hasStartedChat) {
         scrollChatToBottom();
     }
 }
@@ -553,26 +639,55 @@ function appendBotResponseWithLoading() {
 
 // 챗봇 응답 메시지 업데이트
 function updateBotResponse(responseMessage) {
+    // 안전하게 responseMessage가 존재하는지 확인
+    if (!responseMessage) {
+        return;
+    }
+
+    const type = responseMessage?.type || "text";
+
     const chatBox = document.getElementById("chat-box");
     const lastBotResponse = chatBox.lastElementChild;
+    const loadingMessage = lastBotResponse?.querySelector("#bot-loading-message");
 
-    // 로딩 메시지를 포함한 마지막 응답 찾기
-    if (lastBotResponse && lastBotResponse.classList.contains("bot-response")) {
-        const loadingMessage = lastBotResponse.querySelector("#bot-loading-message");
+    let htmlContent = "";
 
-        // 로딩 메시지 있는 경우, 해당 span의 텍스트를 응답 메시지로 변경
-        if (loadingMessage) {
-            loadingMessage.textContent = responseMessage;  // 로딩 메시지를 응답 메시지로 교체
+    // responseMessage가 문자열일 경우 바로 처리
+    if (typeof responseMessage === "string") {
+        htmlContent = responseMessage;
+    } else {
+        // 객체일 경우, type에 따라 다르게 처리
+        if (type === "schedule") {
+            htmlContent = responseMessage.html || responseMessage.schedule_text || "추천 일정이 없습니다.";
+        } else if (type === "place") {
+            htmlContent = responseMessage.html || "추천 장소가 없습니다.";
+        } else {
+            // 기본적인 응답 처리
+            htmlContent = responseMessage.content || responseMessage.response || "응답 없음";
         }
     }
+
+    // HTML 파싱 처리
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, "text/html");
+    const isHTML = Array.from(doc.body.childNodes).some(
+        node => node.nodeType === 1  // ELEMENT_NODE
+    );
+
+    // 로딩 메시지 처리
+    if (loadingMessage) {
+        if (isHTML) {
+            loadingMessage.outerHTML = htmlContent;
+        } else {
+            loadingMessage.textContent = htmlContent;
+        }
+    } else {
+        appendMessage(htmlContent, "bot-response");
+    }
+
+    // 채팅박스 스크롤을 맨 아래로 이동
     scrollChatToBottom();
 }
-
-// ✅ DOM 로드 시 웹소켓 연결 및 이벤트 리스너 추가 부분 제거 (중복 방지)
-document.addEventListener("DOMContentLoaded", function () {
-    connectWebSocket(); // 웹소켓 연결
-});
-
 
 
 // ✅ 페이지가 새로 고쳐지기 전에 localStorage에서 session_id를 삭제
@@ -593,7 +708,6 @@ window.onload = async function() {
     // 모든 초기화가 완료된 후 스크롤을 최상단으로 이동
     setTimeout(() => {
         scrollChatToTop();
-        console.log("스크롤을 최상단으로 이동");
     }, 200);
 };
 
@@ -611,8 +725,6 @@ function goToMypage() {
 
 // 채팅 히스토리 다시 로드하는 함수
 function reloadChatHistory() {
-    console.log("채팅 히스토리 다시 로드 중...");
-
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
@@ -631,7 +743,6 @@ function reloadChatHistory() {
         }
     })
     .then(response => {
-        console.log("채팅 히스토리 업데이트 성공:", response.data);
         const data = response.data;
         const historyList = document.getElementById("chat-history");
         historyList.innerHTML = "";
@@ -658,8 +769,8 @@ function reloadChatHistory() {
             toggleAccordion(dateItem, sessionList);
         });
     })
-    .catch(error => {
-        console.error("채팅 히스토리 업데이트 실패:", error);
+    .catch(() => {
+        // 에러 처리
     });
 }
 
@@ -696,7 +807,6 @@ function scrollChatToTop() {
     const chatBox = document.getElementById("chat-box");
     if (chatBox) {
         chatBox.scrollTop = 0;
-        console.log("채팅창 스크롤 위치:", chatBox.scrollTop);
     }
 }
 
@@ -706,4 +816,142 @@ function scrollChatToBottom() {
     if (chatBox && hasStartedChat) {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
+}
+
+// 메시지 처리 및 전송을 담당하는 새로운 함수
+function processAndSendMessage() {
+    const messageInput = document.getElementById("user-message");
+    const message = messageInput.value.trim();
+    const sendButton = document.getElementById("send-btn");
+    let datetimeValue = document.getElementById("custom-datetime-input").value;
+    let timestamp;
+    
+    function toKSTISOString(date) {
+      const kstOffset = 9 * 60 * 60 * 1000;
+      const kstDate = new Date(date.getTime() + kstOffset);
+      return kstDate.toISOString().replace("Z", "");
+    }
+    
+    if (!datetimeValue) {
+      const now = new Date();
+      timestamp = toKSTISOString(now);
+    } else {
+      const selectedDate = new Date(datetimeValue);
+      timestamp = toKSTISOString(selectedDate);
+    }
+    
+    if (!message || isProcessingMessage) return;
+    
+    // 메시지 전송 가능 여부 확인
+    if (!canSendMessage()) {
+        return;
+    }
+    
+    isProcessingMessage = true;
+    
+    // localStorage에 메시지 카운트 증가
+    const currentCount = parseInt(localStorage.getItem('messageCount') || '0');
+    localStorage.setItem('messageCount', (currentCount + 1).toString());
+    
+    // 입력창과 전송 버튼 비활성화
+    messageInput.disabled = true;
+    messageInput.style.backgroundColor = "#f0f0f0";
+    sendButton.disabled = true;
+    sendButton.style.opacity = "0.5";
+    
+    // 실제 메시지 전송
+    if (!socket) {
+        isProcessingMessage = false;
+        // 입력창과 전송 버튼 다시 활성화
+        messageInput.disabled = false;
+        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
+        sendButton.disabled = false;
+        sendButton.style.opacity = "1";
+        return;
+    }
+
+    if (socket.readyState === WebSocket.OPEN) {
+        hasStartedChat = true;
+        appendMessage(message, "user-message");
+        appendBotResponseWithLoading();
+
+        const position = marker.getPosition();
+        const requestData = {
+            message: message,
+            latitude: position.getLat().toFixed(6),
+            longitude: position.getLng().toFixed(6),
+            session_id: localStorage.getItem("session_id") || "",
+            new_session: !localStorage.getItem("session_id"),
+            timestamp: timestamp
+        };
+
+        // 메시지를 전송한 후에 입력창 초기화
+        requestAnimationFrame(() => {
+            messageInput.value = "";
+            messageInput.style.height = "24px"; // 높이 초기화
+            messageInput.scrollTop = 0; // 스크롤 위치 초기화
+            messageInput.selectionStart = 0; // 커서 위치 처음으로
+            messageInput.selectionEnd = 0; // 선택 영역 초기화
+        });
+
+        socket.send(JSON.stringify(requestData));
+    } else {
+        isProcessingMessage = false;
+        // 입력창과 전송 버튼 다시 활성화
+        messageInput.disabled = false;
+        messageInput.style.backgroundColor = "rgba(246, 248, 250, 0.95)";
+        sendButton.disabled = false;
+        sendButton.style.opacity = "1";
+    }
+}
+
+// sendMessage 함수를 processAndSendMessage로 대체
+function sendMessage() {
+    if (!isProcessingMessage) {
+        processAndSendMessage();
+    }
+}
+
+function sendScheduleMessage() {
+    const messageInput = document.getElementById("user-message");
+    messageInput.value = "스케줄링 해줘";
+    processAndSendMessage();
+}
+
+function openCustomTimeModal() {
+    document.getElementById("custom-time-modal").style.display = "flex";
+}
+  
+function closeCustomTimeModal() {
+    document.getElementById("custom-time-modal").style.display = "none";
+}
+  
+function submitCustomTime() {
+    const messageInput = document.getElementById("user-message");
+    messageInput.value = "스케줄링 해줘";
+    processAndSendMessage();
+
+    closeCustomTimeModal();
+}
+
+function renderRecommendationBox(recommendations) {
+    if (!Array.isArray(recommendations) || recommendations.length === 0) return "";
+
+    const links = recommendations.map(place => {
+        const name = place.name || "이름 없음";
+        const website = place.website;
+        if (website) {
+            return `<a href="${website}" target="_blank">${name}</a>`;
+        } else {
+            return `<span>${name}</span>`;
+        }
+    });
+
+    return `
+        <div class="chat-recommendation-box">
+            나와 <span style="color:#FA5882; font-weight:bold">관심사</span>가 같은 
+            <span style="color:#7A70E3; font-weight:bold">분들</span>이 많이 찾았어요! 👉 
+            ${links.join(" ")}
+        </div>
+    `;
 }

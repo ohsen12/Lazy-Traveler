@@ -1,3 +1,8 @@
+// 메인 페이지로 이동하는 함수
+function goToMain() {
+    window.location.href = 'https://lazy-traveler.store/pages/main/main.html';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 필요한 DOM 요소들 선택
     const idInput = document.querySelector('input[placeholder="ID를 입력해주세요"]');
@@ -34,6 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // admin 포함 여부 체크 추가
+        if (username.toLowerCase().includes('admin')) {
+            showMessage(idMessage, '사용할 수 없는 ID입니다', false);
+            isIdChecked = false;
+            return;
+        }
+
         try {
             const response = await axios.post('https://api.lazy-traveler.store/accounts/check_username/', {
                 username: username
@@ -41,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                withCredentials: true  // 이 부분 추가해보기
+                withCredentials: true
             })
 
             if (response.status === 200) {
@@ -52,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error.response?.status === 409) {
                 showMessage(idMessage, '사용할 수 없는 ID입니다', false);
             } else {
-                showMessage(idMessage, 'ID 중복 확인 중 오류가 발생했습니다', false);
+                showMessage(idMessage, '사용할 수 없는 ID입니다', false);
             }
             isIdChecked = false;
         }
@@ -145,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = 'https://lazy-traveler.store/pages/login/login.html';
             }
         } catch (error) {
-            console.error('회원가입 오류:', error);
             if (error.response?.data?.detail) {
                 showMessage(passwordMessage, error.response.data.detail, false);
             } else {

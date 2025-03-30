@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lazy Traveler</title>
+    <link rel="icon" type="image/png" href="/images/favicon.png">
     <!-- ✅ axios CDN 추가 -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="login.css">
@@ -15,7 +16,7 @@
   </div>
   <form id="login-form">
     <div class="container">
-        <img src="/images/logo.svg" alt="Lazy Traveler" class="logo">
+        <img src="/images/logo.svg" alt="Lazy Traveler" class="logo" onclick="goToMain()" title="메인 페이지로 이동">
         <div class="input-container">
             <input type="text" id="username" class="input-field" placeholder="ID를 입력해주세요">
         </div>
