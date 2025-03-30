@@ -66,7 +66,7 @@ Lazy Traveler는 고객의 위치, 시간, 관심 태그를 기반으로 일정�
         tpsdms121@gmail.com
       </td>
       <td style="padding: 10px;">
-        추후 추가 예정
+        bvv103@naver.com
       </td>
       <td style="padding: 10px;">
         qoraudska97@gmail.com
