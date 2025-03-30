@@ -216,7 +216,7 @@ function connectWebSocket() {
 
         if (data.recommendations && data.recommendations.length > 0) {
             const html = renderRecommendationBox(data.recommendations);
-            appendMessage(html, "bot-response");
+            appendRecommendationBox(html, "bot-response");
         }
 
 
@@ -934,24 +934,10 @@ function submitCustomTime() {
     closeCustomTimeModal();
 }
 
-function renderRecommendationBox(recommendations) {
-    if (!Array.isArray(recommendations) || recommendations.length === 0) return "";
-
-    const links = recommendations.map(place => {
-        const name = place.name || "이름 없음";
-        const website = place.website;
-        if (website) {
-            return `<a href="${website}" target="_blank">${name}</a>`;
-        } else {
-            return `<span>${name}</span>`;
-        }
-    });
-
-    return `
-        <div class="chat-recommendation-box">
-            나와 <span style="color:#FA5882; font-weight:bold">관심사</span>가 같은 
-            <span style="color:#7A70E3; font-weight:bold">분들</span>이 많이 찾았어요! 👉 
-            ${links.join(" ")}
-        </div>
-    `;
+function appendRecommendationBox(htmlContent) {
+    const chatBox = document.getElementById("chat-box");
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = htmlContent;
+    chatBox.appendChild(wrapper);
+    scrollChatToBottom();
 }
