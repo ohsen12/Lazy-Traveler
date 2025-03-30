@@ -2,7 +2,6 @@
 
 ![소개](assets/소개.jpg)
 
-
 Lazy Traveler는 고객의 위치, 시간, 관심 태그를 기반으로 일정을 손쉽게 만들어 드립니다. <br> Django Rest Framework(DRF)를 사용하여 API를 구축하고, AI 모델과 연결하여 사용자 질의에 실시간으로 응답합니다.
 
 ---
