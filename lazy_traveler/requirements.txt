@@ -24,7 +24,7 @@ Twisted==24.11.0
 autobahn==24.4.2
 txaio==23.1.1
 
-# === LangChain 기반 LLM 추천 시스템 ===
+# === AI service ===
 openai==1.65.5
 langchain==0.3.20
 langgraph==0.3.20
