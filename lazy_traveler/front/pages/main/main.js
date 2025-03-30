@@ -968,3 +968,17 @@ function appendRecommendationBox(htmlContent) {
         scrollChatToBottom();
     }
 }
+
+// 현재 날짜 및 시간 구하기
+const now = new Date();
+const year = now.getFullYear();
+const month = String(now.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1 필요
+const day = String(now.getDate()).padStart(2, '0');
+const hours = String(now.getHours()).padStart(2, '0');
+const minutes = String(now.getMinutes()).padStart(2, '0');
+
+// 날짜와 시간 조합하여 `min` 값 설정 (YYYY-MM-DDTHH:MM 형식)
+const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+// `min` 속성에 현재 시간을 설정
+document.getElementById('custom-datetime-input').setAttribute('min', minDateTime);
