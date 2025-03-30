@@ -1,0 +1,6 @@
+{
+    "python.defaultInterpreterPath": "venv/bin/python",
+    "python.venvPath": "${workspaceFolder}/venv",
+    "python.terminal.activateEnvironment": false,
+    "liveServer.settings.port": 5500
+}
