@@ -193,10 +193,9 @@ Lazy Traveler는 고객의 위치, 시간, 관심 태그를 기반으로 일정�
       <td align="center" style="padding: 10px;"><b>Collaboration</b></td>
       <td align="left" style="padding: 10px;">
         - <b>Slack</b>: 팀 커뮤니케이션 및 정보 공유 <br>
-        - <b>Figma</b> : UI/UX 디자인 및 프로토타이핑<br>
         - <b>Confluence</b> : 문서화 및 협업 관리<br>
         - <b>Jira</b> : TC 기반 QA 진행<br>
-        - <b>GitHub</b> : 코드 버전 관리 및 협업 <br>
+        - <b>Figma</b> : UI/UX 디자인 및 프로토타이핑<br>
       </td>
     </tr>
   </table>
