@@ -6,6 +6,12 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import ChatHistory
 from .recommendation_LangGraph import get_recommendation
+from .utils import calculate_similarity
+from django.contrib.auth import get_user_model
+from .recommendations import get_chat_based_recommendations, get_user_tags_by_id
+from .utils import calculate_similarity
+
+User = get_user_model()
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -93,13 +99,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
             #     "response": response_text,
             #     "session_id": self.session_id
             # }, ensure_ascii=False))
+            
+            # 추천 알고리즘 영역 추가
+                recommendations = await self.get_similar_user_recommendations(self.user.id)
+                print("recommendation:", recommendations)
+            else:
+                recommendations = None
 
-            await self.send(text_data=json.dumps({
+            # await self.send(text_data=json.dumps({
+            #     "message": response_text.get("user_query", user_query),
+            #     "response": response_text.get("response", "응답 없음"),
+            #     "session_id": self.session_id,
+            #     "question_type": response_text.get("question_type", "unknown"),
+            #     "question_type": recommendations
+            # }, ensure_ascii=False))
+            
+            response_payload = {
                 "message": response_text.get("user_query", user_query),
                 "response": response_text.get("response", "응답 없음"),
                 "session_id": self.session_id,
                 "question_type": response_text.get("question_type", "unknown")
-            }, ensure_ascii=False))
+            }
+
+            # ✅ 추천 결과가 있을 경우에만 추가
+            if recommendations:
+                response_payload["recommendations"] = recommendations
+
+            # ✅ 응답 전송
+            await self.send(text_data=json.dumps(response_payload, ensure_ascii=False))
+            
 
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({"error": "잘못된 JSON 형식입니다."}))
@@ -124,3 +152,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 print(f"✅ [DEBUG] 데이터 저장 완료: {user_query}")  # 🔥 로그 추가
         except Exception as e:
             print(f"🚨 [ERROR] 채팅 기록 저장 중 오류 발생: {str(e)}")  # 🔥 오류 확인
+    
+    async def get_similar_user_recommendations(self, user_id: int, top_n: int = 5):
+        """
+        비슷한 취향의 다른 유저들이 좋아하는 장소를 추천하는 비동기 함수
+        :param user_id: 추천할 사용자 ID
+        :param top_n: 최대 추천 장소 수
+        :return: 추천된 장소들의 리스트
+        """
+        try:
+            # 현재 사용자 태그
+            user_tags = await get_user_tags_by_id(user_id)
+
+            # 유사 사용자 후보
+            similar_users = await database_sync_to_async(list)(User.objects.exclude(id=user_id))
+
+            similar_user_ids = []
+            for other_user in similar_users:
+                other_tags = await get_user_tags_by_id(other_user.id)
+                similarity = calculate_similarity(user_tags, other_tags)
+                if similarity >= 0.5:
+                    similar_user_ids.append(other_user.id)
+
+            if not similar_user_ids:
+                return []
+
+            # 유사 사용자 기반 장소 추천
+            recommendations = await get_chat_based_recommendations(similar_user_ids, top_n)
+            return recommendations or []
+
+        except Exception as e:
+            print(f"🚨 [ERROR] 추천 시스템 실패: {str(e)}")
+            return []

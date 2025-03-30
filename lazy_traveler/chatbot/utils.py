@@ -7,6 +7,7 @@ from asgiref.sync import sync_to_async
 from langchain.chains import LLMChain
 from .prompt import query_prompt, opening_hours_prompt
 from geopy.distance import geodesic  # 거리 계산 라이브러리
+from typing import Set
 
 User = get_user_model()
 
@@ -379,3 +380,15 @@ def schedule_to_html(schedule: list[dict]) -> str:
 def get_context(session_id, max_turns=5):
     chat_history = ChatHistory.objects.filter(session_id=session_id).order_by("-created_at")[:max_turns]
     return "\n\n".join([f"User: {chat.message}\nBot: {chat.response}" for chat in reversed(chat_history)])
+
+def calculate_similarity(tags1, tags2):
+    set1 = set(tags1)
+    set2 = set(tags2)
+
+    if not set1 and not set2:
+        return 0.0
+
+    intersection = set1 & set2
+    union = set1 | set2
+
+    return len(intersection) / len(union)
