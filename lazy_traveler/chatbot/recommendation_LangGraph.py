@@ -138,7 +138,7 @@ async def get_recommendation(
         "latitude": latitude if latitude is not None else 37.5704,
         "longitude": longitude if longitude is not None else 126.9831,
         "question_type": "",
-        "timestamp": timestamp or datetime.now() ##### 수정
+        "timestamp": timestamp or datetime(2025, 4, 1, 12, 0, 0) ##### datetime.now()수정
     }
 
     # ✅ LangGraph 생성
