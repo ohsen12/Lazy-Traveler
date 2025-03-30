@@ -657,7 +657,7 @@ header {
     margin: 10px 5px;
   }
   .chat-recommendation-box {
-    /* background-color: #e8e7ff; */
+    background-color: #e8e7ff;
     border-radius: 1rem;
     padding: 12px 16px;
     margin: 12px 0;
