@@ -17,6 +17,7 @@ daphne==4.1.2
 channels==4.2.0
 channels_redis==4.2.1
 redis==5.2.1
+gunicorn==23.00
 
 # === 추가 ASGI 의존성 (Daphne 관련) ===
 Twisted==24.11.0
