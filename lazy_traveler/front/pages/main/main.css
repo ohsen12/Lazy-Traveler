@@ -656,3 +656,20 @@ header {
   .modal-actions button {
     margin: 10px 5px;
   }
+
+  .chat-recommendation-box {
+    background-color: #f5f5ff;
+    border: 1px solid #dedcff;
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-size: 14px;
+    margin-top: 10px;
+    line-height: 1.6;
+}
+
+.chat-recommendation-box a {
+    color: #6b5ae0;
+    font-weight: bold;
+    text-decoration: underline;
+    margin: 0 6px;
+}
