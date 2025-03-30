@@ -198,7 +198,9 @@ function connectWebSocket() {
 
     // 로컬 스토리지에서 토큰을 가져와 Authorization 헤더에 추가
     const token = localStorage.getItem("access_token");
-    const url = token ? `ws://localhost:8000/ws/chat/?token=${token}` : "ws://localhost:8000/ws/chat/";
+    const url = token 
+    ? `wss://api.lazy-traveler.store/ws/chat/?token=${token}` 
+    : "wss://api.lazy-traveler.store/ws/chat/";
 
     socket = new WebSocket(url);
 
