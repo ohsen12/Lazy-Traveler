@@ -43,21 +43,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """클라이언트가 메시지를 보낼 때 실행"""
         try:
             data = json.loads(text_data)
-            print("data:", data)
             user_query = data.get("message", "").strip()
             new_session = data.get("new_session", False)
             latitude = data.get("latitude")
             longitude = data.get("longitude")
             session_id = data.get("session_id")
             raw_timestamp = data.get("timestamp")
-            print("raw_timestamp:", raw_timestamp)
 
 
             timestamp = None
             if raw_timestamp:
                 try:
                     timestamp = datetime.fromisoformat(raw_timestamp)
-                    print("timestamp:", timestamp)
                 except ValueError:
                     await self.send(text_data=json.dumps({"error": "올바른 timestamp 형식이 아닙니다."}))
                     return
@@ -85,35 +82,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 longitude=longitude,
                 timestamp= timestamp ## timestamp 추가
             )
-            print("response_text:", response_text)
 
             # ✅ 채팅 기록 저장 (로그인한 사용자만)
             if self.user and self.user.is_authenticated:
-                print(f"📌 [DEBUG] save_chat_history 호출됨: {user_query}")  # 🔥 디버깅용 로그
                 await self.save_chat_history(user_query, response_text.get("response"))
-                print(f"✅ [DEBUG] 채팅 기록 저장 완료: {user_query}")  # 🔥 저장 성공 여부 확인
-
-            # ✅ 응답 전송
-            # await self.send(text_data=json.dumps({
-            #     "message": user_query,
-            #     "response": response_text,
-            #     "session_id": self.session_id
-            # }, ensure_ascii=False))
             
             # 추천 알고리즘 영역 추가
                 recommendations = await self.get_similar_user_recommendations(self.user.id)
-                print("recommendation:", recommendations)
             else:
                 recommendations = None
 
-            # await self.send(text_data=json.dumps({
-            #     "message": response_text.get("user_query", user_query),
-            #     "response": response_text.get("response", "응답 없음"),
-            #     "session_id": self.session_id,
-            #     "question_type": response_text.get("question_type", "unknown"),
-            #     "question_type": recommendations
-            # }, ensure_ascii=False))
-            
             response_payload = {
                 "message": response_text.get("user_query", user_query),
                 "response": response_text.get("response", "응답 없음"),
@@ -138,7 +116,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """로그인한 사용자의 대화 내역을 비동기적으로 저장"""
         try:
             if self.user and self.user.is_authenticated:
-                print(f"📌 [DEBUG] 데이터 저장 시작: {user_query}")  # 🔥 로그 추가
                 if isinstance(response_text, dict):
                     response_to_save = json.dumps(response_text, ensure_ascii=False)
                 else:
@@ -149,7 +126,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     response=response_to_save,
                     session_id=self.session_id
                 )
-                print(f"✅ [DEBUG] 데이터 저장 완료: {user_query}")  # 🔥 로그 추가
         except Exception as e:
             print(f"🚨 [ERROR] 채팅 기록 저장 중 오류 발생: {str(e)}")  # 🔥 오류 확인
     
