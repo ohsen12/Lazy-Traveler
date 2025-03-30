@@ -84,17 +84,25 @@ def extract_place_info(response_text: str) -> List[dict]:
     strong_matches = re.finditer(r'📍\s*<strong>([^<]+)</strong>', response_text, re.DOTALL)
     for match in strong_matches:
         place_name = match.group(1).strip()
-        if place_name in extracted_places:
+        if not place_name or place_name in extracted_places:
             continue
 
-        # cid 찾기
         start_pos = match.start()
         search_text = response_text[start_pos:start_pos + 500]
         cid = None
-        cid_match = re.search(r'<a href="https:\/\/maps\.google\.com\/\?cid=(\d+)"', search_text, re.DOTALL)
+        website = ""
+        
+        cid_match = re.search(r'https://maps\.google\.com/\?cid=(\d+)', search_text)
         if cid_match:
-            cid = cid_match.group(1).strip()
-        places.append({"name": place_name, "cid": cid})
+            cid = cid_match.group(1)
+            website = f"https://maps.google.com/?cid={cid}"
+        else:
+            # fallback: 링크가 있다면 그것만이라도 website로 저장
+            url_match = re.search(r'https://maps\.google\.com/\?cid=\d+', search_text)
+            if url_match:
+                website = url_match.group()
+
+        places.append({"name": place_name, "cid": cid, "website": website})
         extracted_places.add(place_name)
 
     # 패턴 3: 📍 이모지 + 장소명 형식 (HTML 태그 없음)
@@ -108,10 +116,12 @@ def extract_place_info(response_text: str) -> List[dict]:
         start_pos = match.start()
         search_text = response_text[start_pos:start_pos + 500]
         cid = None
+        website = ""
         cid_match = re.search(r'https:\/\/maps\.google\.com\/\?cid=(\d+)', search_text, re.DOTALL)
         if cid_match:
             cid = cid_match.group(1).strip()
-        places.append({"name": place_name, "cid": cid})
+            website = f"https://maps.google.com/?cid={cid}"
+        places.append({"name": place_name, "cid": cid, "website": website or ""})
         extracted_places.add(place_name)
 
     # 패턴 4: 장소: 장소명 형식
@@ -127,10 +137,12 @@ def extract_place_info(response_text: str) -> List[dict]:
         start_pos = match.start()
         search_text = response_text[start_pos:start_pos + 500]
         cid = None
+        website = ""
         cid_match = re.search(r'웹사이트:.*?https:\/\/maps\.google\.com\/\?cid=(\d+)', search_text, re.DOTALL)
         if cid_match:
             cid = cid_match.group(1).strip()
-        places.append({"name": place_name, "cid": cid})
+            website = f"https://maps.google.com/?cid={cid}"
+        places.append({"name": place_name, "cid": cid, "website": website or ""})
         extracted_places.add(place_name)
 
     # 디버깅용 로그
@@ -138,9 +150,10 @@ def extract_place_info(response_text: str) -> List[dict]:
         print(f"[DEBUG] 추출된 장소 정보: {places}")
     else:
         print("[WARNING] 장소 정보를 추출하지 못했습니다.")
+    
+    places = [p for p in places if p["name"].strip()]
 
     return places
-
 
 import googlemaps
 import logging
@@ -250,69 +263,69 @@ from django.shortcuts import get_object_or_404
 from accounts.models import User
 
 
-def save_place_to_db(place_details):
-    """
-    장소 상세 정보를 Place 모델 객체로 저장
+# def save_place_to_db(place_details):
+#     """
+#     장소 상세 정보를 Place 모델 객체로 저장
 
-    Args:
-        place_details (dict): Place 모델 필드명에 맞춰 가공된 장소 상세 정보 딕셔너리
-    """
-    if not place_details:
-        logger.debug("[save_place_to_db] 저장할 장소의 정보가 없습니다.")
-        return 
+#     Args:
+#         place_details (dict): Place 모델 필드명에 맞춰 가공된 장소 상세 정보 딕셔너리
+#     """
+#     if not place_details:
+#         logger.debug("[save_place_to_db] 저장할 장소의 정보가 없습니다.")
+#         return 
 
-    try:
-        # place = Place(**place_details)
-        place, created = Place.objects.get_or_create(
-            place_id=place_details["place_id"],  # 중복 체크 기준
-            defaults={  # 새로 만들 때만 이 값들로 insert
-                "name": place_details["name"],
-                "tags": place_details["tags"],
-                "address": place_details["address"],
-                "latitude": place_details["latitude"],
-                "longitude": place_details["longitude"],
-                "rating": place_details["rating"],
-                "website": place_details["website"],
-                "opening_hours": place_details["opening_hours"],
-            }
-        )
+#     try:
+#         # place = Place(**place_details)
+#         place, created = Place.objects.get_or_create(
+#             place_id=place_details["place_id"],  # 중복 체크 기준
+#             defaults={  # 새로 만들 때만 이 값들로 insert
+#                 "name": place_details["name"],
+#                 "tags": place_details["tags"],
+#                 "address": place_details["address"],
+#                 "latitude": place_details["latitude"],
+#                 "longitude": place_details["longitude"],
+#                 "rating": place_details["rating"],
+#                 "website": place_details["website"],
+#                 "opening_hours": place_details["opening_hours"],
+#             }
+#         )
 
-        if created:
-            logger.info(f"[save_place_to_db] 장소 저장 성공: {place.name}")
-        else:
-            logger.debug(f"[save_place_to_db] 이미 존재하는 장소: {place.name}")
+#         if created:
+#             logger.info(f"[save_place_to_db] 장소 저장 성공: {place.name}")
+#         else:
+#             logger.debug(f"[save_place_to_db] 이미 존재하는 장소: {place.name}")
 
-        place.save()
-        # return place
-        # place.save()
-        # logger.info(f"장소 '{place.name}'이(가) 성공적으로 저장되었습니다.")
-    except Exception as e:
-        logger.error(f"[save_place_to_db] 장소 저장 실패: {str(e)}")
-        return None
+#         place.save()
+#         # return place
+#         # place.save()
+#         # logger.info(f"장소 '{place.name}'이(가) 성공적으로 저장되었습니다.")
+#     except Exception as e:
+#         logger.error(f"[save_place_to_db] 장소 저장 실패: {str(e)}")
+#         return None
 
 
-def save_place_to_user(user, place_details):
-    """
-    장소 상세 정보를 Place 모델 객체로 저장하고, User 모델의 selected_places 필드에 추가
+# def save_place_to_user(user, place_details):
+#     """
+#     장소 상세 정보를 Place 모델 객체로 저장하고, User 모델의 selected_places 필드에 추가
 
-    Args:
-        user (User): User 모델 객체
-        place_details (dict): Place 모델 필드명에 맞춰 가공된 장소 상세 정보 딕셔너리
-    """
-    if not place_details:
-        logger.debug("저장할 장소 정보가 존재하지 않습니다.")
-        return
+#     Args:
+#         user (User): User 모델 객체
+#         place_details (dict): Place 모델 필드명에 맞춰 가공된 장소 상세 정보 딕셔너리
+#     """
+#     if not place_details:
+#         logger.debug("저장할 장소 정보가 존재하지 않습니다.")
+#         return
 
-    try:
-        place, created = Place.objects.get_or_create(place_id=place_details['place_id'],defaults=place_details)
+#     try:
+#         place, created = Place.objects.get_or_create(place_id=place_details['place_id'],defaults=place_details)
 
-        user = get_object_or_404(User, id=user.id)
+#         user = get_object_or_404(User, id=user.id)
 
-        user.selected_places.add(place)
-        logger.info(f"장소가 사용자의 selected_places에 추가되었습니다: {place.name}, {user}")
+#         user.selected_places.add(place)
+#         logger.info(f"장소가 사용자의 selected_places에 추가되었습니다: {place.name}, {user}")
 
-    except Exception as e:
-        logger.warning(f"장소 저장 및 사용자 연결 실패: {str(e)}")
+#     except Exception as e:
+#         logger.warning(f"장소 저장 및 사용자 연결 실패: {str(e)}")
 
 
 def process_place_info(places_info, api_key):
