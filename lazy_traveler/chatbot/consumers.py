@@ -33,7 +33,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
     async def receive(self, text_data):
-        “”"클라이언트가 메시지를 보낼 때 실행“”"
+        "클라이언트가 메시지를 보낼 때 실행“”"
         try:
             data = json.loads(text_data)
             user_query = data.get(“message”, “”).strip()
@@ -112,7 +112,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_similar_user_recommendations(self, user_id):
-        “”"비슷한 취향의 다른 유저들이 좋아하는 장소를 추천“”"
+        "비슷한 취향의 다른 유저들이 좋아하는 장소를 추천“”"
         try:
             recommendations = get_chat_based_recommendations(user_id, top_n=5)
             if not recommendations.exists():
@@ -136,7 +136,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print(f”:rotating_light: [ERROR] 추천 장소 가져오기 실패: {str(e)}“)
             return []async def receive(self, text_data):
-        “”"클라이언트가 메시지를 보낼 때 실행“”"
+        "클라이언트가 메시지를 보낼 때 실행“”"
         try:
             data = json.loads(text_data)
             user_query = data.get(“message”, “”).strip()
