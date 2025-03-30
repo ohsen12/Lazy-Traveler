@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lazy Traveler</title>
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <!-- ✅ axios CDN 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div class="background">
+    <img src="/images/purple.svg" alt="purple background" class="purple-bg">
+    <img src="/images/star.svg" alt="star background" class="star-bg">
+  </div>
+  <form id="login-form">
+    <div class="container">
+        <img src="/images/logo.svg" alt="Lazy Traveler" class="logo" onclick="goToMain()" title="메인 페이지로 이동">
+        <div class="input-container">
+            <input type="text" id="username" class="input-field" placeholder="ID를 입력해주세요">
+        </div>
+        <div class="input-container">
+            <input type="password" id="password" class="input-field" placeholder="비밀번호를 입력해주세요">
+        </div>
+        <div class="warning" id="login-message"></div>
+        <button class="button" type="submit">Login</button>
+  </form>
+        <div class="links">
+            아직 회원이 아니세요? 
+            <a href="https://lazy-traveler.store/pages/signup/signup.html">회원가입 하러가기</a>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>

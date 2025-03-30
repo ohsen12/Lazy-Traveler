@@ -34,15 +34,17 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY가 설정되지 않았습니다! .env 파일을 확인하세요.")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# ✅ SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True #배포시에는 False값으로
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # Application definition
 
 INSTALLED_APPS = [
+    # Third-party apps
+    'daphne',     
+    'channels',   
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -52,19 +54,48 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
     # lazy_traveler
     'accounts',
+    'chatbot',
 ]
 
 MIDDLEWARE = [
+    #'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    #'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+ASGI_APPLICATION = 'lazy_traveler.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('redis', 6379)],  # Redis 컨테이너의 IP 주소 사용
+        },
+        'OPTIONS': {
+                    'MAX_RETRIES': 10,
+                    'TIMEOUT': 30,
+        }
+    },
+}
+
+# CORS 설정
+#CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '127.0.0.1,localhost').split(',')
+
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '127.0.0.1,localhost').split(',')
+
+# ALB에서 SSL 종료되기 때문
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ROOT_URLCONF = 'lazy_traveler.urls'
 
@@ -90,10 +121,15 @@ WSGI_APPLICATION = 'lazy_traveler.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# ✅ PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST'),
+        'PORT': os.getenv('POSTGRES_PORT'),
     }
 }
 
@@ -109,10 +145,11 @@ REST_FRAMEWORK = {
 
 # 🔐 JWT 유효기간 설정 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1440),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+    'BLACKLIST_ENABLED': True,  # 블랙리스트 기능 활성화
 }
 
 # Password validation
@@ -139,23 +176,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul' # 대한민국 시간대
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False # ✅ 서버 시간대
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = 'static/'
-
-# 📷 static 파일을 추가로 검색할 디렉토리를 지정 (베이스 디렉토리의 static)
-STATICFILES_DIRS = [BASE_DIR / "static"]
-
-# 📷 배포 관련
-STATIC_ROOT = BASE_DIR / "staticfiles"  
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
