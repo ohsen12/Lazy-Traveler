@@ -214,10 +214,10 @@ function connectWebSocket() {
         // 로딩 메시지 업데이트
         updateBotResponse(data.response);
 
-        if (data.recommendations && data.recommendations.length > 0) {
-            const html = renderRecommendationBox(data.recommendations);
-            appendRecommendationBox(html);
-        }
+        // if (data.recommendations && data.recommendations.length > 0) {
+        //     const html = renderRecommendationBox(data.recommendations);
+        //     appendRecommendationBox(html);
+        // }
 
 
         // 세션 ID 업데이트
