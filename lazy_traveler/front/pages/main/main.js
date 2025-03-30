@@ -216,7 +216,7 @@ function connectWebSocket() {
 
         if (data.recommendations && data.recommendations.length > 0) {
             const html = renderRecommendationBox(data.recommendations);
-            appendMessage(html, "bot-response");
+            appendRecommendationBox(html);
         }
 
 
@@ -954,4 +954,17 @@ function renderRecommendationBox(recommendations) {
             ${links.join(" ")}
         </div>
     `;
+}
+
+function appendRecommendationBox(htmlContent) {
+    const chatBox = document.getElementById("chat-box");
+
+    const temp = document.createElement("div");
+    temp.innerHTML = htmlContent;
+
+    const box = temp.querySelector(".chat-recommendation-box");
+    if (box) {
+        chatBox.appendChild(box);
+        scrollChatToBottom();
+    }
 }
