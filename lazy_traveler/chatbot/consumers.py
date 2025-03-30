@@ -100,7 +100,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }
 
             # ✅ 추천 결과가 있을 경우에만 추가
-            if recommendations:
+            if recommendations and response_text.get("question_type") == "schedule":
                 response_payload["recommendations"] = recommendations
 
             # ✅ 응답 전송
