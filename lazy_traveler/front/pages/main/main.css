@@ -206,10 +206,10 @@ header {
 
 /* 입력창 */
 .chat-input {
-    height: 60px;
+    height: auto;
     display: flex;
-    align-items: center;
-    padding: 25px;
+    flex-direction: column;
+    padding: 15px 25px;
     background: #ffffff;
     backdrop-filter: blur(5px);
     border: 1px solid #e0e0e0;
@@ -321,12 +321,12 @@ header {
     font-size: 17px;
     margin-right: 10px;
     font-family: 'basicfont';
-    resize: none; /* textarea 크기 조절 비활성화 */
-    height: 24px; /* 기본 높이 설정 */
-    min-height: 24px; /* 최소 높이 설정 */
-    max-height: 24px; /* 최대 높이 설정 */
-    overflow-y: auto; /* 세로 스크롤 활성화 */
-    line-height: 24px; /* 줄 간격 설정 */
+    resize: none;
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px;
+    overflow-y: auto;
+    line-height: 24px;
 }
 
 /* textarea 스크롤바 스타일링 */
@@ -587,13 +587,14 @@ header {
 
  /* 스케줄 버튼 섹션 스타일 */
  .schedule-buttons-section {
-    padding: 20px;
-    margin-bottom: 10px;
+    width: 100%;
+    padding: 0 0 15px 0;
+    margin: 0;
 }
 
 .schedule-title {
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     font-size: 16px;
     color: #333;
     display: flex;
@@ -614,7 +615,7 @@ header {
 }
 
 .schedule-btn {
-    padding: 10px 20px;
+    padding: 8px 16px;
     border: 1px solid #5F5DE3;
     border-radius: 20px;
     background-color: white;
@@ -630,9 +631,10 @@ header {
     color: white;
 }
 
-/* 채팅 입력창 스타일 업데이트 */
-.chat-input textarea {
-    font-family: 'basicfont', sans-serif;
+.input-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
 
 .modal {

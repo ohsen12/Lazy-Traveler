@@ -72,36 +72,26 @@
                         <!-- 동적으로 메시지가 추가됨 -->
                     </div>
                     
-                    <div class="schedule-buttons-section">
-                        <p class="schedule-title">
-                            <img src="/images/spot.svg" alt="spot" class="spot-icon">
-                            Lazy Traveler에 이렇게 물어보세요!
-                            <img src="/images/spot.svg" alt="spot" class="spot-icon">
-                        </p>
-
-                        <div class="schedule-buttons">
-                            <button class="schedule-btn now-btn" onclick="sendScheduleMessage()">지금 시간으로 스케줄 만들기</button>
-                            <button class="schedule-btn custom-btn" onclick="openCustomTimeModal()">원하는 시간으로 스케줄 만들기</button>
+                    <!-- 채팅 입력창 -->
+                    <div class="chat-input">
+                        <div class="schedule-buttons-section">
+                            <div class="schedule-title">
+                                <img src="/images/spot.svg" alt="spot" class="spot-icon">
+                                Lazy Traveler에 이렇게 물어보세요!
+                                <img src="/images/spot.svg" alt="spot" class="spot-icon">
+                            </div>
+                            <div class="schedule-buttons">
+                                <button class="schedule-btn now-btn" onclick="sendScheduleMessage()">지금 시간으로 스케줄 만들기</button>
+                                <button class="schedule-btn custom-btn" onclick="openCustomTimeModal()">원하는 시간으로 스케줄 만들기</button>
+                            </div>
+                        </div>
+                        <div class="input-container">
+                            <textarea id="user-message" placeholder="Lazy Traveler에 이렇게 물어보세요! 예) 맛집 추천해줘, 일정 짜줘, 회원 가입 어떻게 해?" maxlength="200"></textarea>
+                            <button id="send-btn" onclick="sendMessage()">
+                                <img src="../../images/send.svg" alt="Send">
+                            </button>
                         </div>
                     </div>
-
-                    <div id="custom-time-modal" class="modal" style="display: none;">
-                        <div class="modal-content">
-                          <h3>원하는 시간을 선택해주세요</h3>
-                          <input type="datetime-local" id="custom-datetime-input" />
-                          <div class="modal-actions">
-                            <button onclick="submitCustomTime()">확인</button>
-                            <button onclick="closeCustomTimeModal()">취소</button>
-                          </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="chat-input">
-                    <textarea id="user-message" placeholder="Lazy Traveler에 이렇게 물어보세요! 예) 맛집 추천해줘, 일정 짜줘, 회원 가입 어떻게 해?" maxlength="200"></textarea>
-                    <button id="send-btn" onclick="sendMessage()">
-                        <img src="../../images/send.svg" alt="Send">
-                    </button>
                 </div>
             </div>
         </div>
