@@ -200,6 +200,9 @@ Lazy Traveler는 고객의 위치, 시간, 관심 태그를 기반으로 일정�
   </table>
 </p>
 
+#### [💭 기술적 의사결정](https://www.notion.so/teamsparta/1c62dc3ef51481549442c0690a1e5cc5)
+
+
 ---
 
 ## 3. 주요 기능
